@@ -1,0 +1,239 @@
+﻿@model HNSHOP.Dtos.Response.DetailProductResDto
+@{
+	ViewData["Title"] = Model.Name;
+	var relatedProducts = ViewBag.RelatedProducts as List<HNSHOP.Dtos.Response.ProductResDto>;
+	var shopProducts = ViewBag.ShopProducts as List<HNSHOP.Dtos.Response.ProductResDto>;
+	var shop = ViewBag.Shop as HNSHOP.Dtos.Response.ShopResDto;
+	var ratings = ViewBag.Ratings as List<HNSHOP.Models.Rating> ?? new List<HNSHOP.Models.Rating>();
+}
+<section>
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-3">
+				@Html.Partial("_SidebarPartial")
+			</div>
+
+			<div class="col-sm-9 padding-right">
+				<div class="product-details">
+					<!--product-details-->
+					<div class="col-sm-5">
+						<div class="view-product">
+							<img src="~/images/hnshop/@Model.Images.FirstOrDefault()?.Path" class="img-fluid" alt="@Model.Name" />
+							
+						</div>
+						<div id="similar-product" class="carousel slide" data-bs-ride="carousel">
+							<!-- Wrapper for slides -->
+							<div class="carousel-inner">
+								@if (ViewBag.SimilarProducts != null && ViewBag.SimilarProducts.Count > 0)
+								{
+									int index = 0;
+									foreach (var chunk in ViewBag.SimilarProducts.Chunk(3)) // Chia sản phẩm thành nhóm 3 cái một
+									{
+										<div class="carousel-item @(index == 0 ? "active" : "")">
+											<div class="row">
+												@foreach (var product in chunk)
+												{
+													<div class="col-md-4">
+														<a href="@Url.Action("Details", "Products", new { id = product.Id })">
+															<img src="~/images/hnshop/@product.Images.FirstOrDefault()?.Path" class="img-fluid" alt="@product.Name">
+															<p class="text-center">@product.Name</p>
+														</a>
+													</div>
+												}
+											</div>
+										</div>
+										index++;
+									}
+								}
+								else
+								{
+									<div class="carousel-item active">
+										<p class="text-center">Không có ảnh sản phẩm tương tự.</p>
+									</div>
+								}
+							</div>
+
+							<!-- Controls -->
+							<!-- Controls -->
+							<a class="left item-control" href="#similar-product" data-slide="prev">
+								<i class="fa fa-angle-left"></i>
+							</a>
+							<a class="right item-control" href="#similar-product" data-slide="next">
+								<i class="fa fa-angle-right"></i>
+							</a>
+						
+						</div>
+
+
+					</div>
+					<div class="col-sm-7">
+						<div class="product-information">
+							<!--/product-information-->
+							<h2>@Model.Name</h2>
+							<p>@Model.Description</p>
+
+							<span>
+							<span>@Model.Price</span>
+							<label>Quantity:</label>
+							<input type="text" value="@Model.Quantity" />
+								<button type="button" class="btn btn-fefault cart" data-id="@Model.Id">
+								<i class="fa fa-shopping-cart"></i>
+								Thêm vào giỏ hàng
+							</button>
+							</span>
+							<p><b>Loại sản phẩm:</b> @Model.ProductType.Name</p>
+							<p><b>Cửa hàng:</b> @Model.Shop.Name</p>
+							<p><b>Đã bán:</b> @Model.SoldQuantity sản phẩm</p>
+							<p><b>Lượt thích:</b> <i class="fa fa-heart text-danger"></i> @ViewBag.LikeCount lượt thích</p>
+
+							<p><b>Đánh giá trung bình:</b>@ViewBag.AverageRating.ToString("0.0") ⭐ từ @ViewBag.RatingCount đánh giá</p>
+							<a href=""><img src="images/product-details/share.png" class="share img-responsive" alt="" /></a>
+						</div><!--/product-information-->
+					</div>
+				</div><!--/product-details-->
+
+				<div class="category-tab shop-details-tab">
+					<!--category-tab-->
+					<div class="col-sm-12">
+						<ul class="nav nav-tabs">
+							<li><a href="#details" data-toggle="tab">Thông tin chi tiết về loại</a></li>
+							<li><a href="#companyprofile" data-toggle="tab">Thông tin Shop</a></li>
+							<li><a href="#tag" data-toggle="tab">Sản phẩm cùng loại</a></li>
+							<li class="active"><a href="#reviews" data-toggle="tab">Đánh giá(@ViewBag.RatingCount)</a></li>
+						</ul>
+					</div>
+					<div class="tab-content">
+						<div class="tab-pane fade" id="details">
+							<p><b>Tên Loại :</b> @Model.ProductType.Name</p>
+							<p><b>Chi tiết :</b> @Model.ProductType.Description</p>
+						</div>
+
+						<div class="tab-pane fade" id="companyprofile">
+							<p><b>Tên Shop :</b> @shop.Name</p>
+							<p><b>Chi tiết :</b> @shop.Description</p>
+							<h2 class="title text-center">Sản phẩm khác của Shop</h2>
+							@foreach (var product in shopProducts)
+							{
+								<a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id">
+									<div class="col-sm-3">
+										<div class="product-image-wrapper">
+											<div class="single-products">
+												<div class="productinfo text-center">
+													<img src="~/images/hnshop/@product.Images.FirstOrDefault()?.Path" alt="" />
+													<h2>@product.Price VNĐ</h2>
+													<p>@product.Name</p>
+													<button type="button" class="btn btn-default add-to-cart"><i class="fa fa-shopping-cart"></i>Add to cart</button>
+												</div>
+											</div>
+										</div>
+
+									</div>
+								</a>
+							}
+
+						</div>
+
+						<div class="tab-pane fade" id="tag">
+							@foreach (var product in relatedProducts)
+							{
+								<a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id">
+									<div class="col-sm-3">
+										<div class="product-image-wrapper">
+											<div class="single-products">
+												<div class="productinfo text-center">
+													<img src="~/images/hnshop/@product.Images.FirstOrDefault()?.Path" alt="" />
+													<h2>@product.Price VNĐ</h2>
+													<p>@product.Name</p>
+													<button type="button" class="btn btn-default add-to-cart"><i class="fa fa-shopping-cart"></i>Add to cart</button>
+												</div>
+											</div>
+										</div>
+
+									</div>
+								</a>
+							}
+							
+						</div>
+
+						<div class="tab-pane fade active in" id="reviews">
+							<div class="col-sm-12">
+								
+
+								<!-- Hiển thị danh sách đánh giá -->
+								
+									@if (ratings.Count > 0)
+									{
+										@foreach (var review in ratings)
+										{<ul class="list-group">
+											<li class="list-group-item">
+												<strong><i class="fa fa-user"></i> @review.UserName</strong>
+
+												<span style="margin-left: 15px;">
+													<i class="fa fa-clock"></i> @review.CreatedAt.ToString("HH:mm tt") |
+													<i class="fa fa-calendar"></i> @review.CreatedAt.ToString("dd MMM yyyy")
+												</span>
+                                                <hr />
+												<p>@review.Comment</p>
+                                                    @for (int i = 0; i < 5; i++)
+                                                    {
+													<i class="@(i < review.RatingValue ? "fa fa-star" : "fa fa-star-o")" style="color:	 #ffd11a"></i>
+                                                    }
+												
+
+                                               
+                                            </li>
+                                            
+                                        </ul>
+										
+										}
+									}
+									else
+									{
+										<li class="list-group-item text-muted">Chưa có đánh giá nào cho sản phẩm này.</li>
+									}
+
+								<b><hr /></b>
+
+								<p><b>Viết đánh giá của bạn</b></p>
+
+								@if (ViewBag.HasPurchased)
+								{
+									<!-- Hiển thị form thêm đánh giá -->
+									<form asp-action="SubmitReview" asp-controller="Products" method="post">
+										<input type="hidden" name="ProductId" value="@Model.Id" />
+										<input type="hidden" name="CustomerId" value="@ViewBag.CustomerId" />
+
+										<span>
+											<input type="text" name="UserName" placeholder="Tên của bạn" value="@User.Identity.Name" required />
+										</span>
+
+										<textarea name="Comment" placeholder="Viết đánh giá của bạn" required></textarea>
+
+										<b>Đánh giá:</b>
+										<select name="Rating" class="form-control" required>
+											<option value="1">1 - Tệ</option>
+											<option value="2">2 - Không tốt</option>
+											<option value="3">3 - Bình thường</option>
+											<option value="4">4 - Tốt</option>
+											<option value="5">5 - Xuất sắc</option>
+										</select>
+
+										<button type="submit" class="btn btn-default pull-right">Gửi đánh giá</button>
+									</form>
+								}
+								else
+								{
+									<p class="text-danger"><b>Bạn cần mua sản phẩm này để có thể đánh giá.</b></p>
+								}
+							</div>
+						</div>
+
+
+
+					</div>
+				</div><!--/category-tab-->
+
+			</div>
+		</div>
+	</div>
+</section>

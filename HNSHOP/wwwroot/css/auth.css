@@ -1,0 +1,164 @@
+﻿.register-container {
+    max-width: 400px;
+    margin: auto;
+    margin-top:50px;
+    margin-bottom:50px;
+    padding: 30px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    background-color: #e2e7ef;
+}
+
+.register-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+   
+}
+
+.input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+    .input-group input {
+        width: 100%;
+        padding: 10px 40px 10px 40px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+
+.input-icon {
+    position: absolute;
+    left: 10px;
+    color: #888;
+    font-size: 16px;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    color: #888;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+    .toggle-password:hover {
+        color: #555;
+    }
+
+.btn-primary {
+    background: linear-gradient(to right, #003366, #1e90ff);
+    border: none;
+    padding: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    border-radius: 5px;
+}
+
+    .btn-primary:hover {
+        background: linear-gradient(to right, #002244, #0b72e4);
+    }
+
+p.text-center a {
+    color: #1e90ff;
+    font-weight: bold;
+}
+
+    p.text-center a:hover {
+        text-decoration: underline;
+    }
+/* Căn chỉnh vị trí của nhóm nhập liệu */
+.input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+    /* Ô nhập liệu */
+    .input-group input {
+        width: 100%;
+        padding: 10px 40px 10px 40px; /* Điều chỉnh padding để tránh bị icon đè lên */
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+
+/* Icon phía bên trái */
+.input-icon {
+    position: absolute;
+    left: 12px;
+    color: #888;
+    font-size: 16px;
+}
+
+/* Icon ẩn/hiện mật khẩu */
+.toggle-password {
+    position: absolute;
+    right: 12px; /* Dịch sang phải để không đè lên chữ */
+    color: #888;
+    cursor: pointer;
+    font-size: 16px;
+    z-index: 10; /* Đảm bảo icon luôn nằm phía trên */
+    padding: 10px; /* Tăng kích thước vùng click */
+}
+
+    /* Khi hover vào icon, màu sẽ thay đổi */
+    .toggle-password:hover {
+        color: #555;
+    }
+
+
+/*==============================================================================================*/
+
+.profile-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    background: white;
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    margin: 10px auto;
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    left: 10px;
+    font-size: 16px;
+    color: gray;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 10px 10px 10px 30px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+}

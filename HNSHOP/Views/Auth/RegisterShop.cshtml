@@ -1,0 +1,59 @@
+﻿@model HNSHOP.Dtos.Request.RegisterShopReqDto
+
+@{
+    ViewData["Title"] = "Đăng ký Shop";
+}
+<link href="~/css/auth.css" rel="stylesheet">
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+<div class="register-container mt-5 mb-5">
+    <h2 class="text-center">ĐĂNG KÝ SHOP</h2>
+
+    <form asp-action="RegisterShop" method="post" class="register-form">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <!-- Tên Shop -->
+        <div class="input-group">
+            <span class="input-icon"><i class="fa fa-cart-plus"></i></span>
+            <input asp-for="Name" class="form-control" placeholder="Tên Shop" required />
+        </div>
+
+        <!-- Số điện thoại -->
+        <div class="input-group">
+            <span class="input-icon"><i class="fa fa-phone"></i></span>
+            <input asp-for="Phone" type="tel" class="form-control" placeholder="Số điện thoại" required />
+        </div>
+
+        <!-- Email -->
+        <div class="input-group">
+            <span class="input-icon"><i class="fa fa-envelope"></i></span>
+            <input asp-for="Email" type="email" class="form-control" placeholder="Email" required />
+        </div>
+
+        <!-- Mật khẩu -->
+        <div class="input-group">
+            <span class="input-icon"><i class="fa fa-lock"></i></span>
+            <input asp-for="Password" type="password" class="form-control" placeholder="Mật khẩu (8 đến 20 ký tự)" id="passwordShop" required />
+            <span class="toggle-password" onclick="togglePassword('passwordShop')">
+                <i class="fa fa-eye"></i>
+            </span>
+        </div>
+
+        <!-- Nhập lại mật khẩu -->
+        <div class="input-group">
+            <span class="input-icon"><i class="fa fa-lock"></i></span>
+            <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Nhập lại mật khẩu" id="confirmPasswordShop" required />
+            <span class="toggle-password" onclick="togglePassword('confirmPasswordShop')">
+                <i class="fa fa-eye"></i>
+            </span>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 mt-3">Đăng ký Shop</button>
+    </form>
+
+    <p class="text-center mt-2">Bạn đã có tài khoản? <a asp-action="Login">Đăng nhập ngay</a></p>
+</div>
+
+<script src="~/js/auth.js"></script>

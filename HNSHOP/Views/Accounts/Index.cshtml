@@ -1,0 +1,73 @@
+﻿@model HNSHOP.Dtos.Response.AccountResDto
+
+@{
+    ViewData["Title"] = "Hồ Sơ Cá Nhân";
+}
+
+<link href="~/css/profile.css" rel="stylesheet">
+
+<div class="profile-container">
+    <div class="profile-card">
+        <!-- Ảnh đại diện -->
+        <div class="avatar-container">
+            <img src="@Model.Avatar" alt="Avatar" class="avatar">
+        </div>
+        <h3 class="user-name">@Model.Customer?.Name ?? Model.Shop?.Name ?? "Người dùng"</h3>
+
+        <div class="user-info">
+            <p><strong>Email:</strong> @Model.Email</p>
+            <p><strong>Số điện thoại:</strong> @Model.Phone</p>
+            <p><strong>Ngày tham gia:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy")</p>
+        </div>
+    </div>
+
+    <!-- Thông tin chi tiết -->
+    <div class="profile-details">
+        <h3><i class="fa fa-info-circle"></i> Thông tin cá nhân</h3>
+        <form asp-action="Update" method="post">
+            <div class="input-group">
+                <span class="input-icon"><i class="fa fa-envelope"></i></span>
+                <input type="email" name="Email" class="form-control" value="@Model.Email" placeholder="Email" />
+            </div>
+
+            <div class="input-group">
+                <span class="input-icon"><i class="fa fa-phone"></i></span>
+                <input type="text" name="Phone" class="form-control" value="@Model.Phone" placeholder="Số điện thoại" />
+            </div>
+
+            <div class="input-group">
+                <span class="input-icon"><i class="fa fa-user"></i></span>
+                <input type="text" name="Avatar" class="form-control" value="@Model.Avatar" placeholder="Ảnh đại diện URL" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Cập nhật thông tin</button>
+        </form>
+    </div>
+
+    <!-- Nếu là tài khoản Shop, hiển thị danh sách sản phẩm -->
+    @if (Model.Shop != null)
+    {
+        <div class="shop-products">
+            <h3><i class="fa fa-shopping-bag"></i> Sản phẩm của Shop: @Model.Shop.Name</h3>
+            <a href="@Url.Action("Create", "Products")" class="btn btn-success">Thêm sản phẩm mới</a>
+
+            <div class="product-list">
+                @foreach (var product in Model.Shop.Products)
+                {
+                    <div class="product-item">
+                        <div class="product-images">
+                            @foreach (var image in product.Images)
+                            {
+                                <img src="~/images/hnshop/@image.Path" alt="Product Image">
+                            }
+                        </div>
+                        <h4>@product.Name</h4>
+                        <p>Giá: @product.Price VNĐ</p>
+                        <a href="@Url.Action("Edit", "Products", new { id = product.Id })" class="btn btn-warning">Sửa</a>
+                        <a href="@Url.Action("Delete", "Products", new { id = product.Id })" class="btn btn-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');">Xóa</a>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

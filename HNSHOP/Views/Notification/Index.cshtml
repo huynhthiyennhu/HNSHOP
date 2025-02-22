@@ -1,0 +1,29 @@
+﻿@model List<HNSHOP.Models.Notification>
+
+<h2>Thông Báo</h2>
+
+@if (!Model.Any())
+{
+    <p>Bạn chưa có thông báo nào.</p>
+}
+else
+{
+    <ul class="list-group">
+        @foreach (var notification in Model)
+        {
+            <li class="list-group-item @(notification.IsRead ? "" : "list-group-item-warning")">
+                <strong>@notification.Title</strong>
+                <p>@notification.Body</p>
+                <small>@notification.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
+
+                @if (!notification.IsRead)
+                {
+                    <form asp-action="MarkAsRead" method="post">
+                        <input type="hidden" name="id" value="@notification.Id" />
+                        <button type="submit" class="btn btn-sm btn-primary">Đánh dấu đã đọc</button>
+                    </form>
+                }
+            </li>
+        }
+    </ul>
+}

@@ -1,0 +1,29 @@
+﻿@{
+    ViewData["Title"] = "Xác thực Email";
+}
+<link href="~/css/auth.css" rel="stylesheet">
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+<div class="register-container mt-5 mb-5">
+    <h2 class="text-center">XÁC THỰC EMAIL</h2>
+
+    <form asp-action="VerifyEmail" method="post" class="register-form">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <!-- Email -->
+        <div class="input-group">
+            <span class="input-icon"><i class="fa fa-envelope"></i></span>
+            <input type="email" name="email" class="form-control" placeholder="Nhập email" required />
+        </div>
+
+        <!-- Mã xác thực -->
+        <div class="input-group">
+            <span class="input-icon"><i class="fa fa-key"></i></span>
+            <input type="text" name="token" class="form-control" placeholder="Nhập mã xác thực" required />
+        </div>
+
+        <button type="submit" class="btn btn-success w-100 mt-3">Xác thực</button>
+    </form>
+</div>

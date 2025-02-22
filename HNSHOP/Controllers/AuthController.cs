@@ -1,0 +1,224 @@
+﻿using HNSHOP.Data;
+using HNSHOP.Dtos.Request;
+using HNSHOP.Models;
+using HNSHOP.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+
+public class AuthController(ApplicationDbContext db, IEmailService emailService,
+    IValidator<RegisterReqDto> registerValidator,
+    IValidator<RegisterShopReqDto> registerShopValidator,
+    IValidator<LoginReqDto> loginValidator) : Controller
+{
+    private readonly ApplicationDbContext _db = db;
+    private readonly IEmailService _emailService = emailService;
+    private readonly IValidator<RegisterReqDto> _registerValidator = registerValidator;
+    private readonly IValidator<RegisterShopReqDto> _registerShopValidator = registerShopValidator;
+    private readonly IValidator<LoginReqDto> _loginValidator = loginValidator;
+
+    // Hiển thị trang đăng ký User
+    [HttpGet]
+    public IActionResult Register()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Register(RegisterReqDto request)
+    {
+
+        var validationResult = await _registerValidator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+        {
+            validationResult.AddToModelState(ModelState);
+            return View(request);
+        }
+
+        if (await _db.Accounts.AnyAsync(a => a.Email == request.Email))
+        {
+            ModelState.AddModelError("", "Email đã tồn tại.");
+            return View(request);
+        }
+
+        string hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
+        string verifyToken = GenerateVerificationToken();
+
+        var account = new Account
+        {
+            Email = request.Email,
+            Phone = request.Phone,
+            Password = hashedPassword,
+            RoleId = 3,  // Role User
+            VerifyToken = verifyToken,
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now
+        };
+        
+
+        _db.Accounts.Add(account);
+        await _db.SaveChangesAsync();
+        var customer = new Customer
+                {
+                    Name = request.Name,
+                    AccountId = account.Id,
+                    CustomerTypeId = 1,
+                    Description = "Khách hàng mới"
+                };
+        _db.Customers.Add(customer);
+        await _db.SaveChangesAsync();
+
+        await _emailService.SendVerificationEmail(request.Email, verifyToken);
+
+        TempData["Message"] = "Đăng ký thành công! Vui lòng kiểm tra email để xác thực.";
+        return RedirectToAction("VerifyEmail");
+    }
+
+    // Hiển thị trang đăng ký Shop
+    [HttpGet]
+    public IActionResult RegisterShop()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> RegisterShop(RegisterShopReqDto request)
+    {
+        var validationResult = await _registerShopValidator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+        {
+            validationResult.AddToModelState(ModelState);
+            return View(request);
+        }
+
+        if (await _db.Accounts.AnyAsync(a => a.Email == request.Email))
+        {
+            ModelState.AddModelError("", "Email đã tồn tại.");
+            return View(request);
+        }
+
+        string hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
+        string verifyToken = GenerateVerificationToken();
+
+        var account = new Account
+        {
+            Email = request.Email,
+            Phone = request.Phone,
+            Password = hashedPassword,
+            RoleId = 2,  // Role Shop
+            VerifyToken = verifyToken,
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now
+        };
+
+        _db.Accounts.Add(account);
+        await _db.SaveChangesAsync();
+        var shop = new Shop
+        {
+            Name = request.Name,
+            AccountId = account.Id,
+            Description = "Shop mới đăng ký"
+        };
+        _db.Shops.Add(shop);
+        await _db.SaveChangesAsync();
+
+        await _emailService.SendVerificationEmail(request.Email, verifyToken);
+
+        TempData["Message"] = "Đăng ký shop thành công! Vui lòng kiểm tra email để xác thực.";
+        return RedirectToAction("VerifyEmail");
+    }
+
+    // Hiển thị trang xác thực email
+    [HttpGet]
+    public IActionResult VerifyEmail()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> VerifyEmail(string email, string token)
+    {
+        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email == email && a.VerifyToken == token);
+
+        if (account == null)
+        {
+            ModelState.AddModelError("", "Mã xác thực không hợp lệ.");
+            return View();
+        }
+
+        account.IsVerified = true;
+        account.VerifiedAt = DateTime.Now;
+        account.VerifyToken = token;
+
+        await _db.SaveChangesAsync();
+
+        TempData["Message"] = "Xác thực email thành công! Bạn có thể đăng nhập ngay bây giờ.";
+        return RedirectToAction("Login");
+    }
+
+    // Hiển thị trang đăng nhập
+    [HttpGet]
+    public IActionResult Login()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Login(LoginReqDto request)
+    {
+        var validationResult = await _loginValidator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+        {
+            validationResult.AddToModelState(ModelState);
+            return View(request);
+        }
+
+        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email == request.Email);
+
+        if (account == null || !BCrypt.Net.BCrypt.Verify(request.Password, account.Password))
+        {
+            ModelState.AddModelError("", "Email hoặc mật khẩu không chính xác.");
+            return View(request);
+        }
+
+        if (!account.IsVerified)
+        {
+            ModelState.AddModelError("", "Tài khoản chưa được xác thực. Vui lòng kiểm tra email.");
+            return View(request);
+        }
+
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, account.Id.ToString()),
+            new Claim(ClaimTypes.Email, account.Email),
+            new Claim(ClaimTypes.Role, account.RoleId == 2 ? "Shop" : "User")
+        };
+
+        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var authProperties = new AuthenticationProperties();
+
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(claimsIdentity),
+            authProperties);
+
+        return RedirectToAction("Index", "Home");
+    }
+    [HttpPost]
+    public async Task<IActionResult> Logout()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        return RedirectToAction("Index", "Home");
+    }
+    private string GenerateVerificationToken()
+    {
+        var rng = new Random();
+        return rng.Next(100000, 999999).ToString(); // 6 số ngẫu nhiên
+    }
+}

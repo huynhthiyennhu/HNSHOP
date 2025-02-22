@@ -1,0 +1,40 @@
+﻿@model HNSHOP.Dtos.Request.LoginReqDto
+
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+<link href="~/css/auth.css" rel="stylesheet">
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+<div class="register-container mt-5 mb-5">
+    <h2 class="text-center">ĐĂNG NHẬP</h2>
+
+    <form asp-action="Login" method="post" class="register-form">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <!-- Email -->
+        <div class="input-group">
+            <span class="input-icon"><i class="fa fa-envelope"></i></span>
+            <input asp-for="Email" type="email" class="form-control" placeholder="Email" required />
+        </div>
+
+        <!-- Mật khẩu -->
+        <div class="input-group">
+            <span class="input-icon"><i class="fa fa-lock"></i></span>
+            <input asp-for="Password" type="password" class="form-control" placeholder="Mật khẩu" id="passwordLogin" required />
+            <span class="toggle-password" onclick="togglePassword('passwordLogin')">
+                <i class="fa fa-eye"></i>
+            </span>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 mt-3">Đăng nhập</button>
+    </form>
+
+    <p class="text-center mt-2">
+        Bạn chưa có tài khoản? <a asp-action="Register">Đăng ký ngay</a>
+    </p>
+</div>
+
+
