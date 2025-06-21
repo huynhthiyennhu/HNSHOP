@@ -5,7 +5,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta name="description" content="">
 	<meta name="author" content="">
-	<title>Home | E-Shopper</title>
+	<title>HNShop</title>
 	<!-- Nếu bạn dùng các class cũ như 'fa fa-calendar-o', hãy dùng Font Awesome 4 -->
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
@@ -14,8 +14,10 @@
 	<link href="~/css/prettyPhoto.css" rel="stylesheet">
 	<link href="~/css/price-range.css" rel="stylesheet">
 	<link href="~/css/animate.css" rel="stylesheet">
-	<link href="~/css/main.css" rel="stylesheet">
 	<link href="~/css/responsive.css" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+	<link href="~/css/main.css" rel="stylesheet">
+
 	<!--[if lt IE 9]>
 	<script src="js/html5shiv.js"></script>
 	<script src="js/respond.min.js"></script>
@@ -27,38 +29,24 @@
 	<link rel="apple-touch-icon-precomposed" href="~/images/ico/apple-touch-icon-57-precomposed.png">
 	<!-- Thêm vào trong <head> -->
 
-</head><!--/head-->
 
+	<!-- Thư viện SweetAlert2 -->
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	<!-- 1️⃣ Tải jQuery trước -->
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+	<!-- 2️⃣ Tải jQuery UI sau jQuery -->
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
+
+	<!-- 3️⃣ Thêm CSS jQuery UI -->
+	<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+
+</head><!--/head-->
+@RenderSection("Scripts", required: false)
 <body>
 	<header id="header">
-		<!--header-->
-		<div class="header_top">
-			<!--header_top-->
-			<div class="container">
-				<div class="row">
-					<div class="col-sm-6">
-						<div class="contactinfo">
-							<ul class="nav nav-pills">
-								<li><a href="#"><i class="fa fa-phone"></i> +2 95 01 88 821</a></li>
-								<li><a href="#"><i class="fa fa-envelope"></i> info@domain.com</a></li>
-							</ul>
-						</div>
-					</div>
-					<div class="col-sm-6">
-						<div class="social-icons pull-right">
-							<ul class="nav navbar-nav">
-								<li><a href="#"><i class="fa fa-facebook"></i></a></li>
-								<li><a href="#"><i class="fa fa-twitter"></i></a></li>
-								<li><a href="#"><i class="fa fa-linkedin"></i></a></li>
-								<li><a href="#"><i class="fa fa-dribbble"></i></a></li>
-								<li><a href="#"><i class="fa fa-google-plus"></i></a></li>
-							</ul>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div><!--/header_top-->
-
 		<div class="header-middle">
 			<!--header-middle-->
 			<div class="container">
@@ -67,69 +55,53 @@
 						<div class="logo pull-left">
 							<a href="index.html"><img src="~/images/home/logo.png" alt="" /></a>
 						</div>
-						<div class="btn-group pull-right">
-							<div class="btn-group">
-								<button type="button" class="btn btn-default dropdown-toggle usa" data-toggle="dropdown">
-									USA
-									<span class="caret"></span>
-								</button>
-								<ul class="dropdown-menu">
-									<li><a href="#">Canada</a></li>
-									<li><a href="#">UK</a></li>
-								</ul>
-							</div>
 
-							<div class="btn-group">
-								<button type="button" class="btn btn-default dropdown-toggle usa" data-toggle="dropdown">
-									DOLLAR
-									<span class="caret"></span>
-								</button>
-								<ul class="dropdown-menu">
-									<li><a href="#">Canadian Dollar</a></li>
-									<li><a href="#">Pound</a></li>
-								</ul>
-							</div>
-						</div>
 					</div>
 					<div class="col-sm-8">
-                        <div class="shop-menu pull-right">
-						@if (User.Identity.IsAuthenticated){
-                            <ul class="nav navbar-nav">
+						<div class="shop-menu pull-right">
+							@if (User.Identity.IsAuthenticated){
+								<ul class="nav navbar-nav">
+									@if (User.Identity.IsAuthenticated && User.IsInRole("User")) // Chỉ khách hàng
+									{
+										<li><a asp-controller="ACcounts" asp-action="Index"><i class="fa fa-user"></i> Tài Khoản</a></li>
+										<li><a asp-controller="Products" asp-action="Favorites"><i class="fa fa-heart"></i> Yêu Thích</a></li>
+										<li><a asp-controller="Orders" asp-action="Index"><i class="fa fa-credit-card"></i> Đơn Hàng</a></li>
 
-									<li><a asp-controller="ACcounts" asp-action="Index"><i class="fa fa-user"></i> Tài Khoản</a></li>
-									<li><a href="#"><i class="fa fa-star"></i> Yêu Thích</a></li>
-									<li><a href="checkout.html"><i class="fa fa-credit-card"></i> Thanh Toán</a></li>
+										<li>
+											<a asp-controller="Cart" asp-action="Index">
+												<i class="fa fa-shopping-cart"></i> Giỏ hàng (<span id="cart-count">@ViewBag.CartCount</span>)
+											</a>
+										</li>
+									}
 
-									<li>
-									<a asp-controller="Cart" asp-action="Index"><i class="fa fa-shopping-cart"></i> Giỏ hàng(<span id="cart-count">@ViewBag.CartCount</span>)</a>
+									<li class="dropdown">
+										<a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+											<span class="ml-1">@User.Identity.Name</span>
+											<img src="~/images/hnshop/avatar/@User.FindFirst("Avatar")?.Value" class="rounded-circle" style="width:30px; height:30px;" />
 
-									
-							
-									
-
-								<li class="nav-item">
-									<a class="nav-link" asp-controller="Notification" asp-action="Index">
-										<i class="fa fa-bell"></i> Thông báo
-									</a>
-								</li>
-									<li>
-										<a href="javascript:void(0);" onclick="confirmLogout()">
-											<i class="fa fa-user-times"></i> Đăng xuất
 										</a>
-										<form id="logoutForm" asp-controller="Auth" asp-action="Logout" method="post" style="display: none;">
-											<input type="hidden" name="logout" value="true" />
-										</form>
+										<ul class="dropdown-menu">
+											<li><a asp-controller="ACcounts" asp-action="Index">Thông tin tài khoản</a></li>
+											<li>
+												<form id="logoutForm" asp-controller="Auth" asp-action="Logout" method="post">
+													<button type="submit" class="btn btn-link dropdown-item">
+														<i class="fa fa-sign-out"></i> Đăng xuất
+													</button>
+												</form>
+											</li>
+										</ul>
 									</li>
 
 
-							</ul>
+
+								</ul>
 							}
-						else{}
+							else{}
 						</div>
 					</div>
 				</div>
 			</div>
-		</div><!--/header-middle-->
+		</div>
 
 		<div class="header-bottom">
 			<!--header-bottom-->
@@ -146,17 +118,42 @@
 						</div>
 						<div class="mainmenu pull-left">
 							<ul class="nav navbar-nav collapse navbar-collapse">
-								<li><a a asp-controller="Home" asp-action="Index" class="active">Home</a></li>
-								<li class="dropdown">
-									<a href="#">Shop<i class="fa fa-angle-down"></i></a>
-									<ul role="menu" class="sub-menu">
-										<li><a href="shop.html">Products</a></li>
-										<li><a href="product-details.html">Product Details</a></li>
-										<li><a href="checkout.html">Checkout</a></li>
-										<li><a href="cart.html">Cart</a></li>
-										<li><a href="login.html">Login</a></li>
-									</ul>
-								</li>
+								<li><a asp-controller="Home" asp-action="Index" class="active">Home</a></li>
+
+								@if (User.Identity.IsAuthenticated && User.IsInRole("Shop")) 
+								{
+									<li class="dropdown">
+										<a href="#">Cửa Hàng<i class="fa fa-angle-down"></i></a>
+										<ul role="menu" class="sub-menu">
+											<li>
+												<a asp-controller="Products" asp-action="Manage">Quản lý sản phẩm</a>
+											</li>
+											<li><a asp-controller="ACcounts" asp-action="Index">Tài Khoản</a></li>
+
+										</ul>
+									</li>
+								}
+
+								@if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
+								{
+									<li class="dropdown">
+										<a href="#">Quản Trị<i class="fa fa-angle-down"></i></a>
+										<ul role="menu" class="sub-menu">
+											<li><a asp-controller="SaleEvent" asp-action="Index">Quản Lý giảm giá</a></li>
+											<li><a asp-controller="AdminOrders" asp-action="Index">Kiểm tra đơn hàng</a></li>
+											<li><a asp-controller="ProductType" asp-action="Index">Quản lý loại sản phẩm</a></li>
+											
+										</ul>
+									</li>
+									<li class="dropdown">
+										<a href="#">Quản Tài Khoản<i class="fa fa-angle-down"></i></a>
+										<ul role="menu" class="sub-menu">
+											<li><a asp-controller="AdminShop" asp-action="Index">Quản lý Shop</a></li>
+											<li><a asp-controller="Customers" asp-action="Index">Quản lý khách hàng</a></li>
+										</ul>
+									</li>
+									
+								}
 								<li class="dropdown">
 									<a href="#">Đăng Ký<i class="fa fa-angle-down"></i></a>
 									<ul role="menu" class="sub-menu">
@@ -165,25 +162,41 @@
 										<li><a asp-controller="Auth" asp-action="VerifyEmail"> Xác thực tài khoản</a>
 									</ul>
 								</li>
+
 								@if (!User.Identity.IsAuthenticated){
 									<li><a asp-controller="Auth" asp-action="Login"> Đăng Nhập</a></li>}
-								<li><a href="contact-us.html">Contact</a></li>
+								
 							</ul>
 						</div>
 					</div>
+
+					
+
 					<div class="col-sm-3">
-						<div class="search_box pull-right">
-							<input type="text" placeholder="Search" />
+						<div class="pull-right">
+							<form id="searchForm" method="get" asp-controller="Home" asp-action="Index" class="search-container">
+								<input type="text" name="search" placeholder="Tìm kiếm sản phẩm..." value="@ViewBag.Search" class="search-input" />
+								<button type="submit" class="search-button">
+									<i class="fa fa-search"></i>
+								</button>
+							</form>
 						</div>
 					</div>
+
+
 				</div>
 			</div>
-		</div><!--/header-bottom-->
-	</header><!--/header-->
+		</div>
+	</header>
 
 	
 
 	<section>
+		@if (TempData["SuccessMessage"] != null)
+		{
+			<div class="alert alert-success">@TempData["SuccessMessage"]</div>
+		}
+		
 		<div class="container">
 			@RenderBody()
 		</div>
@@ -234,24 +247,16 @@
 		}
 	</script>
 	<script>
-		function togglePassword(inputId, iconId) {
-			let input = document.getElementById(inputId);
-		let icon = document.getElementById(iconId);
-		if (input.type === "password") {
-			input.type = "text";
-		icon.classList.replace("fa-eye", "fa-eye-slash");
-			} else {
-			input.type = "password";
-		icon.classList.replace("fa-eye-slash", "fa-eye");
-			}
-		}
+		var productUrl = "@Url.Action("Index", "Home")";
 	</script>
+	<script src="~/js/home.js"></script>
 
-	<script src="~/js/jquery.js"></script>
+	<script src="~/js/auth.js"></script>
+	<script src="~/js/cart.js"></script>
 	<script src="~/js/bootstrap.min.js"></script>
-	<script src="~/js/jquery.scrollUp.min.js"></script>
-	<script src="~/js/price-range.js"></script>
-	<script src="~/js/jquery.prettyPhoto.js"></script>
-	<script src="~/js/main.js"></script>
+
+
+	
+	
 </body>
 </html>

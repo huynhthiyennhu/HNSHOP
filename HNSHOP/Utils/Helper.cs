@@ -21,20 +21,20 @@ namespace HNSHOP.Utils
             return result;
         }
 
-        public static PaginationDto<T> GetPaginationResult<T>(List<T> dataList, int count, int pageSize)
+        public static PaginationDto<T> GetPagedData<T>(IQueryable<T> query, int page, int pageSize)
         {
-            if (dataList == null || pageSize <= 0)
-                throw new ArgumentException("Data or page size is invalid.");
+            if (page <= 0) page = 1;
+            if (pageSize <= 0) pageSize = ConstConfig.PageSize;
 
-            int totalPage = (int)Math.Ceiling((double)count / pageSize);
+            int totalCount = query.Count();
+            int totalPage = (int)Math.Ceiling((double)totalCount / pageSize);
+            var data = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
-            var result = new PaginationDto<T>
+            return new PaginationDto<T>
             {
-                Data = dataList,
+                Data = data,
                 TotalPage = totalPage
             };
-
-            return result;
         }
 
         public static ErrorDto ErrorResponse(string message)

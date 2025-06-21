@@ -14,5 +14,8 @@
         public int SoldQuantity { get; set; }
         public float Rating { get; set; }
         public List<ProductImageResDto> Images { get; set; } = [];
+        public bool IsSelected { get; set; }
+        public bool IsLiked { get; set; }
+
     }
 }

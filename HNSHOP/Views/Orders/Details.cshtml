@@ -1,0 +1,165 @@
+﻿@model HNSHOP.Dtos.Response.OrderResDto
+
+<section id="order_details">
+    <div class="container">
+        <div class="breadcrumbs">
+            <ol class="breadcrumb">
+                <li><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+                <li><a asp-controller="Orders" asp-action="Index">Đơn hàng của tôi</a></li>
+                <li class="active">Chi tiết đơn hàng</li>
+            </ol>
+        </div>
+
+        <h2 class="title text-center">Chi tiết đơn hàng #@Model.Id</h2>
+
+        <!-- THÔNG TIN ĐƠN HÀNG & TỔNG KẾT ĐƠN HÀNG (HIỂN THỊ NGANG) -->
+        <div class="row">
+            <!-- Thông tin đơn hàng -->
+            <div class="col-md-6">
+                <h3>Thông tin đơn hàng</h3>
+                <table class="table table-bordered">
+                    <tr>
+                        <th>Trạng thái:</th>
+                        <td>
+                            @if (Model.Status == HNSHOP.Utils.EnumTypes.OrderStatus.Processing)
+                            {
+                                <span class="badge badge-warning">Đang xử lý</span>
+                            }
+                            else if (Model.Status == HNSHOP.Utils.EnumTypes.OrderStatus.Shipping)
+                            {
+                                <span class="badge badge-info">Đang giao</span>
+                            }
+                            else if (Model.Status == HNSHOP.Utils.EnumTypes.OrderStatus.Delivered)
+                            {
+                                <span class="badge badge-success">Đã giao</span>
+                            }
+                            else if (Model.Status == HNSHOP.Utils.EnumTypes.OrderStatus.Cancelled)
+                            {
+                                <span class="badge badge-danger">Đã hủy</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Thanh toán:</th>
+                        <td>
+                            @if (Model.PaymentStatus == HNSHOP.Utils.EnumTypes.PaymentStatus.Pending)
+                            {
+                                <span class="badge badge-secondary">Chưa thanh toán</span>
+                            }
+                            else if (Model.PaymentStatus == HNSHOP.Utils.EnumTypes.PaymentStatus.Completed)
+                            {
+                                <span class="badge badge-primary">Đã thanh toán</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Ngày đặt hàng:</th>
+                        <td>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    </tr>
+                    <tr>
+                        <th>Địa chỉ giao hàng:</th>
+                        <td>@Model.Address.AddressDetail</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Tổng kết đơn hàng -->
+            <div class="col-md-6">
+                <h3>Tổng kết đơn hàng</h3>
+                <table class="table table-bordered">
+                    <tr>
+                        <th>Tổng tiền hàng:</th>
+                        <td>@Model.DetailOrders.Sum(d => d.Product.Price * d.Quantity).ToString("N0") VNĐ</td>
+                    </tr>
+                    <tr>
+                        <th>Tổng giảm giá:</th>
+                        <td>
+                            @{
+                                var totalDiscount = Model.DetailOrders.Sum(d => (d.Product.Price * d.Quantity) * (decimal)d.Product.DiscountPercent / 100);
+                            }
+                            @totalDiscount.ToString("N0") VNĐ
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Phí vận chuyển:</th>
+                        <td>Miễn phí</td>
+                    </tr>
+                    <tr>
+                        <th>Tổng thanh toán:</th>
+                        <td><strong>@Model.Total.ToString("N0") VNĐ</strong></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- DANH SÁCH SẢN PHẨM TRONG ĐƠN HÀNG -->
+        <div class="col-md-12">
+            <h3>Sản phẩm trong đơn hàng</h3>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Hình ảnh</th>
+                        <th>Sản phẩm</th>
+                        <th>Giá gốc</th>
+                        <th>Giảm giá</th>
+                        <th>Giá sau giảm</th>
+                        <th>Số lượng</th>
+                        <th>Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.DetailOrders)
+                    {
+                        var finalPrice = item.Product.Price * (1 - (decimal)item.Product.DiscountPercent / 100);
+                        <tr>
+                            <td>
+                                <a asp-controller="Products" asp-action="Details" asp-route-id="@item.Product.Id">
+                                <img src="~/images/hnshop/@(item.Product.Images.FirstOrDefault()?.Path ?? "no-image.png")"
+                                     alt="@item.Product.Name"
+                                         style="width: 80px; height: 80px;">
+                                </a>
+                            </td>
+                            <td class="cart_description">
+                                <h4>@item.Product.Name</h4>
+                                <p>Cửa hàng: @item.Product.Shop.Name</p>
+                            </td>
+                            <td class="cart_price">
+                                <p>@item.Product.Price.ToString("N0") VNĐ</p>
+                            </td>
+                            <td class="cart_discount">
+                                <p>@item.Product.DiscountPercent.ToString("0.##")%</p>
+                            </td>
+                            <td class="cart_final_price">
+                                <p>@finalPrice.ToString("N0") VNĐ</p>
+                            </td>
+                            <td class="cart_quantity">
+                                <p>@item.Quantity</p>
+                            </td>
+                            <td class="cart_total">
+                                <p class="cart_total_price">@((finalPrice * item.Quantity).ToString("N0")) VNĐ</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Nút điều hướng -->
+        <div class="text-center mt-4">
+            <a asp-controller="Orders" asp-action="Index" class="btn btn-secondary">
+                <i class="fa fa-arrow-left"></i> Quay lại danh sách đơn hàng
+            </a>
+
+            @if (Model.Status == HNSHOP.Utils.EnumTypes.OrderStatus.Processing)
+            {
+                <form asp-action="Cancel" asp-controller="Orders" method="post" style="display:inline;">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa fa-times"></i> Hủy đơn hàng
+                    </button>
+                </form>
+            }
+        </div>
+        <br />
+    </div>
+</section>

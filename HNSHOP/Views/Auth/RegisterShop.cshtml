@@ -36,8 +36,8 @@
         <div class="input-group">
             <span class="input-icon"><i class="fa fa-lock"></i></span>
             <input asp-for="Password" type="password" class="form-control" placeholder="Mật khẩu (8 đến 20 ký tự)" id="passwordShop" required />
-            <span class="toggle-password" onclick="togglePassword('passwordShop')">
-                <i class="fa fa-eye"></i>
+            <span class="toggle-password" onclick="togglePassword('passwordShop','pwrs')">
+                <i id="pwrs" class="fa fa-eye"></i>
             </span>
         </div>
 
@@ -45,8 +45,8 @@
         <div class="input-group">
             <span class="input-icon"><i class="fa fa-lock"></i></span>
             <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Nhập lại mật khẩu" id="confirmPasswordShop" required />
-            <span class="toggle-password" onclick="togglePassword('confirmPasswordShop')">
-                <i class="fa fa-eye"></i>
+            <span class="toggle-password" onclick="togglePassword('confirmPasswordShop','pws')">
+                <i id="pws" class="fa fa-eye"></i>
             </span>
         </div>
 
@@ -56,4 +56,4 @@
     <p class="text-center mt-2">Bạn đã có tài khoản? <a asp-action="Login">Đăng nhập ngay</a></p>
 </div>
 
-<script src="~/js/auth.js"></script>
+@* <script src="~/js/auth.js"></script> *@

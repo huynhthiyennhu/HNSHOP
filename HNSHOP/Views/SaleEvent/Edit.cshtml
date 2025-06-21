@@ -1,0 +1,176 @@
+﻿@using System.Globalization
+@model HNSHOP.Dtos.Response.SaleEventProductResDto
+
+<section id="cart_items">
+    <div class="container p-5">
+        <div class="breadcrumbs">
+            <ol class="breadcrumb">
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li><a asp-controller="SaleEvent" asp-action="Index">Quản Lý Giảm Giá</a></li>
+                <li class="active">Chỉnh Sửa Chương Trình Giảm Giá</li>
+            </ol>
+        </div>
+
+        <h2 class="title text-center">Chỉnh Sửa Chương Trình Giảm Giá</h2>
+
+        <form id="editSaleEventForm" enctype="multipart/form-data" action="/SaleEvent/Edit" method="post">
+            <input type="hidden" name="Id" value="@Model.Id" />
+
+            <div class="card p-3">
+                <!-- Ảnh minh họa -->
+                <div class="form-group text-center">
+                    <input type="file" name="Illustration" id="eventImageInput" style="display: none;">
+
+                    <div id="previewImage" class="mt-2 w-100">
+                        <img id="selectedImage" src="~/images/hnshop/@Model.Illustration" class="img-fluid rounded w-100"
+                             style="max-height: 300px; object-fit: cover;">
+                    </div>
+
+                    <button type="button" id="customFileButton" class="btn btn-primary mt-2">Chọn ảnh mới</button>
+                </div>
+
+                <!-- Thông tin chương trình -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="SaleEventName">Tên chương trình</label>
+                            <input type="text" name="Name" class="form-control" value="@Model.Name" required />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="SaleEventDescription">Mô tả</label>
+                            <textarea name="Description" class="form-control" rows="5" required>@Model.Description</textarea>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="SaleEventDiscount">Giảm giá (%)</label>
+                            <input type="number" name="Discount" class="form-control" value="@Model.Discount" required />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="SaleEventStartDate">Ngày bắt đầu</label>
+                            <input type="date" name="StartDate" class="form-control"
+                                   value="@Model.StartDate.ToString("yyyy-MM-dd")" required />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="SaleEventEndDate">Ngày kết thúc</label>
+                            <input type="date" name="EndDate" class="form-control"
+                                   value="@Model.EndDate.ToString("yyyy-MM-dd")" required />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loại khách hàng áp dụng -->
+                <h3>Loại Khách Hàng Áp Dụng</h3>
+                <div class="table-responsive cart_info">
+                    <table class="table table-condensed">
+                        <thead>
+                            <tr class="cart_menu">
+                                <th>Loại khách hàng</th>
+                                <th>Mô tả</th>
+                                <th class="text-center">Chọn</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var type in Model.CustomerTypes)
+                            {
+                                <tr>
+                                    <td>@type.Name</td>
+                                    <td>@type.Description</td>
+                                    <td class="text-center">
+                                        <input type="checkbox" name="CustomerTypeIds" value="@type.Id" @(type.IsSelected ? "checked" : "")>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Danh sách sản phẩm -->
+                <h3>Sản phẩm áp dụng</h3>
+                <div class="table-responsive cart_info">
+                    <table id="productTable" class="table table-condensed">
+                        <thead>
+                            <tr class="cart_menu">
+                                <th>Hình ảnh</th>
+                                <th>Tên sản phẩm</th>
+                                <th>Giá sản phẩm</th>
+                                <th class="text-center">Chọn</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var product in Model.Products)
+                            {
+                                var image = product.Images.FirstOrDefault();
+                                <tr>
+                                    <td>
+                                        <img src="~/images/hnshop/@image?.Path" width="80" height="80">
+                                    </td>
+                                    <td>@product.Name</td>
+                                    <td>@product.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</td>
+                                    <td class="text-center">
+                                        <input type="checkbox" name="ProductIds" value="@product.Id" @(product.IsSelected ? "checked" : "")>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success">Cập nhật chương trình</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("#customFileButton").click(function () {
+                $("#eventImageInput").click();
+            });
+
+            $("#eventImageInput").change(function (event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        $("#selectedImage").attr("src", e.target.result);
+                        $("#previewImage").show();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            $("#productTable").DataTable({
+                "paging": true,
+                "pageLength": 5,
+                "lengthChange": false,
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false,
+                "language": {
+                    "lengthMenu": "Hiển thị _MENU_ sản phẩm mỗi trang",
+                    "zeroRecords": "Không tìm thấy sản phẩm nào",
+                    "info": "Trang _PAGE_ / _PAGES_",
+                    "infoEmpty": "Không có dữ liệu",
+                    "infoFiltered": "(lọc từ _MAX_ sản phẩm)",
+                    "search": "Tìm kiếm:",
+                    "paginate": {
+                        "previous": "Trước",
+                        "next": "Tiếp"
+                    }
+                }
+            });
+        });
+    </script>
+}

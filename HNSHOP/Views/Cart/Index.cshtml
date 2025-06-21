@@ -1,4 +1,5 @@
-﻿@model List<HNSHOP.Dtos.Response.CartItemResDto>
+﻿@using System.Globalization
+@model List<HNSHOP.Dtos.Response.CartItemResDto>
 <section id="cart_items">
 	<div class="container">
 		<div class="breadcrumbs">
@@ -7,21 +8,26 @@
 				<li class="active">Shopping Cart</li>
 			</ol>
 		</div>
-		<div class="table-responsive cart_info">
+		
 			@if (Model.Count == 0)
 			{
-				<p class="text-center">Giỏ hàng của bạn đang trống. <a asp-controller="Home" asp-action="Index">Tiếp tục mua sắm</a></p>
+				 <h2 class="title text-center">Giỏ hàng của bạn đang trống. <a asp-controller="Home" asp-action="Index">Tiếp tục mua sắm</a></h2>
+				 <br />
+				 <br />
+				 <br />
 			}
 			else
 			{
+			<div class="table-responsive cart_info">
 				<table class="table table-condensed">
 					<thead>
 						<tr class="cart_menu">
-							<td class="image">Item</td>
-							<td class="description"></td>
-							<td class="price">Price</td>
-							<td class="quantity">Quantity</td>
-							<td class="total">Total</td>
+							<td class="image">Hình ảnh</td>
+							<td class="image">Sản phẩm</td>
+							<td class="price">Giá</td>
+							<td class="quantity">Số lượng</td>
+							<td class="total">Tổng</td>
+							<td class="total"></td>
 							<td></td>
 						</tr>
 					</thead>
@@ -30,41 +36,72 @@
 						{
 							<tr>
 								<td class="cart_product">
-									<a href=""><img src="~/images/hnshop/@item.Image" alt=""></a>
-						</td>
-						<td class="cart_description">
+									<a asp-controller="Products" asp-action="Details" asp-route-id="@item.ProductId">
+										<img src="~/images/hnshop/@item.Image" alt="" style="width: 110px; height: 110px;" />
+									</a>
+								</td>
+								<td class="cart_description">
 									<h4><a asp-controller="Products" asp-action="Details" asp-route-id="@item.ProductId">@item.Name</a></h4>
-						</td>
-						<td class="cart_price">
-							<p>@item.Price</p>
-						</td>
-						<td class="cart_quantity">
-							@* <div class="cart_quantity_button"> *@
-							@* 	<a class="cart_quantity_up" href=""> + </a> *@
-							@* 	<input class="cart_quantity_input" type="text" name="quantity" value="@item.Quantity" autocomplete="off" size="2"> *@
-							@* 	<a class="cart_quantity_down" href=""> - </a> *@
-							@* </div> *@
-									<form asp-action="UpdateCart" asp-controller="Cart" method="post">
-										<input type="hidden" name="ProductId" value="@item.ProductId" />
-										<input type="number" name="Quantity" value="@item.Quantity" min="1" class="form-control d-inline-block" style="width: 60px;" />
-										<button type="submit" class="btn btn-sm btn-primary">Cập nhật</button>
-									</form>
-						</td>
-						<td class="cart_total">
-									<p class="cart_total_price">@(item.Price * item.Quantity).ToString("N0") VNĐ</p>
-						</td>
-						<td class="cart_delete">
-							@* <a class="cart_quantity_delete" href=""><i class="fa fa-times"></i></a> *@
+								</td>
+								<td class="cart_price">
+									<p id="product-price-@item.ProductId" data-price="@item.Price">@item.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</p>
+								</td>
+								<td class="cart_quantity">
+									<div class="cart_quantity_button">
+										<!-- Nút giảm số lượng -->
+										<a href="javascript:void(0);" class="cart_quantity_down"
+										   data-product-id="@item.ProductId" data-action="decrease"> - </a>
+
+										<input class="cart_quantity_input" type="text" name="quantity"
+											   value="@item.Quantity" autocomplete="off" size="2" readonly>
+
+										<a href="javascript:void(0);" class="cart_quantity_up"
+										   data-product-id="@item.ProductId" data-action="increase"> + </a>
+									</div>
+								</td>
+
+									
+								
+								<td class="cart_total">
+									<p id="product-total-@item.ProductId" class="cart_total_price" class="cart_total_price">@((item.Price * item.Quantity).ToString("C0", CultureInfo.GetCultureInfo("vi-VN")))</p>
+								</td>
+								<td class="cart_delete">
 									<form asp-action="RemoveFromCart" asp-controller="Cart" method="post">
 										<input type="hidden" name="ProductId" value="@item.ProductId" />
-										<button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+										<button type="submit" class="btn btn-light border-0">
+											<i class="fa fa-times" style="color: lightgray;"></i>
+										</button>
 									</form>
-						</td>
-					</tr>}
+								</td>
+							</tr>
+						}
 
-					
-				</tbody>
-			</table>}
-		</div>
-	</div>
+
+					</tbody>
+                </table>
+				<hr />
+                <div class="cart-buttons text-right">
+                    <form asp-action="ClearCart" asp-controller="Cart" method="post" id="clear-cart-form">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fa fa-trash"></i> Xóa toàn bộ giỏ hàng
+                        </button>
+                    </form>
+                </div>
+				<br />
+				<div class="col-md-6 text-right">
+					<br />
+					<a asp-controller="Orders" asp-action="Create" class="btn btn-success btn-lg">
+						<i class="fa fa-check-circle"></i> Đặt hàng
+					</a>
+				</div>
+
+			</div>
+			}
+			
+
+		
+	</div>				
+	<br />
+
 </section> <!--/#cart_items-->
+<script src="~/js/cart.js"></script>

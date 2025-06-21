@@ -1,73 +1,163 @@
-﻿@model HNSHOP.Dtos.Response.AccountResDto
+﻿@using System.Globalization
+@model HNSHOP.Dtos.Response.AccountResDto
+<link href="~/css/profile.css?t=@DateTime.Now.Ticks" rel="stylesheet">
 
-@{
-    ViewData["Title"] = "Hồ Sơ Cá Nhân";
-}
+<section id="cart_items">
+	<div class="container p-5">
+		<div class="breadcrumbs">
+			<ol class="breadcrumb">
+				<li><a asp-controller="Home" asp-action="Index">Home</a></li>
+				<li class="active">Thông Tin Tài Khoản</li>
+			</ol>
+		</div>
+		<div class="row">
 
-<link href="~/css/profile.css" rel="stylesheet">
 
-<div class="profile-container">
-    <div class="profile-card">
-        <!-- Ảnh đại diện -->
-        <div class="avatar-container">
-            <img src="@Model.Avatar" alt="Avatar" class="avatar">
-        </div>
-        <h3 class="user-name">@Model.Customer?.Name ?? Model.Shop?.Name ?? "Người dùng"</h3>
+			<div class="padding-right">
+				<div class="product-details">
+					<!--product-details-->
+					<div class="col-sm-5 text-center">
+						<div class="profile-avatar">
+							<img id="avatarPreview" src="~/images/hnshop/avatar/@(Model.Avatar ?? "no-avatar.jpg")?t=@DateTime.Now.Ticks" alt="Avatar">
+							@if (ViewBag.IsOwner)
+							{
+								<label for="avatarUpload" class="edit-avatar-icon">
+									<i class="fa fa-pencil"></i>
+								</label>
+							}
+							<input type="file" id="avatarUpload" style="display: none;" accept="image/*" onchange="uploadAvatar(this)">
+						</div>
+						<h1 class="profile-name">@(Model.Shop != null ? Model.Shop.Name : Model.Customer?.Name)</h1>
+					</div>
 
-        <div class="user-info">
-            <p><strong>Email:</strong> @Model.Email</p>
-            <p><strong>Số điện thoại:</strong> @Model.Phone</p>
-            <p><strong>Ngày tham gia:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy")</p>
-        </div>
-    </div>
+					<div class="col-sm-7 ">
+						<div class="product-information profile">
+							<h1>Thông tin tài khoản</h1>
+							<p><strong>Email:</strong> @Model.Email</p>
+							<p><strong>SĐT:</strong> @Model.Phone</p>
+							<p><strong>Ngày tham gia:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy")</p>
+							<p><strong>Ngày cập nhật cuối:</strong> @Model.UpdatedAt.ToString("dd/MM/yyyy")</p>
+							@if (Model.Shop != null) {
+								<p><strong>Loại tài khoản: </strong> Tài Khoản Shop</p>
+								<p><strong>Thông tin: </strong> @Model.Shop.Description</p>
+							}else{
+								@if (Model.Customer != null)
+								{
+									<p><strong>Loại tài khoản: </strong> Tài Khoản Khách Hàng</p>
+									<p><strong>Thông tin: </strong> @Model.Customer.Description</p>
+								}else{
+									<p><strong>Loại tài khoản: </strong> Tài Khoản Quản Trị Viên</p>
+								}
+							}
 
-    <!-- Thông tin chi tiết -->
-    <div class="profile-details">
-        <h3><i class="fa fa-info-circle"></i> Thông tin cá nhân</h3>
-        <form asp-action="Update" method="post">
-            <div class="input-group">
-                <span class="input-icon"><i class="fa fa-envelope"></i></span>
-                <input type="email" name="Email" class="form-control" value="@Model.Email" placeholder="Email" />
-            </div>
+							<br />
+							@if (ViewBag.IsOwner)
+							{
+								<btn class=" btn btn-primary" data-toggle="modal" data-target="#updateModal">
+									Chỉnh sửa
+								</btn>
+							}
+						</div>
+					</div>
+				</div>
+				@if (Model.Shop != null)
+				{
+					<h2 class="title text-center">Danh sách sản phẩm của Shop</h2>
+					@foreach (var product in Model.Shop.Products)
+					{
+						<div class="col-sm-4">
+							<div class="product-image-wrapper">
+								<div class="single-products">
+									<div class="productinfo text-center">
+										<img src="~/images/hnshop/@(product.Images.FirstOrDefault()?.Path ?? "default.jpg")"
+											 alt="@product.Name" style="height: 300px; width:260px" />
+										<h2>@product.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</h2>
+										<p>@product.Name</p>
 
-            <div class="input-group">
-                <span class="input-icon"><i class="fa fa-phone"></i></span>
-                <input type="text" name="Phone" class="form-control" value="@Model.Phone" placeholder="Số điện thoại" />
-            </div>
+										@if (User.Identity.IsAuthenticated && User.IsInRole("User"))
+										{
+											<!-- Chỉ tài khoản khách hàng mới có nút thêm vào giỏ -->
+											<button class="btn btn-default add-to-cart" data-product-id="@product.Id"
+													data-quantity="1">
+												<i class="fa fa-shopping-cart"></i> Thêm vào giỏ hàng
+											</button>
+										}
+									</div>
+								</div>
 
-            <div class="input-group">
-                <span class="input-icon"><i class="fa fa-user"></i></span>
-                <input type="text" name="Avatar" class="form-control" value="@Model.Avatar" placeholder="Ảnh đại diện URL" />
-            </div>
+								<div class="choose">
+									<ul class="nav nav-pills nav-justified">
+										@if (User.Identity.IsAuthenticated && User.IsInRole("User"))
+										{
+											<!-- Chỉ user mới có thêm yêu thích -->
+											<li>
+												<a href="javascript:void(0);" class="like-btn" data-product-id="@product.Id">
+													<i class="fa fa-heart"></i>
+													<span class="like-text">@(product.IsLiked ? "Bỏ yêu thích" : "Thêm yêu thích")</span>
+												</a>
+											</li>
+										}
 
-            <button type="submit" class="btn btn-primary">Cập nhật thông tin</button>
-        </form>
-    </div>
+										<li>
+											<a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id">
+												<i class="fa fa-plus-square"></i> Chi tiết sản phẩm
+											</a>
+										</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					}
+				}
+			</div>
+		</div>
+	</div>
+</section>
 
-    <!-- Nếu là tài khoản Shop, hiển thị danh sách sản phẩm -->
-    @if (Model.Shop != null)
-    {
-        <div class="shop-products">
-            <h3><i class="fa fa-shopping-bag"></i> Sản phẩm của Shop: @Model.Shop.Name</h3>
-            <a href="@Url.Action("Create", "Products")" class="btn btn-success">Thêm sản phẩm mới</a>
 
-            <div class="product-list">
-                @foreach (var product in Model.Shop.Products)
-                {
-                    <div class="product-item">
-                        <div class="product-images">
-                            @foreach (var image in product.Images)
-                            {
-                                <img src="~/images/hnshop/@image.Path" alt="Product Image">
-                            }
-                        </div>
-                        <h4>@product.Name</h4>
-                        <p>Giá: @product.Price VNĐ</p>
-                        <a href="@Url.Action("Edit", "Products", new { id = product.Id })" class="btn btn-warning">Sửa</a>
-                        <a href="@Url.Action("Delete", "Products", new { id = product.Id })" class="btn btn-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');">Xóa</a>
-                    </div>
-                }
-            </div>
-        </div>
-    }
+<!-- Modal cập nhật thông tin -->
+<div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="updateModalLabel">Cập nhật thông tin tài khoản</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<form id="update-form" method="post" asp-action="Update">
+					<div class="form-group">
+						<label for="name">Tên:</label>
+						<input type="text" id="name" name="Name" class="form-control"
+							   value="@(Model.Shop != null ? Model.Shop.Name : Model.Customer?.Name)"
+							   placeholder="Nhập tên mới">
+					</div>
+
+					@if (Model.Shop != null)
+					{
+						<div class="form-group">
+							<label for="description">Mô tả Shop:</label>
+							<textarea id="description" name="Description" class="form-control" placeholder="Nhập mô tả Shop">@Model.Shop.Description</textarea>
+						</div>
+					}
+
+					<div class="form-group">
+						<label for="email">Email:</label>
+						<input type="text" id="email" name="Email" class="form-control" value="@Model.Email" placeholder="Email mới">
+					</div>
+					<div class="form-group">
+						<label for="phone">Số điện thoại:</label>
+						<input type="text" id="phone" name="Phone" class="form-control" value="@Model.Phone" placeholder="Số điện thoại mới">
+					</div>
+					<button type="submit" class="btn btn-primary">Lưu</button>
+				</form>
+			</div>
+		</div>
+	</div>
 </div>
+
+<script src="~/js/profile.js"></script>
+
+
+<script src="~/js/auth.js"></script>

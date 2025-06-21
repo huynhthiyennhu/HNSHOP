@@ -24,8 +24,8 @@
         <div class="input-group">
             <span class="input-icon"><i class="fa fa-lock"></i></span>
             <input asp-for="Password" type="password" class="form-control" placeholder="Mật khẩu" id="passwordLogin" required />
-            <span class="toggle-password" onclick="togglePassword('passwordLogin')">
-                <i class="fa fa-eye"></i>
+            <span class="toggle-password" onclick="togglePassword('passwordLogin','pwli')">
+                <i id="pwli" class="fa fa-eye"></i>
             </span>
         </div>
 
@@ -36,5 +36,6 @@
         Bạn chưa có tài khoản? <a asp-action="Register">Đăng ký ngay</a>
     </p>
 </div>
+
 
 

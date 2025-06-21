@@ -14,7 +14,7 @@
         public int SoldQuantity { get; set; }
         public float Rating { get; set; }
         public List<ProductImageResDto> Images { get; set; } = [];
-        public bool CanReview { get; set; }  // Kiểm tra người dùng có thể đánh giá không
+        public bool CanReview { get; set; } 
 
     }
 }

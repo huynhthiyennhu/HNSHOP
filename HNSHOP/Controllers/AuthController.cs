@@ -11,6 +11,8 @@ using System.Security.Cryptography;
 using System.Text;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authorization;
+using HNSHOP.Utils;
 
 public class AuthController(ApplicationDbContext db, IEmailService emailService,
     IValidator<RegisterReqDto> registerValidator,
@@ -23,7 +25,13 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
     private readonly IValidator<RegisterShopReqDto> _registerShopValidator = registerShopValidator;
     private readonly IValidator<LoginReqDto> _loginValidator = loginValidator;
 
-    // Hiển thị trang đăng ký User
+
+    [HttpGet]
+    public IActionResult AccessDenied()
+    {
+        return View();
+    }
+
     [HttpGet]
     public IActionResult Register()
     {
@@ -55,7 +63,7 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
             Email = request.Email,
             Phone = request.Phone,
             Password = hashedPassword,
-            RoleId = 3,  // Role User
+            RoleId =2,  
             VerifyToken = verifyToken,
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now
@@ -111,7 +119,7 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
             Email = request.Email,
             Phone = request.Phone,
             Password = hashedPassword,
-            RoleId = 2,  // Role Shop
+            RoleId = 3,  // Role Shop
             VerifyToken = verifyToken,
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now
@@ -168,7 +176,6 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
     {
         return View();
     }
-
     [HttpPost]
     public async Task<IActionResult> Login(LoginReqDto request)
     {
@@ -179,7 +186,12 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
             return View(request);
         }
 
-        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email == request.Email);
+        var account = await _db.Accounts
+            .Include(a => a.Role)
+            .Include(a => a.Customer)
+            .Include(a => a.Shop)
+            .FirstOrDefaultAsync(a => a.Email == request.Email);
+
 
         if (account == null || !BCrypt.Net.BCrypt.Verify(request.Password, account.Password))
         {
@@ -193,15 +205,24 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
             return View(request);
         }
 
+        var role = account.Role?.Name ?? ConstConfig.UserRoleName;
+
         var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, account.Id.ToString()),
-            new Claim(ClaimTypes.Email, account.Email),
-            new Claim(ClaimTypes.Role, account.RoleId == 2 ? "Shop" : "User")
-        };
+    {
+        new Claim(ClaimTypes.NameIdentifier, account.Id.ToString()),
+        new Claim(ClaimTypes.Email, account.Email),
+        new Claim(ClaimTypes.Role, role), 
+        new Claim(ConstConfig.UserIdClaimType, account.Id.ToString()),
+        new Claim(ClaimTypes.Name, account.Customer?.Name ?? account.Shop?.Name ?? "Admin"),
+        new Claim("Avatar", account.Avatar ?? "default.png") 
+    };
 
         var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        var authProperties = new AuthenticationProperties();
+        var authProperties = new AuthenticationProperties
+        {
+            IsPersistent = true,
+            ExpiresUtc = DateTime.UtcNow.AddMinutes(ConstConfig.ExperyTimeJwtToken)
+        };
 
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
@@ -210,6 +231,8 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
 
         return RedirectToAction("Index", "Home");
     }
+
+
     [HttpPost]
     public async Task<IActionResult> Logout()
     {
@@ -219,6 +242,6 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
     private string GenerateVerificationToken()
     {
         var rng = new Random();
-        return rng.Next(100000, 999999).ToString(); // 6 số ngẫu nhiên
+        return rng.Next(100000, 999999).ToString(); 
     }
 }

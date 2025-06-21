@@ -1,0 +1,107 @@
+﻿@model List<HNSHOP.Models.Shop>
+<style>
+    .avatar {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+</style>
+<section id="cart_items">
+    <div class="container p-5">
+        <div class="breadcrumbs">
+            <ol class="breadcrumb">
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li class="active">Quản lý Shop</li>
+            </ol>
+        </div>
+        <h2 class="title text-center">Quản lý Shop</h2>
+
+    <div class="row">
+        <div class="col-md-10">
+            <input type="text" class="form-control" placeholder="Tìm kiếm shop..." id="searchShop">
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-warning btn-block" id="searchButton">Tìm kiếm</button>
+        </div>
+    </div>
+    <br />
+    <br />
+        <div class="table-responsive cart_info">
+            <table class="table table-condensed">
+                <thead>
+                    <tr class="cart_menu">
+                        <th>Ảnh</th>
+                        <th>Tên Shop</th>                        
+                        <th>Email</th>
+                        <th>Ngày tạo</th>
+                        <th class="text-center">Hành động</th>
+                    </tr>
+                </thead>
+                 <tbody>
+                    @foreach (var shop in Model)
+                    {
+                        <tr>
+                            <td><img src="~/images/hnshop/avatar/@shop.Account.Avatar" class="avatar ms-4" alt="@shop.Account.Avatar" /></td>
+                            <td>@shop.Name</td>                            
+                            <td>@shop.Account.Email</td>
+                            <td>@shop.Account.CreatedAt.ToString("dd/MM/yyyy")</td>
+                            <td class="text-center">
+                                <a asp-controller="Accounts" asp-action="Index" asp-route-id="@shop.AccountId" class="btn btn-info btn-sm">Xem</a>
+                                <button class="btn btn-danger btn-sm delete-btn" data-id="@shop.Id">Xóa</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+</section>
+
+<!-- Modal xác nhận xóa -->
+<div class="modal fade" id="deleteShopModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Xác nhận xóa Shop</h3>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa shop này không?</p>
+                <button type="button" class="btn btn-danger" id="confirmDeleteShop">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            let selectedShopId = null;
+
+            $(".delete-btn").click(function () {
+                selectedShopId = $(this).data("id");
+                $("#deleteShopModal").modal('show');
+            });
+
+            $("#confirmDeleteShop").off('click').on('click', function () {
+                if (!selectedShopId) {
+                    alert("Không tìm thấy shop để xóa.");
+                    return;
+                }
+
+                $.ajax({
+                    url: '/AdminShop/Delete',
+                    type: 'POST',
+                    data: { id: selectedShopId },
+                    success: function (res) {
+                        alert(res.message);
+                        if (res.success) location.reload();
+                    },
+                    error: function (xhr) {
+                        alert("Lỗi khi xóa: " + xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+}

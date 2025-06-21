@@ -598,8 +598,8 @@ ul.sub-menu {
 .item h1 {
   color: #B4B1AB;
   font-family: abel;
-  font-size: 48px;
-  margin-top: 115px;
+  font-size: 38px;
+  margin-top: 40px;
 }
 
 .item h1 span {
@@ -609,7 +609,7 @@ ul.sub-menu {
 .item h2 {
   color: #363432;
   font-family: 'Roboto', sans-serif;
-  font-size: 28px;
+  font-size: 25px;
   font-weight: 700;
   margin-bottom: 22px;
   margin-top: 10px;
@@ -617,7 +617,7 @@ ul.sub-menu {
 
 .item  p {
 	color:#363432;
-	font-size:16px;
+	font-size:18px;
 	font-weight:300;
 	font-family: 'Roboto', sans-serif;
 }
@@ -837,7 +837,7 @@ h2.title:before{
 h2.title {
   color: #FE980F;
   font-family: 'Roboto', sans-serif;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 700;
   margin: 0 15px;
   text-transform: uppercase;
@@ -2521,3 +2521,77 @@ h2.title {
 }
 
 
+
+
+
+
+.search-container {
+	display: flex;
+	align-items: center;
+	border: 1px solid #ccc;
+	border-radius: 5px;
+	padding: 5px;
+	background-color: #f5f5f5;
+}
+
+.search-input {
+	flex: 1;
+	border: none;
+	padding: 5px 10px;
+	outline: none;
+	background: transparent;
+	color: #FE980F;
+}
+
+.search-button {
+	border: none;
+	background: transparent;
+	padding: 5px 10px;
+	cursor: pointer;
+}
+
+	.search-button i {
+		font-size: 18px;
+		color: #888;
+	}
+
+	.search-button:hover i {
+		color: #FE980F;
+	}
+
+
+/* Wrapper để đảm bảo các thành phần nằm trên cùng một hàng */
+.sort-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Tùy chỉnh select */
+.sort-select {
+    flex: 1;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    outline: none;
+}
+
+/* Nút sắp xếp (icon) */
+.sort-toggle {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background: #f8f8f8;
+    cursor: pointer;
+}
+
+/* Icon sắp xếp */
+.sort-toggle i {
+    font-size: 18px;
+    color: #555;
+}
+
+/* Hiệu ứng hover */
+.sort-toggle:hover i {
+    color: #007bff;
+}

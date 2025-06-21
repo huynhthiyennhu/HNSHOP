@@ -1,0 +1,394 @@
+﻿@using System.Globalization
+@model List<HNSHOP.Dtos.Response.ProductResDto>
+
+@{
+    ViewBag.Title = "Quản lý sản phẩm";
+
+}
+
+<section id="cart_items">
+    <div class="container p-5">
+        <div class="breadcrumbs">
+            <ol class="breadcrumb">
+                <li><a asp-controller ="Home" asp-action="Index">Home</a></li>
+                <li class="active">Quản lý Sản phẩm</li>
+            </ol>
+        </div>
+        <h2 class="title text-center">Quản lý Sản phẩm của Shop</h2>
+        <br />
+        <div class="table-responsive cart_info">
+        <table class="table table-condensed">
+            <thead>
+                    <tr class="cart_menu">
+                        <td><b>Tên</b></td>
+                        <td><b>Giá</b></td>
+                        <td><b>Số lượng</b></td>
+                        <td><b>Hình ảnh</b></td>
+                        <td><b>Hành động</b></td>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Count > 0)
+                {
+                    foreach (var product in Model)
+                    {
+                        <tr>
+                            <td>@product.Name</td>
+                                <td>@product.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</td>
+                            <td>@product.Quantity</td>
+                            <td>
+                                @if (product.Images != null && product.Images.Count > 0)
+                                    {
+                                        <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id">
+                                     <img src="~/images/hnshop/@product.Images[0].Path" width="60" />
+                                </a>
+                                }
+                            </td>
+                                <td>
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <button class="btn btn-warning btn-sm edit-btn" data-id="@product.Id">
+                                            Sửa
+                                        </button>
+                                        <button class="btn btn-danger btn-sm delete-btn" data-id="@product.Id">
+                                            Xóa
+                                        </button>
+                                    </div>
+                                </td>
+
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5">Không có sản phẩm nào.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+           
+
+        </div>
+        <div class="text-center">
+            <button class="btn btn-success mb-3" data-toggle="modal" data-target="#addProductModal">
+                Thêm Sản phẩm
+            </button>
+        </div>
+        <br />
+    </div>
+</section>
+
+<!-- Modal Thêm sản phẩm -->
+<div class="modal fade" id="addProductModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form id="addProductForm" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Thêm Sản phẩm<button type="button" class="close" data-dismiss="modal">&times;</button></h3>
+                    
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="Name">Tên sản phẩm</label>
+                        <input type="text" name="Name" id="Name" class="form-control" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Price">Giá</label>
+                        <input type="number" name="Price" id="Price" class="form-control" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Quantity">Số lượng</label>
+                        <input type="number" name="Quantity" id="Quantity" class="form-control" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Description">Mô tả</label>
+                        <textarea name="Description" id="Description" class="form-control" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ProductTypeId">Loại sản phẩm</label>
+                        <select name="ProductTypeId" id="ProductTypeId" class="form-control" required>
+                            @foreach (var type in ViewBag.ProductTypes)
+                            {
+                                <option value="@type.Id">@type.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="productImages">Hình ảnh sản phẩm</label>
+                        <input type="file" name="Images" id="productImages" multiple class="form-control" required />
+                        <div id="previewImages" class="d-flex flex-wrap mt-2"></div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Thêm</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Sửa sản phẩm -->
+<div class="modal fade" id="editProductModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form id="editProductForm" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Chỉnh sửa sản phẩm<button type="button" class="close" data-dismiss="modal">&times;</button></h3>
+                    
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" name="Id" id="editProductId" />
+
+                    <div class="form-group">
+                        <label for="editProductName">Tên sản phẩm</label>
+                        <input type="text" name="Name" id="editProductName" class="form-control" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editProductPrice">Giá</label>
+                        <input type="number" name="Price" id="editProductPrice" class="form-control" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editProductQuantity">Số lượng</label>
+                        <input type="number" name="Quantity" id="editProductQuantity" class="form-control" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editProductDescription">Mô tả</label>
+                        <textarea name="Description" id="editProductDescription" class="form-control" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editProductTypeId">Loại sản phẩm</label>
+                        <select name="ProductTypeId" id="editProductTypeId" class="form-control" required></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editProductImages">Thêm hình ảnh mới</label>
+                        <input type="file" name="Images" id="editProductImages" multiple class="form-control" />
+                    </div>
+
+                    <div id="currentImages" class="mt-2">
+                        <p><strong>Ảnh hiện tại:</strong> (Nhấn vào ảnh để xóa)</p>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Cập nhật</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Xóa sản phẩm -->
+<div class="modal fade" id="deleteProductModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+
+                <h3>Xác nhận xóa sản phẩm<button type="button" class="close" data-dismiss="modal">&times;</button></h3>
+                    
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa sản phẩm này không?</p>
+                <button type="button" class="btn btn-danger" id="confirmDeleteProduct">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+           // Hiển thị ảnh đã chọn
+        $('#productImages').on('change', function (event) {
+            const files = event.target.files;
+            const preview = $('#previewImages');
+            preview.empty(); // Xóa các ảnh cũ nếu có
+
+            if (files.length === 0) {
+                preview.append('<p>Chưa có hình ảnh nào được chọn.</p>');
+                return;
+            }
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    const img = `<img src="${e.target.result}" width="80" height="80" class="m-2 border rounded" style="object-fit:cover;" alt="Ảnh sản phẩm"/>`;
+                    preview.append(img);
+                };
+
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Xử lý khi submit form
+        $("#addProductForm").submit(function (e) {
+            e.preventDefault();
+            var formData = new FormData(this);
+
+            $.ajax({
+                url: '/Products/Create',
+                type: 'POST',
+                headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    alert(res.message);
+                    if (res.success) location.reload();
+                },
+                error: function (xhr) {
+                    alert("Lỗi: " + xhr.responseText);
+                }
+            });
+        });
+
+            let selectedProductId = null;
+
+            // Mở modal Sửa sản phẩm và load dữ liệu cũ
+            $(".edit-btn").click(function () {
+                var id = $(this).data("id");
+
+                $.get("/Products/GetProduct", { id: id }, function (response) {
+                    const data = response.product;
+                    const productTypes = response.productTypes;
+
+                    // Load thông tin sản phẩm
+                    $("#editProductId").val(data.id);
+                    $("#editProductName").val(data.name);
+                    $("#editProductPrice").val(data.price);
+                    $("#editProductQuantity").val(data.quantity);
+                    $("#editProductDescription").val(data.description);
+
+                    // Đổ loại sản phẩm vào select
+                    $("#editProductTypeId").empty();
+                    productTypes.forEach(function (type) {
+                        const selected = (type.id === data.productTypeId) ? "selected" : "";
+                        $("#editProductTypeId").append(`<option value="${type.id}" ${selected}>${type.name}</option>`);
+                    });
+
+                    // Hiển thị ảnh hiện tại với data-id
+                    $("#currentImages").empty();
+                    if (data.images && data.images.length > 0) {
+                        data.images.forEach(image => {
+                            $("#currentImages").append(`
+                                <img src='/images/hnshop/${image.path}' width='60'
+                                    class='mr-2 image-item' data-id="${image.id}"
+                                    style="cursor:pointer;" title="Nhấn để xóa ảnh" />
+                            `);
+                        });
+                    }
+
+                    $("#editProductModal").modal('show');
+                }).fail(function (xhr) {
+                    alert("Lỗi: " + xhr.responseText);
+                });
+            });
+
+            // Xóa ảnh khi nhấn vào ảnh
+            $(document).on("click", ".image-item", function () {
+                const imageId = $(this).data("id");
+
+                if (!imageId) {
+                    alert("Không tìm thấy ID của ảnh.");
+                    return;
+                }
+
+                if (confirm("Bạn có chắc chắn muốn xóa ảnh này không?")) {
+                    $.ajax({
+                        url: '/Products/DeleteImage',
+                        type: 'POST',
+                        data: { imageId: imageId },
+                        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                        success: function (res) {
+                            alert(res.message);
+                            if (res.success) {
+                                // Xóa ảnh khỏi DOM mà không cần reload hoặc đóng modal
+                                $(`.image-item[data-id="${imageId}"]`).remove();
+                            }
+                        },
+                        error: function (xhr) {
+                            alert("Lỗi khi xóa ảnh: " + xhr.responseText);
+                        }
+                    });
+                }
+            });
+
+
+
+            // Cập nhật sản phẩm
+            $("#editProductForm").submit(function (e) {
+                e.preventDefault();
+                var formData = new FormData(this);
+                $.ajax({
+                    url: '/Products/Edit',
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    headers: {
+                        "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (res) {
+                        alert(res.message);
+                        if (res.success) {
+                            location.reload();
+                        }
+                    },
+                    error: function (xhr) {
+                        alert("Lỗi khi cập nhật sản phẩm: " + xhr.responseText);
+                    }
+                });
+            });
+
+            // Mở modal xóa sản phẩm
+            $(".delete-btn").click(function () {
+                selectedProductId = $(this).data("id");
+                $("#deleteProductModal").modal('show');
+            });
+
+            // Xác nhận xóa sản phẩm
+            $("#confirmDeleteProduct").off('click').on('click', function () {
+                if (!selectedProductId) {
+                    alert("Không tìm thấy sản phẩm để xóa.");
+                    return;
+                }
+
+                $.ajax({
+                    url: '/Products/Delete',
+                    type: 'POST',
+                    data: { id: selectedProductId },
+                    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                    success: function (res) {
+                        alert(res.message);
+                        if (res.success) {
+                            location.reload();
+                        }
+                    },
+                    error: function (xhr) {
+                        alert("Lỗi khi xóa sản phẩm: " + xhr.responseText);
+                    }
+                });
+            });
+
+        });
+    </script>
+}
+

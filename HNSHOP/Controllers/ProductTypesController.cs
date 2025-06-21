@@ -1,118 +1,81 @@
-﻿using AutoMapper;
-using HNSHOP.Data;
+﻿using HNSHOP.Data;
 using HNSHOP.Dtos.Request;
 using HNSHOP.Dtos.Response;
 using HNSHOP.Models;
-using HNSHOP.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
-namespace HNSHOP.Controllers
+[Authorize(Roles = "Admin")]
+public class ProductTypeController : Controller
 {
-    [Authorize]
-    public class ProductTypesController : Controller
+    private readonly ApplicationDbContext _db;
+
+    public ProductTypeController(ApplicationDbContext db)
     {
-        private readonly ApplicationDbContext _db;
-        private readonly IMapper _mapper;
+        _db = db;
+    }
 
-        public ProductTypesController(ApplicationDbContext db, IMapper mapper)
+    // Danh sách loại sản phẩm
+    public async Task<IActionResult> Index()
+    {
+        var productTypes = await _db.ProductTypes.AsNoTracking().ToListAsync();
+        return View(productTypes);
+    }
+
+    // Thêm loại sản phẩm
+    [HttpPost]
+    public async Task<IActionResult> Create(ProductTypeReqDto req)
+    {
+        if (!ModelState.IsValid)
+            return Json(new { success = false, message = "Dữ liệu không hợp lệ!" });
+
+        var productType = new ProductType
         {
-            _db = db;
-            _mapper = mapper;
-        }
+            Name = req.Name,
+            Description = req.Description
+        };
 
-        /// <summary>
-        /// Hiển thị danh sách loại sản phẩm
-        /// </summary>
-        public async Task<IActionResult> Index()
-        {
-            var productTypes = await _db.ProductTypes.ToListAsync();
-            var result = _mapper.Map<List<ProductTypeResDto>>(productTypes);
-            return View(result);
-        }
+        _db.ProductTypes.Add(productType);
+        await _db.SaveChangesAsync();
 
-        /// <summary>
-        /// Hiển thị chi tiết loại sản phẩm
-        /// </summary>
-        public async Task<IActionResult> Details(int id)
-        {
-            var productType = await _db.ProductTypes.FindAsync(id);
-            if (productType == null) return NotFound();
+        return Json(new { success = true, message = "Thêm loại sản phẩm thành công!" });
+    }
 
-            var result = _mapper.Map<ProductTypeResDto>(productType);
-            return View(result);
-        }
+    // Lấy thông tin loại sản phẩm để sửa
+    public async Task<IActionResult> Get(int id)
+    {
+        var productType = await _db.ProductTypes.FindAsync(id);
+        if (productType == null) return NotFound();
 
-        /// <summary>
-        /// Hiển thị form tạo loại sản phẩm
-        /// </summary>
-        [Authorize(Roles = ConstConfig.AdminRoleName)]
-        public IActionResult Create() => View();
+        return Json(productType);
+    }
 
-        /// <summary>
-        /// Xử lý tạo loại sản phẩm
-        /// </summary>
-        [Authorize(Roles = ConstConfig.AdminRoleName)]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(ProductTypeReqDto productTypeReq)
-        {
-            if (!ModelState.IsValid) return View(productTypeReq);
+    // Cập nhật loại sản phẩm
+    [HttpPost]
+    public async Task<IActionResult> Edit(int id, ProductTypeReqDto req)
+    {
+        var productType = await _db.ProductTypes.FindAsync(id);
+        if (productType == null) return NotFound();
 
-            var productType = _mapper.Map<ProductType>(productTypeReq);
-            _db.ProductTypes.Add(productType);
-            await _db.SaveChangesAsync();
+        productType.Name = req.Name;
+        productType.Description = req.Description;
 
-            return RedirectToAction("Index");
-        }
+        await _db.SaveChangesAsync();
+        return Json(new { success = true, message = "Cập nhật loại sản phẩm thành công!" });
+    }
 
-        /// <summary>
-        /// Hiển thị form chỉnh sửa loại sản phẩm
-        /// </summary>
-        [Authorize(Roles = ConstConfig.AdminRoleName)]
-        public async Task<IActionResult> Edit(int id)
-        {
-            var productType = await _db.ProductTypes.FindAsync(id);
-            if (productType == null) return NotFound();
+    // Xóa loại sản phẩm
+    [HttpPost]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var productType = await _db.ProductTypes.FindAsync(id);
+        if (productType == null) return NotFound();
 
-            var result = _mapper.Map<ProductTypeReqDto>(productType);
-            return View(result);
-        }
-
-        /// <summary>
-        /// Xử lý cập nhật loại sản phẩm
-        /// </summary>
-        [Authorize(Roles = ConstConfig.AdminRoleName)]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, ProductTypeReqDto updateProductTypeReq)
-        {
-            if (!ModelState.IsValid) return View(updateProductTypeReq);
-
-            var productType = await _db.ProductTypes.FindAsync(id);
-            if (productType == null) return NotFound();
-
-            _mapper.Map(updateProductTypeReq, productType);
-            await _db.SaveChangesAsync();
-
-            return RedirectToAction("Index");
-        }
-
-        /// <summary>
-        /// Xóa loại sản phẩm
-        /// </summary>
-        [Authorize(Roles = ConstConfig.AdminRoleName)]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var productType = await _db.ProductTypes.FindAsync(id);
-            if (productType == null) return NotFound();
-
-            _db.ProductTypes.Remove(productType);
-            await _db.SaveChangesAsync();
-            return RedirectToAction("Index");
-        }
+        _db.ProductTypes.Remove(productType);
+        await _db.SaveChangesAsync();
+        return Json(new { success = true, message = "Xóa loại sản phẩm thành công!" });
     }
 }

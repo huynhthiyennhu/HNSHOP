@@ -133,6 +133,7 @@ namespace HNSHOP.Utils
             // Account Mapping
             CreateMap<Account, AccountResDto>();
 
+
             CreateMap<UpdateAccountReqDto, Account>()
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
                 .ForAllMembers(opts => opts

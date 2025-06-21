@@ -11,8 +11,8 @@ namespace HNSHOP.Models
         public decimal Total { get; set; }
         public OrderStatus Status { get; set; } = OrderStatus.Processing;
         public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
-        public DateTime CreatedAt { get; set; } = new DateTime(2024, 1, 1);
-        public DateTime UpdatedAt { get; set; } = new DateTime(2024, 1, 1);
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         public int CustomerId { get; set; }
         [ForeignKey(nameof(CustomerId))]

@@ -1,0 +1,330 @@
+﻿@model HNSHOP.Dtos.Request.CreateOrderReqDto
+
+<section id="cart_items">
+    <div class="container">
+        <div class="breadcrumbs">
+            <ol class="breadcrumb">
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li class="active">Thanh toán</li>
+            </ol>
+        </div>
+        <div class="row">
+            <!-- Bước 1: Chọn địa chỉ giao hàng -->
+            <div class="col-md-6">
+                <div class="step-one">
+                    <h2 class="heading">Bước 1: Chọn địa chỉ giao hàng</h2>
+                </div>
+
+                <div class="checkout-options">
+                    <h3>Chọn địa chỉ</h3>
+                    <p>Bạn có thể chọn địa chỉ có sẵn hoặc thêm địa chỉ mới</p>
+
+                    <div>
+                        <select id="addressSelect" class="form-control">
+                            <option value="">Chọn địa chỉ có sẵn</option>
+                            @if (ViewBag.Addresses != null)
+                            {
+                                foreach (var address in ViewBag.Addresses as List<HNSHOP.Dtos.Response.AddressResDto>)
+                                {
+                                    <option value="@address.Id">@address.AddressDetail</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <button type="button" class="btn btn-primary mt-2" id="addNewAddressBtn">Nhập địa chỉ mới</button>
+                    <hr />
+                    <div id="newAddressForm" style="display: none;" class="mt-2">
+                        <input type="text" id="houseNumber" class="form-control" placeholder="Số nhà">
+                        <br />
+                        <select id="citySelect" class="form-control mt-2">
+                            <option value="">Chọn Tỉnh/Thành phố</option>
+                        </select>
+                        <br />
+                        <select id="districtSelect" class="form-control mt-2">
+                            <option value="">Chọn Quận/Huyện</option>
+                        </select>
+                        <br />
+                        <select id="wardSelect" class="form-control mt-2">
+                            <option value="">Chọn Phường/Xã</option>
+                        </select>
+                        <br />
+                        <select id="streetSelect" class="form-control mt-2">
+                            <option value="">Chọn Đường/Phố</option>
+                        </select>
+                        <br />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bước 2: Chọn phương thức thanh toán -->
+            <div class="col-md-6">
+                <div class="step-one">
+                    <h2 class="heading">Bước 2: Chọn phương thức thanh toán</h2>
+                    <div class="payment-options">
+                        <span>
+                            <label><input type="radio" name="paymentMethod" value="bank"> Chuyển khoản ngân hàng</label>
+                        </span>
+                        <span>
+                            <label><input type="radio" name="paymentMethod" value="cod"> Thanh toán khi nhận hàng</label>
+                        </span>
+                        <span>
+                            <label><input type="radio" name="paymentMethod" value="paypal"> Paypal</label>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="step-one" style="margin-top:50px">
+            <h2 class="heading">Bước 3: Kiểm tra danh sách sản phẩm đặt mua</h2>
+        </div>
+
+        <div class="table-responsive cart_info">
+            <table class="table table-condensed">
+                <thead>
+                    <tr class="cart_menu">
+                        <td class="image">Sản phẩm</td>
+                        <td class="description"></td>
+                        <td class="price">Giá</td>
+                        <td class="quantity">Số lượng</td>
+                        <td class="total">Thành tiền</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (ViewBag.CartItems != null)
+                    {
+                        foreach (var item in ViewBag.CartItems as List<HNSHOP.Dtos.Response.CartItemResDto>)
+                        {
+                            <tr data-id="@item.ProductId">
+                                <td class="cart_product" data-id="@item.ProductId">
+                                    <img src="~/images/hnshop/@item.Image" alt="@item.Name" style="width: 80px; height: 80px;">
+                                </td>
+                                <td class="cart_description">
+                                    <h4>@item.Name</h4>
+                                </td>
+                                <td class="cart_price">
+                                    <p>@item.Price.ToString("N0") VNĐ</p>
+                                </td>
+                                <td class="cart_quantity">
+                                    <p>@item.Quantity</p>
+                                </td>
+                                <td class="cart_total">
+                                    <p class="cart_total_price">@item.Total.ToString("N0") VNĐ</p>
+                                </td>
+                            </tr>
+                           
+
+
+                        }
+                        <tr>
+                            <td colspan="4">&nbsp;</td>
+                            <td colspan="2">
+                                <table class="table table-condensed total-result">
+                                    <tr>
+                                        <td>Tổng tiền hàng</td>
+                                        <td>@ViewBag.Total.ToString("N0") VNĐ</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Phí vận chuyển</td>
+                                        <td>Miễn phí</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Tổng giảm giá</td>
+                                        <td><span class="text-danger">- @ViewBag.TotalDiscount.ToString("N0") VNĐ</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Tổng thanh toán</strong></td>
+                                        <input type="hidden" id="finalTotal" value="@ViewBag.FinalTotal" />
+                                        <td><span>@ViewBag.FinalTotal.ToString("N0") VNĐ</span></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+       
+
+        <div class="text-center mt-4">
+            <a asp-controller="Cart" asp-action="Index" class="btn btn-secondary btn-lg">
+                <i class="fa fa-arrow-left"></i> Trở về giỏ hàng
+            </a>
+
+            <button type="button" class="btn btn-success btn-lg" id="placeOrderBtn">
+                <i class="fa fa-check-circle"></i> Đặt hàng
+            </button>
+        </div>
+        <br />
+
+    </div>
+</section>
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            let locations = [];
+
+            // Load danh sách địa phương từ file JSON
+            $.getJSON("/json/local.json", function (data) {
+                locations = data;
+                loadCities();
+            });
+
+            // Hàm load danh sách Tỉnh/Thành phố
+            function loadCities() {
+                let citySelect = $("#citySelect");
+                citySelect.empty().append('<option value="">Chọn Tỉnh/Thành phố</option>');
+                locations.forEach(city => {
+                    citySelect.append(`<option value="${city.id}">${city.name}</option>`);
+                });
+            }
+
+            // Khi chọn Tỉnh/Thành phố, load danh sách Quận/Huyện
+            $("#citySelect").change(function () {
+                let cityId = $(this).val();
+                let districtSelect = $("#districtSelect");
+                let wardSelect = $("#wardSelect");
+                let streetSelect = $("#streetSelect");
+
+                districtSelect.empty().append('<option value="">Chọn Quận/Huyện</option>');
+                wardSelect.empty().append('<option value="">Chọn Phường/Xã</option>');
+                streetSelect.empty().append('<option value="">Chọn Đường/Phố</option>');
+
+                if (!cityId) return;
+                let city = locations.find(c => c.id === cityId);
+                city.districts.forEach(district => {
+                    districtSelect.append(`<option value="${district.id}">${district.name}</option>`);
+                });
+            });
+
+            // Khi chọn Quận/Huyện, load danh sách Phường/Xã và Đường/Phố
+            $("#districtSelect").change(function () {
+                let cityId = $("#citySelect").val();
+                let districtId = $(this).val();
+                let wardSelect = $("#wardSelect");
+                let streetSelect = $("#streetSelect");
+
+                wardSelect.empty().append('<option value="">Chọn Phường/Xã</option>');
+                streetSelect.empty().append('<option value="">Chọn Đường/Phố</option>');
+
+                if (!cityId || !districtId) return;
+                let city = locations.find(c => c.id === cityId);
+                let district = city.districts.find(d => d.id === districtId);
+
+                district.wards.forEach(ward => {
+                    wardSelect.append(`<option value="${ward.id}">${ward.prefix} ${ward.name}</option>`);
+                });
+
+                district.streets.forEach(street => {
+                    streetSelect.append(`<option value="${street.id}">${street.prefix} ${street.name}</option>`);
+                });
+            });
+
+            // Khi chọn địa chỉ cũ -> Ẩn form nhập địa chỉ mới
+            $("#addressSelect").change(function () {
+                if ($(this).val()) {
+                    $("#newAddressForm").hide();
+                }
+            });
+
+            // Khi bấm "Nhập địa chỉ mới" -> Hiện form nhập địa chỉ mới
+            $("#addNewAddressBtn").click(function () {
+                $("#newAddressForm").toggle();
+                $("#addressSelect").val("");
+            });
+
+           $("#placeOrderBtn").click(function () {
+            let selectedAddressId = $("#addressSelect").val();
+            let paymentMethod = $("input[name='paymentMethod']:checked").val();
+
+            let newAddress = null;
+            if ($("#newAddressForm").is(":visible")) {
+                newAddress = JSON.stringify({
+                    HouseNumber: $("#houseNumber").val(),
+                    Street: $("#streetSelect option:selected").text(),
+                    Ward: $("#wardSelect option:selected").text(),
+                    District: $("#districtSelect option:selected").text(),
+                    City: $("#citySelect option:selected").text()
+                });
+            }
+
+            let cartItems = [];
+            $(".cart_info tbody tr").each(function () {
+                let productId = $(this).data("id");
+                let quantity = $(this).find(".cart_quantity p").text().trim();
+                if (productId && quantity) {
+                    cartItems.push({ ProductId: parseInt(productId), Quantity: parseInt(quantity) });
+                }
+            });
+
+            if (!selectedAddressId && !newAddress) {
+                alert("Vui lòng chọn hoặc nhập địa chỉ giao hàng.");
+                return;
+            }
+            if (!paymentMethod) {
+                alert("Vui lòng chọn phương thức thanh toán.");
+                return;
+            }
+            if (cartItems.length === 0) {
+                alert("Giỏ hàng trống!");
+                return;
+            }
+
+            let orderData = {
+                AddressId: selectedAddressId || 0,
+                NewAddress: newAddress,
+                PaymentMethod: paymentMethod,
+                DetailOrderReqDtos: cartItems
+            };
+        if (paymentMethod === "paypal") {
+            let total = parseFloat($("#finalTotal").val());
+
+            if (total <= 0) {
+                alert("Tổng tiền phải lớn hơn 0 để thanh toán bằng PayPal.");
+                return;
+            }
+
+            $.ajax({
+                url: "/Orders/PreparePaypal",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(orderData),
+                success: function (res) {
+                    if (res.redirectUrl) {
+                        window.location.href = res.redirectUrl;
+                    } else {
+                        alert("Không thể tạo đơn hàng PayPal.");
+                    }
+                },
+                error: function (xhr) {
+                    alert("Lỗi tạo đơn PayPal: " + xhr.responseText);
+                }
+            });
+
+            return;
+        }
+
+
+            // 👉 Thanh toán bình thường
+            $.ajax({
+                url: "/Orders/Create",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(orderData),
+                success: function () {
+                    alert("Đặt hàng thành công!");
+                    window.location.href = "/Orders/Index";
+                },
+                error: function (xhr) {
+                    alert("Có lỗi xảy ra khi đặt hàng: " + xhr.responseText);
+                }
+            });
+        });
+
+
+        });
+    </script>
+}

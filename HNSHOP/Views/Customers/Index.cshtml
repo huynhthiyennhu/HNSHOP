@@ -1,0 +1,160 @@
+﻿<style>
+    .avatar {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+</style>
+<section id="cart_items">
+    <div class="container p-5">
+        <div class="breadcrumbs">
+            <ol class="breadcrumb">
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li class="active">Quản lý Khách Hàng</li>
+            </ol>
+        </div>
+        <h2 class="title text-center">Quản lý Khách hàng</h2>
+
+    <!-- Ô tìm kiếm khách hàng -->
+    <div class="row mb-3">
+        <div class="col-md-10">
+            <input type="text" class="form-control" id="searchCustomer" placeholder="Tìm kiếm khách hàng...">
+        </div>
+        <div class="col-md-2 text-right">
+            <button class="btn btn-warning btn-block" id="searchButton"><i class="fa fa-search"></i> Tìm kiếm</button>
+        </div>
+    </div>
+
+        <br />
+        <br />
+        <div class="table-responsive cart_info">
+            <table class="table table-condensed">
+                <thead>
+                    <tr class="cart_menu">
+                    <th>Hình ảnh</th>
+                    <th>Họ Tên</th>
+                    <th>Email</th>
+                    <th>Loại khách hàng</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="customerTableBody">
+                @foreach (var customer in Model)
+                {
+                    <tr>
+                            <td><img src="~/images/hnshop/avatar/@customer.Account.Avatar" class="avatar ms-4" alt="@customer.Account.Avatar" /></td>
+
+                        <td>@customer.Name</td>
+                        <td>@customer.Account.Email</td>
+                        <td>
+                                @if (ViewBag.CustomerTypes != null)
+                                {
+                                    <select class="form-control customer-type-select" data-id="@customer.Id">
+                                        @foreach (var type in ViewBag.CustomerTypes)
+                                        {
+                                            <option value="@type.Id" selected="@(customer.CustomerTypeId == type.Id)">
+                                                @type.Name
+                                            </option>
+                                        }
+                                    </select>
+                                }
+                                else
+                                {
+                                    <p class="text-danger">Không có dữ liệu loại khách hàng!</p>
+                                }
+
+
+                        </td>
+                        <td>
+                                <a asp-controller="Accounts" asp-action="Index" asp-route-id="@customer.AccountId" class="btn btn-info btn-sm">
+                                <i class="fa fa-user"></i> Xem
+                            </a>
+                            <button class="btn btn-danger btn-sm delete-customer" data-id="@customer.Id">
+                                <i class="fa fa-trash"></i> Xóa
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        </div>
+</div>
+</section>
+<!-- Modal Xác Nhận Xóa -->
+<div class="modal fade" id="deleteCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Xác nhận xóa</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa khách hàng <strong id="deleteCustomerName"></strong>?</p>
+                <button type="button" class="btn btn-danger" id="confirmDeleteCustomer">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Tìm kiếm khách hàng
+            $("#searchButton").click(function () {
+                let searchValue = $("#searchCustomer").val().trim().toLowerCase();
+                $("#customerTableBody tr").each(function () {
+                    let name = $(this).find("td:nth-child(1)").text().toLowerCase();
+                    let email = $(this).find("td:nth-child(2)").text().toLowerCase();
+                    $(this).toggle(name.includes(searchValue) || email.includes(searchValue));
+                });
+            });
+
+            // Cập nhật loại khách hàng (AJAX)
+            $(".customer-type-select").change(function () {
+                let customerId = $(this).data("id");
+                let newTypeId = $(this).val();
+                $.ajax({
+                    url: "/Customers/UpdateType",
+                    type: "POST",
+                    data: { id: customerId, customerTypeId: newTypeId },
+                    success: function (res) {
+                        alert(res.message);
+                    },
+                    error: function () {
+                        alert("Lỗi khi cập nhật loại khách hàng.");
+                    }
+                });
+            });
+
+            // Hiển thị modal xóa
+            let selectedCustomerId = null;
+            $(".delete-customer").click(function () {
+                selectedCustomerId = $(this).data("id");
+                let customerName = $(this).closest("tr").find("td:first").text();
+                $("#deleteCustomerName").text(customerName);
+                $("#deleteCustomerModal").modal("show");
+            });
+
+            // Xác nhận xóa khách hàng (AJAX)
+            $("#confirmDeleteCustomer").click(function () {
+                if (!selectedCustomerId) return;
+                $.ajax({
+                    url: "/Customers/Delete",
+                    type: "POST",
+                    data: { id: selectedCustomerId },
+                    success: function (res) {
+                        if (res.success) {
+                            $("#deleteCustomerModal").modal("hide");
+                            $("button[data-id='" + selectedCustomerId + "']").closest("tr").remove();
+                        }
+                        alert(res.message);
+                    },
+                    error: function () {
+                        alert("Lỗi khi xóa khách hàng.");
+                    }
+                });
+            });
+        });
+    </script>
+}

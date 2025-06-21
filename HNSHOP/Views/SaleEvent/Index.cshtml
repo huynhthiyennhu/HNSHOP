@@ -1,0 +1,156 @@
+﻿@model List<HNSHOP.Dtos.Response.SaleEventResDto>
+
+@{
+    ViewBag.Title = "Quản lý Chương trình Giảm giá";
+}
+
+<section id="cart_items">
+    <div class="container p-5">
+        <div class="breadcrumbs">
+            <ol class="breadcrumb">
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li class="active">Quản lý Giảm Giá</li>
+            </ol>
+        </div>
+        <h2 class="title text-center">Quản lý chương trình giảm giá</h2>
+
+        <div class="table-responsive cart_info">
+            <table class="table table-condensed">
+                <thead>
+                    <tr class="cart_menu">
+                        <td><b>Hình ảnh</b></td>
+                        <td><b>Tên</b></td>
+                        <td><b>Mô tả</b></td>
+                        <td><b>Giảm giá (%)</b></td>
+                        <td><b>Thời gian</b></td>
+                        <td><b>Hành động</b></td>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Count > 0)
+                    {
+                        foreach (var eventItem in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <img src="~/images/hnshop/@eventItem.Illustration" width="60" class="border rounded" />
+                                </td>
+                                <td>@eventItem.Name</td>
+                                <td>
+                                    @if (eventItem.Description.Length > 50)
+                                    {
+                                        <span title="@eventItem.Description">
+                                            @eventItem.Description.Substring(0, 50)...
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        @eventItem.Description
+                                    }
+                                </td>
+                                <td>@eventItem.Discount%</td>
+                                <td>@eventItem.StartDate.ToString("dd/MM/yyyy") - @eventItem.EndDate.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <div class="d-flex justify-content-center align-items-center gap-2">
+                                        <a class="btn btn-info btn-sm" asp-action="Details" asp-route-id="@eventItem.Id">
+                                            <i class="fa fa-eye"></i> Chi tiết
+                                        </a>
+
+                                        <a class="btn btn-warning btn-sm" asp-action="Edit" asp-route-id="@eventItem.Id">
+                                            <i class="fa fa-edit"></i> Sửa
+                                        </a>
+
+                                        <button type="button" class="btn btn-danger btn-sm delete-btn" data-id="@eventItem.Id" data-name="@eventItem.Name">
+                                            <i class="fa fa-trash"></i> Xóa
+                                        </button>
+                                    </div>
+                                </td>
+
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center" >Không có chương trình giảm giá nào.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>           
+        </div>
+    </div> 
+    <div class="text-center">
+        <a class="btn btn-success" asp-action="Create">Thêm Chương trình Giảm giá</a>
+    </div>
+    <br />
+</section>
+
+<!-- Modal Xóa -->
+<div class="modal fade" id="deleteSaleEventModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header d-flex justify-content-between align-items-center">
+                <h3 class="modal-title">Xác nhận xóa</h3>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa chương trình <strong id="deleteSaleEventName"></strong> không?</p>
+                <button type="button" class="btn btn-danger" id="confirmDeleteSaleEvent">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            let selectedEventId = null;
+            let selectedRow = null;
+
+            // Khi nhấn nút xóa, mở modal xác nhận
+            $(".delete-btn").click(function () {
+                selectedEventId = $(this).data("id");
+                selectedRow = $(this).closest("tr"); // Lưu lại dòng dữ liệu để xóa sau
+
+                let eventName = selectedRow.find("td:nth-child(2)").text(); // Lấy tên chương trình
+                $("#deleteSaleEventName").text(eventName);
+                $("#deleteSaleEventModal").modal('show');
+            });
+
+            // Xử lý xác nhận xóa
+            $("#confirmDeleteSaleEvent").off('click').on('click', function () {
+                if (!selectedEventId) {
+                    alert("Không tìm thấy chương trình giảm giá để xóa.");
+                    return;
+                }
+
+                let btn = $(this);
+                btn.text("Đang xóa...").prop("disabled", true);
+
+                $.ajax({
+                    url: '/SaleEvent/Delete',
+                    type: 'POST',
+                    data: { id: selectedEventId },
+                    success: function (res) {
+                        alert(res.message);
+                        if (res.success) {
+                            $("#deleteSaleEventModal").modal('hide');
+                            selectedRow.fadeOut(300, function () { $(this).remove(); }); // Xóa hàng đã chọn khỏi bảng
+                        }
+                    },
+                    error: function (xhr) {
+                        alert("Lỗi khi xóa: " + xhr.responseText);
+                    },
+                    complete: function () {
+                        btn.text("Xóa").prop("disabled", false);
+                    }
+                });
+            });
+
+        });
+    </script>
+}
+
+

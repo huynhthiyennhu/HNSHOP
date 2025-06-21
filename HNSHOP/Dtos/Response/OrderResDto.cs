@@ -1,4 +1,5 @@
-﻿using HNSHOP.Utils.EnumTypes;
+﻿using HNSHOP.Models;
+using HNSHOP.Utils.EnumTypes;
 
 namespace HNSHOP.Dtos.Response
 {
@@ -12,5 +13,6 @@ namespace HNSHOP.Dtos.Response
         public DateTime UpdatedAt { get; set; }
         public AddressResDto Address { get; set; } = null!;
         public List<DetailOrderResDto> DetailOrders { get; set; } = [];
+        public Customer Customer { get; set; } = null!;
     }
 }

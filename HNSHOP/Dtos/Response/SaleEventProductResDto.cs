@@ -12,5 +12,6 @@
         public DateTime EndDate { get; set; }
         public List<CustomerTypeResDto> CustomerTypes { get; set; } = [];
         public List<ProductResDto> Products { get; set; } = [];
+        public bool IsApplicableCustomer { get; set; }
     }
 }

@@ -5,7 +5,7 @@
         public int Id { get; set; }
         public string Email { get; set; }
         public string Phone { get; set; }
-        public string Avatar { get; set; }
+        public string Avatar { get; set; } = "~/images/hnshop/default-avatar.png";
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public ShopResDto? Shop { get; set; }
