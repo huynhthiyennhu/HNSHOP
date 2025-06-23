@@ -14,9 +14,14 @@ namespace HNSHOP.Models
         public string? VerifyToken { get; set; } = string.Empty;
         public bool IsVerified { get; set; } = false;
 
+        public bool IsApproved { get; set; } = false;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? VerifiedAt { get; set; }
+        public string? ResetToken { get; set; }
+        public DateTime? ResetTokenExpiry { get; set; }
+
 
         public int RoleId { get; set; }
         [ForeignKey(nameof(RoleId))]

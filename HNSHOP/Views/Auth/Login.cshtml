@@ -21,6 +21,7 @@
         </div>
 
         <!-- Mật khẩu -->
+        <!-- Mật khẩu -->
         <div class="input-group">
             <span class="input-icon"><i class="fa fa-lock"></i></span>
             <input asp-for="Password" type="password" class="form-control" placeholder="Mật khẩu" id="passwordLogin" required />
@@ -28,6 +29,12 @@
                 <i id="pwli" class="fa fa-eye"></i>
             </span>
         </div>
+
+        <!-- Link Quên mật khẩu -->
+        <div class="text-right mt-1">
+            <a asp-action="ForgotPassword" class="text-decoration-none">Quên mật khẩu?</a>
+        </div>
+
 
         <button type="submit" class="btn btn-primary w-100 mt-3">Đăng nhập</button>
     </form>

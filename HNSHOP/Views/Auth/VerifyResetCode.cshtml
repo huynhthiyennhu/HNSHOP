@@ -1,0 +1,48 @@
+﻿@model HNSHOP.Dtos.Request.ResetPasswordReqDto
+
+@{
+    ViewData["Title"] = "Đặt lại mật khẩu";
+}
+<link href="~/css/auth.css" rel="stylesheet">
+
+<div class="register-container mt-5 mb-5">
+    <h2 class="text-center">ĐẶT LẠI MẬT KHẨU</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <form asp-controller="Auth" asp-action="VerifyResetCode" method="post" class="register-form">
+
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="input-group">
+            <span class="input-icon"><i class="fa fa-envelope"></i></span>
+            <input asp-for="Email" type="email" class="form-control" placeholder="Email" required />
+        </div>
+
+        <div class="input-group">
+            <span class="input-icon"><i class="fa fa-key"></i></span>
+            <input asp-for="Token" class="form-control" placeholder="Mã xác nhận" required />
+        </div>
+
+        <div class="input-group">
+            <span class="input-icon"><i class="fa fa-lock"></i></span>
+            <input asp-for="NewPassword" type="password" class="form-control" placeholder="Mật khẩu mới" id="newPass" required />
+            <span class="toggle-password" onclick="togglePassword('newPass','pwli')">
+                <i id="pwli" class="fa fa-eye"></i>
+            </span>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 mt-3">Cập nhật mật khẩu</button>
+    </form>
+
+    <p class="text-center mt-2">
+        <a asp-action="Login">Quay lại đăng nhập</a>
+    </p>
+</div>

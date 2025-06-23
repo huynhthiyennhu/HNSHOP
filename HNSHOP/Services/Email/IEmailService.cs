@@ -6,5 +6,7 @@ namespace HNSHOP.Services
     {
         Task SendVerificationEmail(string email, string token);
         Task SendGeneralEmailAsync(string toEmail, string subject, string htmlBody);
+        Task SendApprovedNotification(string email, string shopName, string token);
+        Task SendRejectedShopEmail(string email, string shopName);
     }
 }

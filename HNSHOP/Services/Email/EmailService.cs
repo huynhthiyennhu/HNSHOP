@@ -41,5 +41,30 @@ namespace HNSHOP.Services
             mailMessage.To.Add(toEmail);
             await smtpClient.SendMailAsync(mailMessage);
         }
+
+        public async Task SendApprovedNotification(string email, string shopName, string token)
+        {
+            string subject = "Shop đã được duyệt - Xác thực tài khoản";
+            string body = $@"
+        <p>Xin chào,</p>
+        <p>Shop <strong>{shopName}</strong> của bạn đã được duyệt.</p>
+        <p>Mã xác thực của bạn là: <b>{token}</b></p>
+        <p>Vui lòng xác thực để hoàn tất đăng ký.</p>
+        <p>Trân trọng,<br/>Hệ thống HNSHOP</p>";
+            await SendGeneralEmailAsync(email, subject, body);
+        }
+
+        public async Task SendRejectedShopEmail(string email, string shopName)
+        {
+            string subject = "Tài khoản Shop bị từ chối";
+            string body = $@"
+        <p>Xin chào,</p>
+        <p>Rất tiếc! Shop <strong>{shopName}</strong> của bạn đã bị từ chối đăng ký.</p>
+        <p>Vui lòng kiểm tra lại thông tin và đăng ký lại nếu cần.</p>
+        <p>Trân trọng,<br/>Hệ thống HNSHOP</p>";
+            await SendGeneralEmailAsync(email, subject, body);
+        }
+
+
     }
 }

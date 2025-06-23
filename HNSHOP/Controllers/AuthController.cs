@@ -138,8 +138,8 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
 
         await _emailService.SendVerificationEmail(request.Email, verifyToken);
 
-        TempData["Message"] = "Đăng ký shop thành công! Vui lòng kiểm tra email để xác thực.";
-        return RedirectToAction("VerifyEmail");
+        TempData["Message"] = "Đăng ký shop thành công! Tài khoản đang chờ quản trị viên duyệt.";
+        return RedirectToAction("Login");
     }
 
     // Hiển thị trang xác thực email
@@ -152,23 +152,43 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
     [HttpPost]
     public async Task<IActionResult> VerifyEmail(string email, string token)
     {
-        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email == email && a.VerifyToken == token);
+        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email == email);
 
         if (account == null)
+        {
+            ModelState.AddModelError("", "Tài khoản không tồn tại.");
+            return View();
+        }
+
+        // Nếu là Shop thì bắt buộc phải được duyệt
+        if (account.RoleId == 3 && !account.IsApproved)
+        {
+            ModelState.AddModelError("", "Tài khoản Shop của bạn chưa được quản trị viên duyệt.");
+            return View();
+        }
+
+        if (account.VerifyToken != token)
         {
             ModelState.AddModelError("", "Mã xác thực không hợp lệ.");
             return View();
         }
 
+        if (account.IsVerified)
+        {
+            TempData["Message"] = "Tài khoản đã xác thực trước đó.";
+            return RedirectToAction("Login");
+        }
+
         account.IsVerified = true;
         account.VerifiedAt = DateTime.Now;
-        account.VerifyToken = token;
+        account.VerifyToken = null;
 
         await _db.SaveChangesAsync();
 
-        TempData["Message"] = "Xác thực email thành công! Bạn có thể đăng nhập ngay bây giờ.";
+        TempData["Message"] = "Xác thực email thành công! Bạn có thể đăng nhập ngay.";
         return RedirectToAction("Login");
     }
+
 
     // Hiển thị trang đăng nhập
     [HttpGet]
@@ -204,6 +224,13 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
             ModelState.AddModelError("", "Tài khoản chưa được xác thực. Vui lòng kiểm tra email.");
             return View(request);
         }
+
+        if (account.RoleId == 3 && !account.IsApproved)
+        {
+            ModelState.AddModelError("", "Tài khoản Shop của bạn đang chờ duyệt.");
+            return View(request);
+        }
+
 
         var role = account.Role?.Name ?? ConstConfig.UserRoleName;
 
@@ -243,5 +270,49 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
     {
         var rng = new Random();
         return rng.Next(100000, 999999).ToString(); 
+    }
+
+    [HttpGet]
+    public IActionResult ForgotPassword() => View();
+
+    [HttpPost]
+    public async Task<IActionResult> ForgotPassword(string email)
+    {
+        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email == email);
+        if (account == null)
+        {
+            ModelState.AddModelError("", "Email không tồn tại.");
+            return View();
+        }
+
+        string token = new Random().Next(100000, 999999).ToString();
+        account.VerifyToken = token;
+        await _db.SaveChangesAsync();
+
+        await _emailService.SendGeneralEmailAsync(email, "Khôi phục mật khẩu", $"Mã xác thực của bạn là: <b>{token}</b>");
+
+        TempData["Email"] = email;
+        return RedirectToAction("VerifyResetCode");
+    }
+
+    [HttpGet]
+    public IActionResult VerifyResetCode() => View();
+
+    [HttpPost]
+    public async Task<IActionResult> VerifyResetCode(string email, string token, string newPassword)
+    {
+        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email == email && a.VerifyToken == token);
+        if (account == null)
+        {
+            ModelState.AddModelError("", "Mã xác thực không hợp lệ.");
+            return View();
+        }
+
+        account.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        account.VerifyToken = null;
+
+        await _db.SaveChangesAsync();
+        TempData["Success"] = "Mật khẩu đã được đặt lại.";
+        return RedirectToAction("Login");
     }
 }

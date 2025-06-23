@@ -4,6 +4,7 @@ using HNSHOP.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HNSHOP.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250622073355_AddIsApprovedToAccount")]
+    partial class AddIsApprovedToAccount
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -55,12 +58,6 @@ namespace HNSHOP.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ResetToken")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("ResetTokenExpiry")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("RoleId")
                         .HasColumnType("int");
 
@@ -91,7 +88,7 @@ namespace HNSHOP.Migrations
                             Email = "admin@example.com",
                             IsApproved = false,
                             IsVerified = false,
-                            Password = "$2a$11$n7AkzN/bBRqYCFjOyMpI3ONUvUUnIbn3KsjIa8GW14HcYHmNJMe7y",
+                            Password = "$2a$11$fSehxbm6vSGy43YQWOsayu9/qeBO3KXm6w4kmUbj1Uo1GvFjN9eDe",
                             Phone = "0912345678",
                             RoleId = 1,
                             UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -106,7 +103,7 @@ namespace HNSHOP.Migrations
                             Email = "user1@example.com",
                             IsApproved = false,
                             IsVerified = false,
-                            Password = "$2a$11$cfE22zZ96Rxa6a.jQCptLe3Y7XI8SIrdFSsEi1mL9wO.CxbjAaBQ.",
+                            Password = "$2a$11$5GGmn4TM3TkgeIz/X4zaVuLnYLTPK4aUB/YuCmdqcyez68F8bja4m",
                             Phone = "0934567890",
                             RoleId = 2,
                             UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -120,7 +117,7 @@ namespace HNSHOP.Migrations
                             Email = "user2@example.com",
                             IsApproved = false,
                             IsVerified = false,
-                            Password = "$2a$11$jtxrAx2tNiTdLvW4DqPTJ.I3qhjlwvxRjh3B4a7Og1lyajl3ko9Bi",
+                            Password = "$2a$11$i2r7hTm5aELzNbiXUqQ.OebPJJwTqezeb/3VGmPI4Mf806XDI.tdi",
                             Phone = "0987654321",
                             RoleId = 2,
                             UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -135,7 +132,7 @@ namespace HNSHOP.Migrations
                             Email = "seller1@example.com",
                             IsApproved = false,
                             IsVerified = false,
-                            Password = "$2a$11$QgWTIxrMm63wPKFZOApjnueSJx/rTK82y4k.CaRFmL1aEvbFq8q3i",
+                            Password = "$2a$11$lMj674LMS3b/wHL32v/Z5.45DSbru2MjqlzsIYDCqxnE127w2XFT.",
                             Phone = "0901234567",
                             RoleId = 3,
                             UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -149,7 +146,7 @@ namespace HNSHOP.Migrations
                             Email = "seller2@example.com",
                             IsApproved = false,
                             IsVerified = false,
-                            Password = "$2a$11$wcwBbXaMztM1x2iFnmDxNuG5FjluyhVnLimVh0PXVqj7.CT7sUq2y",
+                            Password = "$2a$11$y1xpJA7qQsCZJRuxGBTj.eT5dwwCg.r7XWWfrWL/FgQPOTQjZT61e",
                             Phone = "0912345678",
                             RoleId = 3,
                             UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),

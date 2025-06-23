@@ -11,11 +11,13 @@ using System.IO;
 using Microsoft.AspNetCore.Http;
 using HNSHOP.Utils;
 using HNSHOP.Utils.QueryParams;
+using HNSHOP.Services;
 
 public class AccountsController : Controller
 {
     private readonly ApplicationDbContext _db;
     private readonly IWebHostEnvironment _env;
+
 
     public AccountsController(ApplicationDbContext db, IWebHostEnvironment env)
     {
@@ -179,4 +181,8 @@ public class AccountsController : Controller
     {
         return int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int userId) ? userId : -1;
     }
+
+
+   
+
 }
