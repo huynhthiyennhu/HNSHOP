@@ -68,6 +68,32 @@ namespace HNSHOP.Controllers
             return RedirectToAction("Index");
         }
 
+        //[HttpPost]
+        //public async Task<IActionResult> Approve(int id)
+        //{
+        //    var order = await _db.Orders
+        //        .Include(o => o.DetailOrders)
+        //            .ThenInclude(d => d.Product)
+        //        .FirstOrDefaultAsync(o => o.Id == id);
+
+        //    if (order == null || order.Status != OrderStatus.Processing)
+        //        return BadRequest();
+
+        //    order.Status = OrderStatus.Shipping;
+        //    order.UpdatedAt = DateTime.UtcNow;
+
+        //    foreach (var detail in order.DetailOrders)
+        //    {
+        //        var product = detail.Product;
+        //        detail.ShopId = product.ShopId; // cập nhật nếu chưa có
+        //        product.Quantity -= detail.Quantity;
+        //    }
+
+        //    await _db.SaveChangesAsync();
+        //    return RedirectToAction("Index");
+        //}
+
+
 
         [HttpPost]
         public async Task<IActionResult> Delete(int id)

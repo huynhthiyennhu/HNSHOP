@@ -1,107 +1,119 @@
 ﻿@using System.Globalization
-@model List<HNSHOP.Dtos.Response.CartItemResDto>
+@model List<HNSHOP.Dtos.Response.ShopCartGroupDto>
+
 <section id="cart_items">
-	<div class="container">
-		<div class="breadcrumbs">
-			<ol class="breadcrumb">
-				<li><a href="#">Home</a></li>
-				<li class="active">Shopping Cart</li>
-			</ol>
-		</div>
-		
-			@if (Model.Count == 0)
-			{
-				 <h2 class="title text-center">Giỏ hàng của bạn đang trống. <a asp-controller="Home" asp-action="Index">Tiếp tục mua sắm</a></h2>
-				 <br />
-				 <br />
-				 <br />
-			}
-			else
-			{
-			<div class="table-responsive cart_info">
-				<table class="table table-condensed">
-					<thead>
-						<tr class="cart_menu">
-							<td class="image">Hình ảnh</td>
-							<td class="image">Sản phẩm</td>
-							<td class="price">Giá</td>
-							<td class="quantity">Số lượng</td>
-							<td class="total">Tổng</td>
-							<td class="total"></td>
-							<td></td>
-						</tr>
-					</thead>
-					<tbody>
-						@foreach (var item in Model)
-						{
-							<tr>
-								<td class="cart_product">
-									<a asp-controller="Products" asp-action="Details" asp-route-id="@item.ProductId">
-										<img src="~/images/hnshop/@item.Image" alt="" style="width: 110px; height: 110px;" />
-									</a>
-								</td>
-								<td class="cart_description">
-									<h4><a asp-controller="Products" asp-action="Details" asp-route-id="@item.ProductId">@item.Name</a></h4>
-								</td>
-								<td class="cart_price">
-									<p id="product-price-@item.ProductId" data-price="@item.Price">@item.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</p>
-								</td>
-								<td class="cart_quantity">
-									<div class="cart_quantity_button">
-										<!-- Nút giảm số lượng -->
-										<a href="javascript:void(0);" class="cart_quantity_down"
-										   data-product-id="@item.ProductId" data-action="decrease"> - </a>
+    <div class="container" id="cart-container">
+        <div class="breadcrumbs">
+            <ol class="breadcrumb">
+                <li><a href="#">Home</a></li>
+                <li class="active">Shopping Cart</li>
+            </ol>
+        </div>
 
-										<input class="cart_quantity_input" type="text" name="quantity"
-											   value="@item.Quantity" autocomplete="off" size="2" readonly>
+        @{
+            var hasItems = Model.Any(s => s.Items.Any());
+        }
 
-										<a href="javascript:void(0);" class="cart_quantity_up"
-										   data-product-id="@item.ProductId" data-action="increase"> + </a>
-									</div>
-								</td>
+        @if (!hasItems)
+        {
+            <h2 class="title text-center">
+                Giỏ hàng của bạn đang trống. <a asp-controller="Home" asp-action="Index">Tiếp tục mua sắm</a>
+            </h2>
+            <br />
 
-									
-								
-								<td class="cart_total">
-									<p id="product-total-@item.ProductId" class="cart_total_price" class="cart_total_price">@((item.Price * item.Quantity).ToString("C0", CultureInfo.GetCultureInfo("vi-VN")))</p>
-								</td>
-								<td class="cart_delete">
-									<form asp-action="RemoveFromCart" asp-controller="Cart" method="post">
-										<input type="hidden" name="ProductId" value="@item.ProductId" />
-										<button type="submit" class="btn btn-light border-0">
-											<i class="fa fa-times" style="color: lightgray;"></i>
-										</button>
-									</form>
-								</td>
-							</tr>
-						}
+            <br />
 
+            <br />
+        }
+        else
+        {
+            foreach (var shop in Model)
+            {
+                if (!shop.Items.Any()) { continue; }
 
-					</tbody>
-                </table>
-				<hr />
-                <div class="cart-buttons text-right">
-                    <form asp-action="ClearCart" asp-controller="Cart" method="post" id="clear-cart-form">
-                        <button type="submit" class="btn btn-danger">
-                            <i class="fa fa-trash"></i> Xóa toàn bộ giỏ hàng
-                        </button>
-                    </form>
+                <div class="shop-group" id="shop-@shop.ShopId">
+                    <h3 class="text-left">🛍 Shop: @shop.ShopName</h3>
+                    <div class="table-responsive cart_info">
+                        <table class="table table-condensed">
+                            <thead>
+                                <tr class="cart_menu">
+                                    <td class="image">Hình ảnh</td>
+                                    <td class="image">Sản phẩm</td>
+                                    <td class="price">Giá</td>
+                                    <td class="quantity">Số lượng</td>
+                                    <td class="total">Tổng</td>
+                                    <td></td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in shop.Items)
+                                {
+                                    <tr id="cart-item-@item.ProductId">
+                                        <td class="cart_product">
+                                            <a asp-controller="Products" asp-action="Details" asp-route-id="@item.ProductId">
+                                                <img src="~/images/hnshop/@item.Image" alt="" style="width: 110px; height: 110px;" />
+                                            </a>
+                                        </td>
+                                        <td class="cart_description">
+                                            <h4>
+                                                <a asp-controller="Products" asp-action="Details" asp-route-id="@item.ProductId">
+                                                    @item.Name
+                                                </a>
+                                            </h4>
+                                        </td>
+                                        <td class="cart_price">
+                                            <p id="product-price-@item.ProductId" data-price="@item.Price">
+                                                @item.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))
+                                            </p>
+                                        </td>
+                                        <td class="cart_quantity">
+                                            <div class="cart_quantity_button">
+                                                <a href="javascript:void(0);" class="cart_quantity_down"
+                                                   data-product-id="@item.ProductId" data-action="decrease"> - </a>
+                                                <input class="cart_quantity_input" type="text" value="@item.Quantity" readonly size="2" />
+                                                <a href="javascript:void(0);" class="cart_quantity_up"
+                                                   data-product-id="@item.ProductId" data-action="increase"> + </a>
+                                            </div>
+                                        </td>
+                                        <td class="cart_total">
+                                            <p class="cart_total_price" id="product-total-@item.ProductId">
+                                                @((item.Price * item.Quantity).ToString("C0", CultureInfo.GetCultureInfo("vi-VN")))
+                                            </p>
+                                        </td>
+                                        <td class="cart_delete">
+                                            <button type="button"
+                                                    class="btn btn-light border-0 cart-remove-item"
+                                                    data-product-id="@item.ProductId"
+                                                    data-shop-id="@item.ShopId">
+                                                <i class="fa fa-times" style="color: lightgray;"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-				<br />
-				<div class="col-md-6 text-right">
-					<br />
-					<a asp-controller="Orders" asp-action="Create" class="btn btn-success btn-lg">
-						<i class="fa fa-check-circle"></i> Đặt hàng
-					</a>
-				</div>
+            }
 
-			</div>
-			}
-			
+            <hr />
+            <div class="cart-buttons text-right">
+                <form asp-action="ClearCart" asp-controller="Cart" method="post" id="clear-cart-form">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa fa-trash"></i> Xóa toàn bộ giỏ hàng
+                    </button>
+                </form>
+            </div>
 
-		
-	</div>				
-	<br />
+            <br />
+            <div class="col-md-6 text-right">
+                <a asp-controller="Orders" asp-action="Create" class="btn btn-success btn-lg">
+                    <i class="fa fa-check-circle"></i> Đặt hàng
+                </a>
+            </div>
+        }
+    </div>
+    <br />
+</section>
 
-</section> <!--/#cart_items-->
 <script src="~/js/cart.js"></script>

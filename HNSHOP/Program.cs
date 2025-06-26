@@ -101,7 +101,8 @@ builder.Services.AddAuthorizationBuilder()
 //    options.AddPolicy("ShopPolicy", policy => policy.RequireRole("shop"));
 //    options.AddPolicy("UserPolicy", policy => policy.RequireRole("user"));
 //});
-
+builder.Services.AddSession();
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 

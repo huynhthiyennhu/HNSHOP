@@ -17,6 +17,6 @@ namespace HNSHOP.Models
         public int Quantity { get; set; }
         [Column(TypeName = "decimal(9, 1)")]
         public decimal UnitPrice { get; set; }
-        
+
     }
 }

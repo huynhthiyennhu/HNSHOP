@@ -114,19 +114,19 @@ public class AccountsController : Controller
         return RedirectToAction("Index");
     }
 
-    [HttpPost]
-    public async Task<IActionResult> UpdateOrderStatus(int id, OrderStatus status)
-    {
-        var order = await _db.Orders.FindAsync(id);
-        if (order == null) return NotFound();
+    //[HttpPost]
+    //public async Task<IActionResult> UpdateOrderStatus(int id, OrderStatus status)
+    //{
+    //    var order = await _db.Orders.FindAsync(id);
+    //    if (order == null) return NotFound();
 
-        order.Status = status;
-        order.UpdatedAt = DateTime.Now;
-        await _db.SaveChangesAsync();
+    //    order.Status = status;
+    //    order.UpdatedAt = DateTime.Now;
+    //    await _db.SaveChangesAsync();
 
-        TempData["SuccessMessage"] = "Cập nhật trạng thái đơn hàng thành công!";
-        return RedirectToAction("Index");
-    }
+    //    TempData["SuccessMessage"] = "Cập nhật trạng thái đơn hàng thành công!";
+    //    return RedirectToAction("Index");
+    //}
 
     [HttpPost]
     public async Task<IActionResult> UpdateAvatar(IFormFile Avatar)

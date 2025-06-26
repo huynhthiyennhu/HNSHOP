@@ -46,7 +46,8 @@
 </head><!--/head-->
 @RenderSection("Scripts", required: false)
 <body>
-	<header id="header">
+	<div class="page-wrapper">
+		<header id="header" >
 		<div class="header-middle">
 			<!--header-middle-->
 			<div class="container">
@@ -74,10 +75,10 @@
 										</li>
 									}
 
-									<li class="dropdown">
+									<li class="dropdown ">
 										<a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
 											<span class="ml-1">@User.Identity.Name</span>
-											<img src="~/images/hnshop/avatar/@User.FindFirst("Avatar")?.Value" class="rounded-circle" style="width:40px; height:40px; border-radius: 50%" />
+											<img src="~/images/hnshop/avatar/@User.FindFirst("Avatar")?.Value" class="rounded-circle" style="width:32px; height:32px; border-radius: 50%" />
 
 										</a>
 										<ul class="dropdown-menu">
@@ -189,18 +190,20 @@
 		</div>
 	</header>
 
-	
+		<main>
+            <section>
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+                }
 
-	<section>
-		@if (TempData["SuccessMessage"] != null)
-		{
-			<div class="alert alert-success">@TempData["SuccessMessage"]</div>
-		}
-		
-		<div class="container">
-			@RenderBody()
-		</div>
-	</section>
+                <div class="container">
+                    @RenderBody()
+                </div>
+            </section>
+		</main>
+
+	
 
 	<footer id="footer">
 		<!--Footer-->
@@ -238,7 +241,7 @@
 		</div>
 
 	</footer><!--/Footer-->
-
+	</div>
 	<script>
 		function confirmLogout() {
 			if (confirm("Bạn có chắc chắn muốn đăng xuất không?")) {

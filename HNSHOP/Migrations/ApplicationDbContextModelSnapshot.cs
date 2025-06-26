@@ -80,7 +80,7 @@ namespace HNSHOP.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("Accounts");
+                    b.ToTable("Accounts", (string)null);
 
                     b.HasData(
                         new
@@ -177,7 +177,7 @@ namespace HNSHOP.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.ToTable("Addresses");
+                    b.ToTable("Addresses", (string)null);
 
                     b.HasData(
                         new
@@ -238,7 +238,7 @@ namespace HNSHOP.Migrations
 
                     b.HasIndex("CustomerTypeId");
 
-                    b.ToTable("Customers");
+                    b.ToTable("Customers", (string)null);
 
                     b.HasData(
                         new
@@ -276,7 +276,7 @@ namespace HNSHOP.Migrations
 
                     b.HasIndex("NotificationId");
 
-                    b.ToTable("CustomerNotifications");
+                    b.ToTable("CustomerNotifications", (string)null);
 
                     b.HasData(
                         new
@@ -323,7 +323,7 @@ namespace HNSHOP.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CustomerTypes");
+                    b.ToTable("CustomerTypes", (string)null);
 
                     b.HasData(
                         new
@@ -352,7 +352,7 @@ namespace HNSHOP.Migrations
 
                     b.HasIndex("SaleEventId");
 
-                    b.ToTable("CustomerTypeSaleEvents");
+                    b.ToTable("CustomerTypeSaleEvents", (string)null);
 
                     b.HasData(
                         new
@@ -390,7 +390,7 @@ namespace HNSHOP.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("DetailOrders");
+                    b.ToTable("DetailOrders", (string)null);
 
                     b.HasData(
                         new
@@ -452,7 +452,7 @@ namespace HNSHOP.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("Likes");
+                    b.ToTable("Likes", (string)null);
 
                     b.HasData(
                         new
@@ -505,7 +505,7 @@ namespace HNSHOP.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Notifications");
+                    b.ToTable("Notifications", (string)null);
 
                     b.HasData(
                         new
@@ -579,7 +579,7 @@ namespace HNSHOP.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
 
                     b.HasData(
                         new
@@ -662,7 +662,7 @@ namespace HNSHOP.Migrations
 
                     b.HasIndex("ShopId");
 
-                    b.ToTable("Products");
+                    b.ToTable("Products", (string)null);
 
                     b.HasData(
                         new
@@ -839,7 +839,7 @@ namespace HNSHOP.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductImages");
+                    b.ToTable("ProductImages", (string)null);
 
                     b.HasData(
                         new
@@ -1036,7 +1036,7 @@ namespace HNSHOP.Migrations
 
                     b.HasIndex("SaleEventId");
 
-                    b.ToTable("ProductSaleEvents");
+                    b.ToTable("ProductSaleEvents", (string)null);
 
                     b.HasData(
                         new
@@ -1129,7 +1129,7 @@ namespace HNSHOP.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProductTypes");
+                    b.ToTable("ProductTypes", (string)null);
 
                     b.HasData(
                         new
@@ -1197,7 +1197,7 @@ namespace HNSHOP.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("Ratings");
+                    b.ToTable("Ratings", (string)null);
 
                     b.HasData(
                         new
@@ -1282,7 +1282,7 @@ namespace HNSHOP.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Roles");
+                    b.ToTable("Roles", (string)null);
 
                     b.HasData(
                         new
@@ -1333,7 +1333,7 @@ namespace HNSHOP.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SaleEvents");
+                    b.ToTable("SaleEvents", (string)null);
 
                     b.HasData(
                         new
@@ -1392,7 +1392,7 @@ namespace HNSHOP.Migrations
                     b.HasIndex("AccountId")
                         .IsUnique();
 
-                    b.ToTable("Shops");
+                    b.ToTable("Shops", (string)null);
 
                     b.HasData(
                         new

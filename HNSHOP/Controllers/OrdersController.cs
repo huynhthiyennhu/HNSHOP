@@ -152,110 +152,110 @@ namespace HNSHOP.Controllers
 
 
 
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateOrderReqDto orderRequest)
-        {
-            try
-            {
-                if (orderRequest == null || orderRequest.DetailOrderReqDtos == null || !orderRequest.DetailOrderReqDtos.Any())
-                {
-                    return BadRequest("Dữ liệu đơn hàng không hợp lệ.");
-                }
+        //[HttpPost]
+        //public async Task<IActionResult> Create([FromBody] CreateOrderReqDto orderRequest)
+        //{
+        //    try
+        //    {
+        //        if (orderRequest == null || orderRequest.DetailOrderReqDtos == null || !orderRequest.DetailOrderReqDtos.Any())
+        //        {
+        //            return BadRequest("Dữ liệu đơn hàng không hợp lệ.");
+        //        }
 
-                int userId = GetUserIdFromToken();
-                var customer = await _db.Customers.Include(c => c.Account).FirstOrDefaultAsync(c => c.AccountId == userId);
-                if (customer == null) return NotFound("Khách hàng không tồn tại.");
+        //        int userId = GetUserIdFromToken();
+        //        var customer = await _db.Customers.Include(c => c.Account).FirstOrDefaultAsync(c => c.AccountId == userId);
+        //        if (customer == null) return NotFound("Khách hàng không tồn tại.");
 
-                Address address;
-                if (!string.IsNullOrWhiteSpace(orderRequest.NewAddress))
-                {
-                    try
-                    {
-                        var newAddress = JsonConvert.DeserializeObject<AddressReqDto>(orderRequest.NewAddress);
-                        if (newAddress == null || string.IsNullOrWhiteSpace(newAddress.HouseNumber) ||
-                            string.IsNullOrWhiteSpace(newAddress.Street) || string.IsNullOrWhiteSpace(newAddress.Ward) ||
-                            string.IsNullOrWhiteSpace(newAddress.District) || string.IsNullOrWhiteSpace(newAddress.City))
-                        {
-                            return BadRequest("Vui lòng nhập đầy đủ thông tin địa chỉ.");
-                        }
+        //        Address address;
+        //        if (!string.IsNullOrWhiteSpace(orderRequest.NewAddress))
+        //        {
+        //            try
+        //            {
+        //                var newAddress = JsonConvert.DeserializeObject<AddressReqDto>(orderRequest.NewAddress);
+        //                if (newAddress == null || string.IsNullOrWhiteSpace(newAddress.HouseNumber) ||
+        //                    string.IsNullOrWhiteSpace(newAddress.Street) || string.IsNullOrWhiteSpace(newAddress.Ward) ||
+        //                    string.IsNullOrWhiteSpace(newAddress.District) || string.IsNullOrWhiteSpace(newAddress.City))
+        //                {
+        //                    return BadRequest("Vui lòng nhập đầy đủ thông tin địa chỉ.");
+        //                }
 
-                        string addressDetail = $"{newAddress.HouseNumber}, {newAddress.Street}, {newAddress.Ward}, {newAddress.District}, {newAddress.City}";
-                        address = new Address { CustomerId = customer.Id, AddressDetail = addressDetail };
+        //                string addressDetail = $"{newAddress.HouseNumber}, {newAddress.Street}, {newAddress.Ward}, {newAddress.District}, {newAddress.City}";
+        //                address = new Address { CustomerId = customer.Id, AddressDetail = addressDetail };
 
-                        _db.Addresses.Add(address);
-                        await _db.SaveChangesAsync();
-                    }
-                    catch (JsonException ex)
-                    {
-                        return BadRequest($"Lỗi xử lý địa chỉ mới: {ex.Message}");
-                    }
-                }
-                else
-                {
-                    address = await _db.Addresses.FirstOrDefaultAsync(a => a.Id == orderRequest.AddressId && a.CustomerId == customer.Id);
-                    if (address == null) return BadRequest("Không tìm thấy địa chỉ đã chọn.");
-                }
+        //                _db.Addresses.Add(address);
+        //                await _db.SaveChangesAsync();
+        //            }
+        //            catch (JsonException ex)
+        //            {
+        //                return BadRequest($"Lỗi xử lý địa chỉ mới: {ex.Message}");
+        //            }
+        //        }
+        //        else
+        //        {
+        //            address = await _db.Addresses.FirstOrDefaultAsync(a => a.Id == orderRequest.AddressId && a.CustomerId == customer.Id);
+        //            if (address == null) return BadRequest("Không tìm thấy địa chỉ đã chọn.");
+        //        }
 
-                // Lấy giỏ hàng từ CartService thay vì Session
-                var cartItems = _cartService.GetCartItems();
-                if (cartItems == null || !cartItems.Any())
-                {
-                    return BadRequest("Giỏ hàng trống!");
-                }
+        //        // Lấy giỏ hàng từ CartService thay vì Session
+        //        var cartItems = _cartService.GetCartItems();
+        //        if (cartItems == null || !cartItems.Any())
+        //        {
+        //            return BadRequest("Giỏ hàng trống!");
+        //        }
 
-                var products = await _db.Products.Include(p => p.ProductSaleEvents).ToListAsync();
-                decimal totalOrder = 0;
-                var orderDetails = new List<DetailOrder>();
+        //        var products = await _db.Products.Include(p => p.ProductSaleEvents).ToListAsync();
+        //        decimal totalOrder = 0;
+        //        var orderDetails = new List<DetailOrder>();
 
-                foreach (var item in cartItems)
-                {
-                    var product = products.FirstOrDefault(p => p.Id == item.ProductId);
-                    if (product == null) continue;
+        //        foreach (var item in cartItems)
+        //        {
+        //            var product = products.FirstOrDefault(p => p.Id == item.ProductId);
+        //            if (product == null) continue;
 
-                    var discount = await _db.SaleEvents
-                        .Where(se => product.ProductSaleEvents.Select(pse => pse.SaleEventId).Contains(se.Id) &&
-                                     se.StartDate <= DateTime.UtcNow && se.EndDate >= DateTime.UtcNow)
-                        .Select(se => se.Discount)
-                        .FirstOrDefaultAsync();
+        //            var discount = await _db.SaleEvents
+        //                .Where(se => product.ProductSaleEvents.Select(pse => pse.SaleEventId).Contains(se.Id) &&
+        //                             se.StartDate <= DateTime.UtcNow && se.EndDate >= DateTime.UtcNow)
+        //                .Select(se => se.Discount)
+        //                .FirstOrDefaultAsync();
 
-                    var finalPrice = product.Price * (1 - (decimal)discount / 100);
-                    totalOrder += finalPrice * item.Quantity;
+        //            var finalPrice = product.Price * (1 - (decimal)discount / 100);
+        //            totalOrder += finalPrice * item.Quantity;
 
-                    orderDetails.Add(new DetailOrder
-                    {
-                        ProductId = product.Id,
-                        Quantity = item.Quantity,
-                        UnitPrice = finalPrice
-                    });
-                }
+        //            orderDetails.Add(new DetailOrder
+        //            {
+        //                ProductId = product.Id,
+        //                Quantity = item.Quantity,
+        //                UnitPrice = finalPrice
+        //            });
+        //        }
 
-                var order = new Order
-                {
-                    CustomerId = customer.Id,
-                    AddressId = address.Id,
-                    Total = totalOrder,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow,
-                    Status = OrderStatus.Processing,
-                    PaymentStatus = PaymentStatus.Pending,
-                    DetailOrders = orderDetails
-                };
+        //        var order = new Order
+        //        {
+        //            CustomerId = customer.Id,
+        //            AddressId = address.Id,
+        //            Total = totalOrder,
+        //            CreatedAt = DateTime.UtcNow,
+        //            UpdatedAt = DateTime.UtcNow,
+        //            Status = OrderStatus.Processing,
+        //            PaymentStatus = PaymentStatus.Pending,
+        //            DetailOrders = orderDetails
+        //        };
 
-                _db.Orders.Add(order);
-                await _db.SaveChangesAsync();
+        //        _db.Orders.Add(order);
+        //        await _db.SaveChangesAsync();
 
-                // Xóa giỏ hàng sau khi đặt hàng thành công
-                _cartService.ClearCart();
+        //        // Xóa giỏ hàng sau khi đặt hàng thành công
+        //        _cartService.ClearCart();
 
-                TempData["SuccessMessage"] = "Đơn hàng đã được đặt thành công!";
-                return RedirectToAction("Index");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Lỗi khi xử lý đơn hàng: {ex.Message}");
-                return StatusCode(500, "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.");
-            }
-        }
+        //        TempData["SuccessMessage"] = "Đơn hàng đã được đặt thành công!";
+        //        return RedirectToAction("Index");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError($"Lỗi khi xử lý đơn hàng: {ex.Message}");
+        //        return StatusCode(500, "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.");
+        //    }
+        //}
 
 
 
@@ -456,6 +456,7 @@ namespace HNSHOP.Controllers
 
         public IActionResult PaypalCancel() => View("Cancel");
         public IActionResult PaypalConfirmed() => View("Success");
+
 
     }
 }

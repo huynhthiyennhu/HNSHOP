@@ -8,5 +8,7 @@
         public int Quantity { get; set; }
         public string Image { get; set; } = string.Empty;
         public decimal Total => Price * Quantity;
+        public int ShopId { get; set; }
+        public string ShopName { get; set; } = string.Empty;
     }
 }

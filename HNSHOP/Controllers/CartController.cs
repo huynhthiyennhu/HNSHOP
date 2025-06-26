@@ -20,8 +20,19 @@ public class CartController : Controller
     public IActionResult Index()
     {
         var cartItems = _cartService.GetCartItems();
-        return View(cartItems);
+
+        var grouped = cartItems
+            .GroupBy(x => new { x.ShopId, x.ShopName })
+            .Select(g => new ShopCartGroupDto
+            {
+                ShopId = g.Key.ShopId,
+                ShopName = g.Key.ShopName,
+                Items = g.ToList()
+            }).ToList();
+
+        return View(grouped);
     }
+
 
     // Thêm sản phẩm vào giỏ hàng
     [HttpPost]
@@ -59,13 +70,21 @@ public class CartController : Controller
 
     // Xóa sản phẩm khỏi giỏ hàng
     [HttpPost]
-    public IActionResult RemoveFromCart(int productId)
+    public IActionResult RemoveFromCart([FromBody] RemoveFromCartReqDto request)
     {
-        _cartService.RemoveFromCart(productId);
-        int cartCount = _cartService.GetCartItemCount(); // Lấy lại số lượng giỏ hàng
+        var productId = request.ProductId;
+        var removed = _cartService.RemoveFromCart(productId);
 
-        return RedirectToAction("Index");
+        if (!removed)
+        {
+            return Json(new { success = false, message = "Không tìm thấy sản phẩm trong giỏ hàng." });
+        }
+
+        int cartCount = _cartService.GetCartItemCount();
+        return Json(new { success = true, cartCount });
     }
+
+
 
     // Xóa toàn bộ giỏ hàng
     [HttpPost]
@@ -74,6 +93,7 @@ public class CartController : Controller
         _cartService.ClearCart();
         return Json(new { success = true, cartCount = 0 });
     }
+
 
 
     [HttpGet]
