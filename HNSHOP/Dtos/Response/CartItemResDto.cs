@@ -10,5 +10,7 @@
         public decimal Total => Price * Quantity;
         public int ShopId { get; set; }
         public string ShopName { get; set; } = string.Empty;
+        public float DiscountPercent { get; set; } // Bổ sung nếu chưa có
+
     }
 }

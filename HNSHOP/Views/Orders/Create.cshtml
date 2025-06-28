@@ -1,4 +1,169 @@
-﻿@model HNSHOP.Dtos.Request.CreateOrderReqDto
+﻿@* @model HNSHOP.Dtos.Request.CreateOrderReqDto *@
+
+@* <section id="cart_items"> *@
+@*     <div class="container"> *@
+@*         <div class="breadcrumbs"> *@
+@*             <ol class="breadcrumb"> *@
+@*                 <li><a asp-controller="Home" asp-action="Index">Home</a></li> *@
+@*                 <li class="active">Thanh toán</li> *@
+@*             </ol> *@
+@*         </div> *@
+@*         <div class="row"> *@
+@*             <!-- Bước 1: Chọn địa chỉ giao hàng --> *@
+@*             <div class="col-md-6"> *@
+@*                 <div class="step-one"> *@
+@*                     <h2 class="heading">Bước 1: Chọn địa chỉ giao hàng</h2> *@
+@*                 </div> *@
+
+@*                 <div class="checkout-options"> *@
+@*                     <h3>Chọn địa chỉ</h3> *@
+@*                     <p>Bạn có thể chọn địa chỉ có sẵn hoặc thêm địa chỉ mới</p> *@
+
+@*                     <div> *@
+@*                         <select id="addressSelect" class="form-control"> *@
+@*                             <option value="">Chọn địa chỉ có sẵn</option> *@
+@*                             @if (ViewBag.Addresses != null) *@
+@*                             { *@
+@*                                 foreach (var address in ViewBag.Addresses as List<HNSHOP.Dtos.Response.AddressResDto>) *@
+@*                                 { *@
+@*                                     <option value="@address.Id">@address.AddressDetail</option> *@
+@*                                 } *@
+@*                             } *@
+@*                         </select> *@
+@*                     </div> *@
+
+@*                     <button type="button" class="btn btn-primary mt-2" id="addNewAddressBtn">Nhập địa chỉ mới</button> *@
+@*                     <hr /> *@
+@*                     <div id="newAddressForm" style="display: none;" class="mt-2"> *@
+@*                         <input type="text" id="houseNumber" class="form-control" placeholder="Số nhà"> *@
+@*                         <br /> *@
+@*                         <select id="citySelect" class="form-control mt-2"> *@
+@*                             <option value="">Chọn Tỉnh/Thành phố</option> *@
+@*                         </select> *@
+@*                         <br /> *@
+@*                         <select id="districtSelect" class="form-control mt-2"> *@
+@*                             <option value="">Chọn Quận/Huyện</option> *@
+@*                         </select> *@
+@*                         <br /> *@
+@*                         <select id="wardSelect" class="form-control mt-2"> *@
+@*                             <option value="">Chọn Phường/Xã</option> *@
+@*                         </select> *@
+@*                         <br /> *@
+@*                         <select id="streetSelect" class="form-control mt-2"> *@
+@*                             <option value="">Chọn Đường/Phố</option> *@
+@*                         </select> *@
+@*                         <br /> *@
+@*                     </div> *@
+@*                 </div> *@
+@*             </div> *@
+
+@*             <!-- Bước 2: Chọn phương thức thanh toán --> *@
+@*             <div class="col-md-6"> *@
+@*                 <div class="step-one"> *@
+@*                     <h2 class="heading">Bước 2: Chọn phương thức thanh toán</h2> *@
+@*                     <div class="payment-options"> *@
+@*                         <span> *@
+@*                             <label><input type="radio" name="paymentMethod" value="bank"> Chuyển khoản ngân hàng</label> *@
+@*                         </span> *@
+@*                         <span> *@
+@*                             <label><input type="radio" name="paymentMethod" value="cod"> Thanh toán khi nhận hàng</label> *@
+@*                         </span> *@
+@*                         <span> *@
+@*                             <label><input type="radio" name="paymentMethod" value="paypal"> Paypal</label> *@
+@*                         </span> *@
+@*                     </div> *@
+@*                 </div> *@
+@*             </div> *@
+@*         </div> *@
+
+
+@*         <div class="step-one" style="margin-top:50px"> *@
+@*             <h2 class="heading">Bước 3: Kiểm tra danh sách sản phẩm đặt mua</h2> *@
+@*         </div> *@
+
+@*         <div class="table-responsive cart_info"> *@
+@*             <table class="table table-condensed"> *@
+@*                 <thead> *@
+@*                     <tr class="cart_menu"> *@
+@*                         <td class="image">Sản phẩm</td> *@
+@*                         <td class="description"></td> *@
+@*                         <td class="price">Giá</td> *@
+@*                         <td class="quantity">Số lượng</td> *@
+@*                         <td class="total">Thành tiền</td> *@
+@*                     </tr> *@
+@*                 </thead> *@
+@*                 <tbody> *@
+@*                     @if (ViewBag.CartItems != null) *@
+@*                     { *@
+@*                         foreach (var item in ViewBag.CartItems as List<HNSHOP.Dtos.Response.CartItemResDto>) *@
+@*                         { *@
+@*                             <tr data-id="@item.ProductId"> *@
+@*                                 <td class="cart_product" data-id="@item.ProductId"> *@
+@*                                     <img src="~/images/hnshop/@item.Image" alt="@item.Name" style="width: 80px; height: 80px;"> *@
+@*                                 </td> *@
+@*                                 <td class="cart_description"> *@
+@*                                     <h4>@item.Name</h4> *@
+@*                                 </td> *@
+@*                                 <td class="cart_price"> *@
+@*                                     <p>@item.Price.ToString("N0") VNĐ</p> *@
+@*                                 </td> *@
+@*                                 <td class="cart_quantity"> *@
+@*                                     <p>@item.Quantity</p> *@
+@*                                 </td> *@
+@*                                 <td class="cart_total"> *@
+@*                                     <p class="cart_total_price">@item.Total.ToString("N0") VNĐ</p> *@
+@*                                 </td> *@
+@*                             </tr> *@
+                           
+
+
+@*                         } *@
+@*                         <tr> *@
+@*                             <td colspan="4">&nbsp;</td> *@
+@*                             <td colspan="2"> *@
+@*                                 <table class="table table-condensed total-result"> *@
+@*                                     <tr> *@
+@*                                         <td>Tổng tiền hàng</td> *@
+@*                                         <td>@ViewBag.Total.ToString("N0") VNĐ</td> *@
+@*                                     </tr> *@
+@*                                     <tr> *@
+@*                                         <td>Phí vận chuyển</td> *@
+@*                                         <td>Miễn phí</td> *@
+@*                                     </tr> *@
+@*                                     <tr> *@
+@*                                         <td>Tổng giảm giá</td> *@
+@*                                         <td><span class="text-danger">- @ViewBag.TotalDiscount.ToString("N0") VNĐ</span></td> *@
+@*                                     </tr> *@
+@*                                     <tr> *@
+@*                                         <td><strong>Tổng thanh toán</strong></td> *@
+@*                                         <input type="hidden" id="finalTotal" value="@ViewBag.FinalTotal" /> *@
+@*                                         <td><span>@ViewBag.FinalTotal.ToString("N0") VNĐ</span></td> *@
+@*                                     </tr> *@
+@*                                 </table> *@
+@*                             </td> *@
+@*                         </tr> *@
+@*                     } *@
+@*                 </tbody> *@
+
+@*             </table> *@
+@*         </div> *@
+       
+
+@*         <div class="text-center mt-4"> *@
+@*             <a asp-controller="Cart" asp-action="Index" class="btn btn-secondary btn-lg"> *@
+@*                 <i class="fa fa-arrow-left"></i> Trở về giỏ hàng *@
+@*             </a> *@
+
+@*             <button type="button" class="btn btn-success btn-lg" id="placeOrderBtn"> *@
+@*                 <i class="fa fa-check-circle"></i> Đặt hàng *@
+@*             </button> *@
+@*         </div> *@
+@*         <br /> *@
+
+@*     </div> *@
+@* </section> *@
+
+@model HNSHOP.Dtos.Request.CreateOrderReqDto
 
 <section id="cart_items">
     <div class="container">
@@ -9,7 +174,6 @@
             </ol>
         </div>
         <div class="row">
-            <!-- Bước 1: Chọn địa chỉ giao hàng -->
             <div class="col-md-6">
                 <div class="step-one">
                     <h2 class="heading">Bước 1: Chọn địa chỉ giao hàng</h2>
@@ -57,7 +221,6 @@
                 </div>
             </div>
 
-            <!-- Bước 2: Chọn phương thức thanh toán -->
             <div class="col-md-6">
                 <div class="step-one">
                     <h2 class="heading">Bước 2: Chọn phương thức thanh toán</h2>
@@ -76,78 +239,71 @@
             </div>
         </div>
 
-
         <div class="step-one" style="margin-top:50px">
             <h2 class="heading">Bước 3: Kiểm tra danh sách sản phẩm đặt mua</h2>
         </div>
 
         <div class="table-responsive cart_info">
-            <table class="table table-condensed">
-                <thead>
-                    <tr class="cart_menu">
-                        <td class="image">Sản phẩm</td>
-                        <td class="description"></td>
-                        <td class="price">Giá</td>
-                        <td class="quantity">Số lượng</td>
-                        <td class="total">Thành tiền</td>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (ViewBag.CartItems != null)
-                    {
-                        foreach (var item in ViewBag.CartItems as List<HNSHOP.Dtos.Response.CartItemResDto>)
-                        {
-                            <tr data-id="@item.ProductId">
-                                <td class="cart_product" data-id="@item.ProductId">
-                                    <img src="~/images/hnshop/@item.Image" alt="@item.Name" style="width: 80px; height: 80px;">
-                                </td>
-                                <td class="cart_description">
-                                    <h4>@item.Name</h4>
-                                </td>
-                                <td class="cart_price">
-                                    <p>@item.Price.ToString("N0") VNĐ</p>
-                                </td>
-                                <td class="cart_quantity">
-                                    <p>@item.Quantity</p>
-                                </td>
-                                <td class="cart_total">
-                                    <p class="cart_total_price">@item.Total.ToString("N0") VNĐ</p>
-                                </td>
+            @if (ViewBag.GroupedCartItems != null)
+            {
+                foreach (var group in ViewBag.GroupedCartItems as List<HNSHOP.Dtos.Response.ShopCartGroupDto>)
+                {
+                    <h4>Shop: @group.ShopName</h4>
+                    <table class="table table-condensed">
+                        <thead>
+                            <tr class="cart_menu">
+                                <td class="image">Sản phẩm</td>
+                                <td class="description"></td>
+                                <td class="price">Giá</td>
+                                <td class="quantity">Số lượng</td>
+                                <td class="total">Thành tiền</td>
                             </tr>
-                           
-
-
-                        }
-                        <tr>
-                            <td colspan="4">&nbsp;</td>
-                            <td colspan="2">
-                                <table class="table table-condensed total-result">
-                                    <tr>
-                                        <td>Tổng tiền hàng</td>
-                                        <td>@ViewBag.Total.ToString("N0") VNĐ</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Phí vận chuyển</td>
-                                        <td>Miễn phí</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Tổng giảm giá</td>
-                                        <td><span class="text-danger">- @ViewBag.TotalDiscount.ToString("N0") VNĐ</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Tổng thanh toán</strong></td>
-                                        <input type="hidden" id="finalTotal" value="@ViewBag.FinalTotal" />
-                                        <td><span>@ViewBag.FinalTotal.ToString("N0") VNĐ</span></td>
-                                    </tr>
-                                </table>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-
+                        </thead>
+                        <tbody>
+                            @foreach (var item in group.Items)
+                            {
+                                <tr data-id="@item.ProductId">
+                                    <td class="cart_product">
+                                        <img src="~/images/hnshop/@item.Image" alt="@item.Name" style="width: 80px; height: 80px;">
+                                    </td>
+                                    <td class="cart_description">
+                                        <h4>@item.Name</h4>
+                                    </td>
+                                    <td class="cart_price">
+                                        <p>@item.Price.ToString("N0") VNĐ</p>
+                                    </td>
+                                    <td class="cart_quantity">
+                                        <p>@item.Quantity</p>
+                                    </td>
+                                    <td class="cart_total">
+                                        <p class="cart_total_price">@item.Total.ToString("N0") VNĐ</p>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            }
+            <table class="table table-condensed total-result">
+                <tr>
+                    <td>Tổng tiền hàng</td>
+                    <td>@ViewBag.Total.ToString("N0") VNĐ</td>
+                </tr>
+                <tr>
+                    <td>Phí vận chuyển</td>
+                    <td>Miễn phí</td>
+                </tr>
+                <tr>
+                    <td>Tổng giảm giá</td>
+                    <td><span class="text-danger">- @ViewBag.TotalDiscount.ToString("N0") VNĐ</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Tổng thanh toán</strong></td>
+                    <input type="hidden" id="finalTotal" value="@ViewBag.FinalTotal" />
+                    <td><span>@ViewBag.FinalTotal.ToString("N0") VNĐ</span></td>
+                </tr>
             </table>
         </div>
-       
 
         <div class="text-center mt-4">
             <a asp-controller="Cart" asp-action="Index" class="btn btn-secondary btn-lg">
@@ -162,6 +318,7 @@
 
     </div>
 </section>
+
 @section Scripts {
     <script>
         $(document).ready(function () {

@@ -25,8 +25,11 @@ namespace HNSHOP.Controllers
             var orders = await _db.Orders
                 .Include(o => o.Customer)
                 .Include(o => o.Address)
-                .Include(o => o.DetailOrders)
-                    .ThenInclude(d => d.Product)
+                .Include(o => o.SubOrders)
+                    .ThenInclude(so => so.Shop)
+                .Include(o => o.SubOrders)
+                    .ThenInclude(so => so.DetailOrders)
+                        .ThenInclude(d => d.Product)
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
 
@@ -37,78 +40,61 @@ namespace HNSHOP.Controllers
         public async Task<IActionResult> Approve(int id)
         {
             var order = await _db.Orders
-                .Include(o => o.DetailOrders)
-                    .ThenInclude(d => d.Product)
+                .Include(o => o.SubOrders)
+                    .ThenInclude(so => so.DetailOrders)
+                        .ThenInclude(d => d.Product)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
             if (order == null) return NotFound("Không tìm thấy đơn hàng.");
             if (order.Status != OrderStatus.Processing)
-            {
                 return BadRequest("Chỉ có thể duyệt đơn hàng đang xử lý.");
-            }
 
             order.Status = OrderStatus.Shipping;
             order.UpdatedAt = DateTime.UtcNow;
 
-            foreach (var detail in order.DetailOrders)
+            foreach (var subOrder in order.SubOrders)
             {
-                var product = detail.Product;
-                if (product != null)
-                {
-                    product.Quantity -= detail.Quantity;
+                subOrder.Status = SubOrderStatus.Shipping;
 
-                    // ✅ Tăng số lượng đã bán
-                    product.DetailOrders ??= new List<DetailOrder>();
-                    product.DetailOrders.Add(detail); // đã được Include
+                foreach (var detail in subOrder.DetailOrders)
+                {
+                    var product = detail.Product;
+                    if (product != null)
+                    {
+                        product.Quantity -= detail.Quantity;
+
+                        // Optional: Ghi nhận chi tiết đơn hàng đã bán
+                        product.DetailOrders ??= new List<DetailOrder>();
+                        product.DetailOrders.Add(detail);
+                    }
                 }
             }
 
             await _db.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Duyệt đơn hàng thành công! Khách hàng có thể đánh giá sản phẩm.";
+            TempData["SuccessMessage"] = "Đã duyệt đơn hàng thành công! Các shop có thể tiến hành giao hàng.";
             return RedirectToAction("Index");
         }
-
-        //[HttpPost]
-        //public async Task<IActionResult> Approve(int id)
-        //{
-        //    var order = await _db.Orders
-        //        .Include(o => o.DetailOrders)
-        //            .ThenInclude(d => d.Product)
-        //        .FirstOrDefaultAsync(o => o.Id == id);
-
-        //    if (order == null || order.Status != OrderStatus.Processing)
-        //        return BadRequest();
-
-        //    order.Status = OrderStatus.Shipping;
-        //    order.UpdatedAt = DateTime.UtcNow;
-
-        //    foreach (var detail in order.DetailOrders)
-        //    {
-        //        var product = detail.Product;
-        //        detail.ShopId = product.ShopId; // cập nhật nếu chưa có
-        //        product.Quantity -= detail.Quantity;
-        //    }
-
-        //    await _db.SaveChangesAsync();
-        //    return RedirectToAction("Index");
-        //}
-
-
 
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
         {
             var order = await _db.Orders
-                .Include(o => o.DetailOrders)
+                .Include(o => o.SubOrders)
+                    .ThenInclude(so => so.DetailOrders)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
-            if (order == null) return NotFound("Không tìm thấy đơn hàng.");
+            if (order == null)
+                return NotFound("Không tìm thấy đơn hàng.");
+
             if (order.Status != OrderStatus.Cancelled)
-            {
                 return BadRequest("Chỉ có thể xóa đơn hàng đã bị hủy.");
+
+            foreach (var subOrder in order.SubOrders)
+            {
+                _db.DetailOrders.RemoveRange(subOrder.DetailOrders);
             }
 
-            _db.DetailOrders.RemoveRange(order.DetailOrders);
+            _db.SubOrders.RemoveRange(order.SubOrders);
             _db.Orders.Remove(order);
             await _db.SaveChangesAsync();
 

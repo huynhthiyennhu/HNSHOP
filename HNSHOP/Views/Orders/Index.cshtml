@@ -1,84 +1,177 @@
-﻿@model List<HNSHOP.Dtos.Response.OrderResDto>
-<section id="cart_items">
-	<div class="container">
-		<div class="breadcrumbs">
-			<ol class="breadcrumb">
-				<li><a href="#">Home</a></li>
-				<li class="active">Đơn hàng</li>
-			</ol>
-		</div>
-		<h2 class="title text-center">Danh sách đơn hàng</h2>
-			@if (Model.Count == 0)
-			{
-				 <h2 class="title text-center">Bạn không có đơn hàng nào.<a asp-controller="Home" asp-action="Index">Tiếp tục mua sắm</a></h2>
-				 <br />
-				 <br />
-				 <br />
-			}
-			else
-			{
-			<div class="table-responsive cart_info">
-				<table class="table table-condensed">
-					<thead>
-						<tr class="cart_menu">
-            <th>Mã đơn</th>
-            <th>Trạng thái</th>
-            <th>Thanh toán</th>
-            <th>Tổng tiền</th>
-            <th>Ngày đặt</th>
-            <th>Thao tác</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var order in Model)
-        {
-            <tr>
-                <td>#@order.Id</td>
-                <td>
-                    @switch (order.Status)
-                    {
-                        case HNSHOP.Utils.EnumTypes.OrderStatus.Processing:
-                            <span class="badge bg-warning">Đang xử lý</span>
-                            break;
-                        case HNSHOP.Utils.EnumTypes.OrderStatus.Shipping:
-                            <span class="badge bg-info">Đang giao</span>
-                            break;
-                        case HNSHOP.Utils.EnumTypes.OrderStatus.Delivered:
-                            <span class="badge bg-success">Đã giao</span>
-                            break;
-                        case HNSHOP.Utils.EnumTypes.OrderStatus.Cancelled:
-                            <span class="badge bg-danger">Đã hủy</span>
-                            break;
-                    }
-                </td>
-                <td>
-                    @switch (order.PaymentStatus)
-                    {
-                        case HNSHOP.Utils.EnumTypes.PaymentStatus.Pending:
-                            <span class="badge bg-secondary">Chưa thanh toán</span>
-                            break;
-                        case HNSHOP.Utils.EnumTypes.PaymentStatus.Completed:
-                            <span class="badge bg-success">Đã thanh toán</span>
-                            break;
-                    }
-                </td>
-                <td>@order.Total.ToString("N0") VNĐ</td>
-                <td>@order.CreatedAt.ToString("dd/MM/yyyy")</td>
-                <td>
-                    <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-info btn-sm">Chi tiết</a>
-                    @if (order.Status == HNSHOP.Utils.EnumTypes.OrderStatus.Processing)
-                    {
-                        <form asp-action="Cancel" asp-route-id="@order.Id" method="post" style="display:inline;">
-                            <button type="submit" class="btn btn-danger btn-sm">Hủy đơn</button>
-                        </form>
-                    }
-                </td>
-            </tr>
+﻿@* @model List<HNSHOP.Dtos.Response.OrderResDto> *@
+@* <section id="cart_items"> *@
+@* 	<div class="container"> *@
+@* 		<div class="breadcrumbs"> *@
+@* 			<ol class="breadcrumb"> *@
+@* 				<li><a href="#">Home</a></li> *@
+@* 				<li class="active">Đơn hàng</li> *@
+@* 			</ol> *@
+@* 		</div> *@
+@* 		<h2 class="title text-center">Danh sách đơn hàng</h2> *@
+@* 			@if (Model.Count == 0) *@
+@* 			{ *@
+@* 				 <h2 class="title text-center">Bạn không có đơn hàng nào.<a asp-controller="Home" asp-action="Index">Tiếp tục mua sắm</a></h2> *@
+@* 				 <br /> *@
+@* 				 <br /> *@
+@* 				 <br /> *@
+@* 			} *@
+@* 			else *@
+@* 			{ *@
+@* 			<div class="table-responsive cart_info"> *@
+@* 				<table class="table table-condensed"> *@
+@* 					<thead> *@
+@* 						<tr class="cart_menu"> *@
+@*             <th>Mã đơn</th> *@
+@*             <th>Trạng thái</th> *@
+@*             <th>Thanh toán</th> *@
+@*             <th>Tổng tiền</th> *@
+@*             <th>Ngày đặt</th> *@
+@*             <th>Thao tác</th> *@
+@*         </tr> *@
+@*     </thead> *@
+@*     <tbody> *@
+@*         @foreach (var order in Model) *@
+@*         { *@
+@*             <tr> *@
+@*                 <td>#@order.Id</td> *@
+@*                 <td> *@
+@*                     @switch (order.Status) *@
+@*                     { *@
+@*                         case HNSHOP.Utils.EnumTypes.OrderStatus.Processing: *@
+@*                             <span class="badge bg-warning">Đang xử lý</span> *@
+@*                             break; *@
+@*                         case HNSHOP.Utils.EnumTypes.OrderStatus.Shipping: *@
+@*                             <span class="badge bg-info">Đang giao</span> *@
+@*                             break; *@
+@*                         case HNSHOP.Utils.EnumTypes.OrderStatus.Delivered: *@
+@*                             <span class="badge bg-success">Đã giao</span> *@
+@*                             break; *@
+@*                         case HNSHOP.Utils.EnumTypes.OrderStatus.Cancelled: *@
+@*                             <span class="badge bg-danger">Đã hủy</span> *@
+@*                             break; *@
+@*                     } *@
+@*                 </td> *@
+@*                 <td> *@
+@*                     @switch (order.PaymentStatus) *@
+@*                     { *@
+@*                         case HNSHOP.Utils.EnumTypes.PaymentStatus.Pending: *@
+@*                             <span class="badge bg-secondary">Chưa thanh toán</span> *@
+@*                             break; *@
+@*                         case HNSHOP.Utils.EnumTypes.PaymentStatus.Completed: *@
+@*                             <span class="badge bg-success">Đã thanh toán</span> *@
+@*                             break; *@
+@*                     } *@
+@*                 </td> *@
+@*                 <td>@order.Total.ToString("N0") VNĐ</td> *@
+@*                 <td>@order.CreatedAt.ToString("dd/MM/yyyy")</td> *@
+@*                 <td> *@
+@*                     <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-info btn-sm">Chi tiết</a> *@
+@*                     @if (order.Status == HNSHOP.Utils.EnumTypes.OrderStatus.Processing) *@
+@*                     { *@
+@*                         <form asp-action="Cancel" asp-route-id="@order.Id" method="post" style="display:inline;"> *@
+@*                             <button type="submit" class="btn btn-danger btn-sm">Hủy đơn</button> *@
+@*                         </form> *@
+@*                     } *@
+@*                 </td> *@
+@*             </tr> *@
 
-        }
-    </tbody>
-</table>
-</div>
-}
-</div>
+@*         } *@
+@*     </tbody> *@
+@* </table> *@
+@* </div> *@
+@* } *@
+@* </div> *@
+@* </section> *@
+@model List<HNSHOP.Dtos.Response.OrderResDto>
+@using HNSHOP.Utils.EnumTypes
+
+<section class="category-tab shop-details-tab">
+    <div class="container">
+        <div class="col-sm-12">
+            <ul class="nav nav-tabs">
+                <li class="active"><a href="#processing" data-toggle="tab">Đang xử lý</a></li>
+                <li><a href="#shipping" data-toggle="tab">Đang giao</a></li>
+                <li><a href="#delivered" data-toggle="tab">Đã giao</a></li>
+                <li><a href="#completed" data-toggle="tab">Hoàn tất</a></li>
+                <li><a href="#rating" data-toggle="tab">Chờ đánh giá</a></li>
+            </ul>
+        </div>
+
+        <div class="tab-content">
+            <div class="tab-pane fade active in" id="processing">
+                @Html.Raw(RenderOrders(Model.Where(o => o.Status == OrderStatus.Processing).ToList()))
+            </div>
+
+            <div class="tab-pane fade" id="shipping">
+                @Html.Raw(RenderOrders(Model.Where(o => o.Status == OrderStatus.Shipping).ToList()))
+            </div>
+
+            <div class="tab-pane fade" id="delivered">
+                @Html.Raw(RenderOrders(Model.Where(o => o.Status == OrderStatus.Delivered).ToList()))
+            </div>
+
+            <div class="tab-pane fade" id="completed">
+                @Html.Raw(RenderOrders(Model.Where(o => o.Status == OrderStatus.Completed).ToList()))
+            </div>
+
+            <div class="tab-pane fade" id="rating">
+                @{
+                    var waitingToReviewOrders = Model
+                    .Where(o => o.Status == OrderStatus.Delivered &&
+                    o.SubOrders != null &&
+                    o.SubOrders.Any(so =>
+                    so.DetailOrders != null &&
+                    so.DetailOrders.Any(d => d.Product != null && !d.Product.IsRated)
+                    )
+                    ).ToList();
+                }
+                @Html.Raw(RenderOrders(waitingToReviewOrders))
+            </div>
+        </div>
+    </div>
 </section>
+
+@functions {
+    private string RenderOrders(List<HNSHOP.Dtos.Response.OrderResDto> orders)
+    {
+        if (orders == null || orders.Count == 0)
+        {
+            return "<p class='text-muted text-center'>Không có đơn hàng nào trong trạng thái này.</p>";
+        }
+
+        var html = "<table class='table table-condensed'>" +
+                   "<thead>" +
+                   "<tr class='cart_menu'>" +
+                   "<th>Mã đơn</th><th>Ngày đặt</th><th>Thanh toán</th><th>Tổng tiền</th><th>Thao tác</th>" +
+                   "</tr></thead><tbody>";
+
+        foreach (var order in orders)
+        {
+            html += "<tr>" +
+                    $"<td>#{order.Id}</td>" +
+                    $"<td>{order.CreatedAt:dd/MM/yyyy}</td>" +
+                    "<td>";
+
+            html += (order.PaymentStatus == PaymentStatus.Completed)
+                ? "<span class='badge bg-success'>Đã thanh toán</span>"
+                : "<span class='badge bg-secondary'>Chưa thanh toán</span>";
+
+            html += "</td>" +
+                    $"<td>{order.Total:N0} VNĐ</td>" +
+                    "<td>" +
+                    $"<a href='/Orders/Details/{order.Id}' class='btn btn-info btn-sm'>Chi tiết</a>";
+
+            if (order.Status == OrderStatus.Processing)
+            {
+                html += $"<form action='/Orders/Cancel/{order.Id}' method='post' style='display:inline;'>" +
+                        "<button type='submit' class='btn btn-danger btn-sm'>Hủy đơn</button></form>";
+            }
+
+            html += "</td></tr>";
+        }
+
+        html += "</tbody></table>";
+        return html;
+    }
+}
+

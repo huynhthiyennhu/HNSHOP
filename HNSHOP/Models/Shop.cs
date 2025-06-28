@@ -13,6 +13,7 @@ namespace HNSHOP.Models
         public Account Account { get; set; } = null!;
 
         public List<Product> Products { get; set; } = [];
+        public List<SubOrder> SubOrders { get; set; } = [];
 
 
     }

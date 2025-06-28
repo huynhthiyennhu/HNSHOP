@@ -1,4 +1,4 @@
-﻿@model List<HNSHOP.Models.Order>
+﻿@* @model List<HNSHOP.Models.Order> *@
 @using HNSHOP.Utils.EnumTypes
 @using System.Globalization
 @{
@@ -10,7 +10,7 @@
 <table class="table table-bordered">
     <thead>
         <tr>
-            <th>Mã đơn hàng</th>
+            <th>Mã đơn</th>
             <th>Khách hàng</th>
             <th>Địa chỉ</th>
             <th>Trạng thái</th>
@@ -39,6 +39,9 @@
                         case OrderStatus.Delivered:
                             @:<span class="badge bg-success">Đã giao</span>
                             break;
+                        case OrderStatus.Completed:
+                            @:<span class="badge bg-primary">Hoàn tất</span>
+                            break;
                         case OrderStatus.Cancelled:
                             @:<span class="badge bg-danger">Đã hủy</span>
                             break;
@@ -66,15 +69,71 @@
                     }
                 </td>
             </tr>
+
+            @* Hiển thị các SubOrder *@
+            @if (order.SubOrders != null && order.SubOrders.Any())
+            {
+                <tr>
+                    <td colspan="8" class="p-0">
+                        <table class="table table-sm table-striped mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center">Shop</th>
+                                    <th colspan="3">Sản phẩm</th>
+                                    <th class="text-center">Số lượng</th>
+                                    <th class="text-center">Đơn giá</th>
+                                    <th class="text-center">Tạm tính</th>
+                                    <th class="text-center">Trạng thái giao</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var sub in order.SubOrders)
+                                {
+                                    foreach (var item in sub.DetailOrders)
+                                    {
+                                        <tr>
+                                            <td>@sub.Shop.Name</td>
+                                            <td colspan="3">@item.Product.Name</td>
+                                            <td class="text-center">@item.Quantity</td>
+                                            <td class="text-center">@item.UnitPrice.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</td>
+                                            <td class="text-center">@((item.UnitPrice * item.Quantity).ToString("C0", CultureInfo.GetCultureInfo("vi-VN")))</td>
+                                            <td class="text-center">
+                                                @switch (sub.Status)
+                                                {
+                                                    case SubOrderStatus.Pending:
+                                                        @:<span class="badge bg-secondary">Chờ duyệt</span>
+                                                        break;
+                                                    case SubOrderStatus.Shipping:
+                                                        @:<span class="badge bg-info">Đang giao</span>
+                                                        break;
+                                                    case SubOrderStatus.Delivered:
+                                                        @:<span class="badge bg-success">Đã giao</span>
+                                                        break;
+                                                    case SubOrderStatus.Completed:
+                                                        @:<span class="badge bg-primary">Hoàn tất</span>
+                                                        break;
+                                                    case SubOrderStatus.Cancelled:
+                                                        @:<span class="badge bg-danger">Đã hủy</span>
+                                                        break;
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            }
         }
     </tbody>
 </table>
 
 @if (TempData["SuccessMessage"] != null)
 {
-    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    <div class="alert alert-success mt-3">@TempData["SuccessMessage"]</div>
 }
 @if (TempData["ErrorMessage"] != null)
 {
-    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    <div class="alert alert-danger mt-3">@TempData["ErrorMessage"]</div>
 }

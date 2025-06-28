@@ -27,12 +27,24 @@ namespace HNSHOP.Services
 
         }
 
+        //public async Task<List<OrderResDto>> GetAllCustomerOrdersAsync(int customerId)
+        //{
+        //    var orders = await _db.Orders
+        //        .Include(o => o.DetailOrders)
+        //        .Where(o => o.CustomerId == customerId)
+        //        .ToListAsync();
+
+        //    return _mapper.Map<List<OrderResDto>>(orders);
+        //}
+
         public async Task<List<OrderResDto>> GetAllCustomerOrdersAsync(int customerId)
         {
             var orders = await _db.Orders
-                .Include(o => o.DetailOrders)
-                .Where(o => o.CustomerId == customerId)
-                .ToListAsync();
+                .Include(o => o.SubOrders)
+                    .ThenInclude(so => so.DetailOrders)
+                        //.ThenInclude(do => do.Product) // nếu cần thêm thông tin sản phẩm trong DTO
+        .Where(o => o.CustomerId == customerId)
+        .ToListAsync();
 
             return _mapper.Map<List<OrderResDto>>(orders);
         }
@@ -40,11 +52,14 @@ namespace HNSHOP.Services
         public async Task<OrderResDto?> GetOrderByIdAsync(int orderId)
         {
             var order = await _db.Orders
-                .Include(o => o.DetailOrders)
-                .FirstOrDefaultAsync(o => o.Id == orderId);
+                .Include(o => o.SubOrders)
+                    .ThenInclude(so => so.DetailOrders)
+                        //.ThenInclude(do => do.Product) // nếu cần thông tin sản phẩm trong chi tiết đơn
+        .FirstOrDefaultAsync(o => o.Id == orderId);
 
             return _mapper.Map<OrderResDto>(order);
         }
+
 
         public async Task<bool> UpdateOrderShopAsync(int orderId, UpdateOrderShopReqDto updateOrderReq)
         {
@@ -96,29 +111,56 @@ namespace HNSHOP.Services
             var cartItems = _cartService.GetCartItems();
             if (cartItems == null || !cartItems.Any()) throw new Exception("Giỏ hàng trống.");
 
-            var products = await _db.Products.Include(p => p.ProductSaleEvents).ToListAsync();
+            var products = await _db.Products
+                .Include(p => p.ProductSaleEvents)
+                .Include(p => p.Shop)
+                .ToListAsync();
+
             decimal totalOrder = 0;
-            var orderDetails = new List<DetailOrder>();
 
-            foreach (var item in cartItems)
+            // Nhóm sản phẩm trong giỏ hàng theo ShopId
+            var itemsGroupedByShop = cartItems
+                .GroupBy(item => products.First(p => p.Id == item.ProductId).ShopId)
+                .ToList();
+
+            var subOrders = new List<SubOrder>();
+
+            foreach (var shopGroup in itemsGroupedByShop)
             {
-                var product = products.FirstOrDefault(p => p.Id == item.ProductId);
-                if (product == null) continue;
+                int shopId = shopGroup.Key;
+                var detailOrders = new List<DetailOrder>();
+                decimal subTotal = 0;
 
-                var discount = await _db.SaleEvents
-                    .Where(se => product.ProductSaleEvents.Select(pse => pse.SaleEventId).Contains(se.Id)
-                                 && se.StartDate <= DateTime.UtcNow && se.EndDate >= DateTime.UtcNow)
-                    .Select(se => se.Discount)
-                    .FirstOrDefaultAsync();
-
-                var finalPrice = product.Price * (1 - (decimal)discount / 100);
-                totalOrder += finalPrice * item.Quantity;
-
-                orderDetails.Add(new DetailOrder
+                foreach (var item in shopGroup)
                 {
-                    ProductId = product.Id,
-                    Quantity = item.Quantity,
-                    UnitPrice = finalPrice
+                    var product = products.First(p => p.Id == item.ProductId);
+
+                    var discount = await _db.SaleEvents
+                        .Where(se => product.ProductSaleEvents.Select(pse => pse.SaleEventId).Contains(se.Id)
+                                     && se.StartDate <= DateTime.UtcNow && se.EndDate >= DateTime.UtcNow)
+                        .Select(se => se.Discount)
+                        .FirstOrDefaultAsync();
+
+                    var finalPrice = product.Price * (1 - (decimal)discount / 100);
+                    subTotal += finalPrice * item.Quantity;
+
+                    detailOrders.Add(new DetailOrder
+                    {
+                        ProductId = product.Id,
+                        Quantity = item.Quantity,
+                        UnitPrice = finalPrice
+                    });
+                }
+
+                totalOrder += subTotal;
+
+                subOrders.Add(new SubOrder
+                {
+                    ShopId = shopId,
+                    DetailOrders = detailOrders,
+                    Total = subTotal,
+                    Status = SubOrderStatus.Pending,
+                    CreatedAt = DateTime.UtcNow
                 });
             }
 
@@ -131,7 +173,7 @@ namespace HNSHOP.Services
                 UpdatedAt = DateTime.UtcNow,
                 Status = OrderStatus.Processing,
                 PaymentStatus = PaymentStatus.Pending,
-                DetailOrders = orderDetails
+                SubOrders = subOrders
             };
 
             _db.Orders.Add(order);
@@ -141,5 +183,6 @@ namespace HNSHOP.Services
 
             return order;
         }
+
     }
 }

@@ -11,8 +11,14 @@ namespace HNSHOP.Dtos.Response
         public decimal Total { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
         public AddressResDto Address { get; set; } = null!;
-        public List<DetailOrderResDto> DetailOrders { get; set; } = [];
         public Customer Customer { get; set; } = null!;
+
+        // ❌ XÓA DetailOrders (không còn ở Order)
+        // public List<DetailOrderResDto> DetailOrders { get; set; } = [];
+
+        // ✅ Thêm SubOrders (theo shop)
+        public List<SubOrderResDto> SubOrders { get; set; } = [];
     }
 }

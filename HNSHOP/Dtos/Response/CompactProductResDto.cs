@@ -8,6 +8,7 @@
         public ShopResDto Shop { get; set; } = null!;
         public float DiscountPercent { get; set; }
         public List<ProductImageResDto> Images { get; set; } = [];
+        public bool IsRated { get; set; } = false;
 
     }
 }

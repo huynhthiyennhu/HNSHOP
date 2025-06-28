@@ -32,6 +32,88 @@ public class ProductsController(ApplicationDbContext db, IMapper mapper, CartSer
     }
 
 
+    //public async Task<IActionResult> Details(int id)
+    //{
+    //    var product = await _db.Products
+    //        .Include(p => p.ProductImages)
+    //        .Include(p => p.Shop)
+    //        .Include(p => p.ProductType)
+    //        .Include(p => p.Ratings)
+    //            .ThenInclude(r => r.Customer)
+    //        .Include(p => p.Likes)
+    //        .Include(p => p.DetailOrders) 
+    //        .FirstOrDefaultAsync(p => p.Id == id);
+
+    //    if (product == null) return NotFound();
+
+
+    //    int ratingCount = product.Ratings?.Count ?? 0;
+    //    float averageRating = ratingCount > 0 ? (float)product.Ratings.Average(r => r.RatingValue) : 0;
+    //    int likeCount = product.Likes.Count;
+
+    //    int soldQuantity = product.DetailOrders.Sum(d => d.Quantity);
+
+    //    var relatedProducts = await _db.Products
+    //        .Include(p => p.ProductImages)
+    //        .Where(p => p.ProductTypeId == product.ProductTypeId && p.Id != id)
+    //        .Take(4)
+    //        .ToListAsync();
+
+    //    var shopProducts = await _db.Products
+    //        .Include(p => p.ProductImages)
+    //        .Where(p => p.ShopId == product.ShopId && p.Id != id)
+    //        .Take(4)
+    //        .ToListAsync();
+    //    bool hasPurchased = false;
+    //    bool hasReviewed = false;
+
+    //    // Lấy ID người dùng từ token
+    //    int userId = GetUserIdFromToken();
+
+    //    // Lấy thông tin khách hàng tương ứng với tài khoản (nếu có)
+    //    var customer = await _db.Customers.FirstOrDefaultAsync(c => c.AccountId == userId);
+
+    //    // Nếu là khách hàng thì kiểm tra đã mua và đã đánh giá chưa
+    //    if (customer != null)
+    //    {
+    //        int customerId = customer.Id;
+
+    //        hasPurchased = await _db.Orders
+    //            .Include(o => o.DetailOrders)
+    //            .AnyAsync(o => o.CustomerId == customerId
+    //                        && o.DetailOrders.Any(d => d.ProductId == id)
+    //                        && o.Status == OrderStatus.Shipping);
+
+    //        hasReviewed = await _db.Ratings
+    //            .AnyAsync(r => r.ProductId == id && r.CustomerId == customerId);
+    //    }
+
+    //    ViewBag.HasPurchased = hasPurchased;
+    //    ViewBag.HasReviewed = hasReviewed;
+    //    ViewBag.CustomerId = customer?.Id ?? 0;
+
+
+
+    //    var productDto = _mapper.Map<DetailProductResDto>(product);
+    //    var relatedProductsDto = _mapper.Map<List<ProductResDto>>(relatedProducts);
+    //    var shopProductsDto = _mapper.Map<List<ProductResDto>>(shopProducts);
+    //    var shopDto = _mapper.Map<ShopResDto>(product.Shop);
+
+    //    productDto.SoldQuantity = soldQuantity; 
+
+    //    ViewBag.RelatedProducts = relatedProductsDto;
+    //    ViewBag.ShopProducts = shopProductsDto;
+    //    ViewBag.Shop = shopDto;
+    //    ViewBag.Ratings = product.Ratings?.ToList() ?? new List<Rating>();
+    //    ViewBag.RatingCount = ratingCount;
+    //    ViewBag.AverageRating = averageRating;
+    //    ViewBag.CustomerId = userId;
+    //    ViewBag.LikeCount = likeCount;
+
+    //    return View("Details", productDto);
+    //}
+
+
     public async Task<IActionResult> Details(int id)
     {
         var product = await _db.Products
@@ -41,12 +123,11 @@ public class ProductsController(ApplicationDbContext db, IMapper mapper, CartSer
             .Include(p => p.Ratings)
                 .ThenInclude(r => r.Customer)
             .Include(p => p.Likes)
-            .Include(p => p.DetailOrders) 
+            .Include(p => p.DetailOrders)
             .FirstOrDefaultAsync(p => p.Id == id);
 
         if (product == null) return NotFound();
 
-        
         int ratingCount = product.Ratings?.Count ?? 0;
         float averageRating = ratingCount > 0 ? (float)product.Ratings.Average(r => r.RatingValue) : 0;
         int likeCount = product.Likes.Count;
@@ -64,42 +145,16 @@ public class ProductsController(ApplicationDbContext db, IMapper mapper, CartSer
             .Where(p => p.ShopId == product.ShopId && p.Id != id)
             .Take(4)
             .ToListAsync();
-        bool hasPurchased = false;
-        bool hasReviewed = false;
 
-        // Lấy ID người dùng từ token
-        int userId = GetUserIdFromToken();
-
-        // Lấy thông tin khách hàng tương ứng với tài khoản (nếu có)
-        var customer = await _db.Customers.FirstOrDefaultAsync(c => c.AccountId == userId);
-
-        // Nếu là khách hàng thì kiểm tra đã mua và đã đánh giá chưa
-        if (customer != null)
-        {
-            int customerId = customer.Id;
-
-            hasPurchased = await _db.Orders
-                .Include(o => o.DetailOrders)
-                .AnyAsync(o => o.CustomerId == customerId
-                            && o.DetailOrders.Any(d => d.ProductId == id)
-                            && o.Status == OrderStatus.Shipping);
-
-            hasReviewed = await _db.Ratings
-                .AnyAsync(r => r.ProductId == id && r.CustomerId == customerId);
-        }
-
-        ViewBag.HasPurchased = hasPurchased;
-        ViewBag.HasReviewed = hasReviewed;
-        ViewBag.CustomerId = customer?.Id ?? 0;
-
-
+        // Không cần kiểm tra đã mua hay đã đánh giá nữa
+        // Không cần lấy thông tin Customer nếu không dùng
 
         var productDto = _mapper.Map<DetailProductResDto>(product);
         var relatedProductsDto = _mapper.Map<List<ProductResDto>>(relatedProducts);
         var shopProductsDto = _mapper.Map<List<ProductResDto>>(shopProducts);
         var shopDto = _mapper.Map<ShopResDto>(product.Shop);
 
-        productDto.SoldQuantity = soldQuantity; 
+        productDto.SoldQuantity = soldQuantity;
 
         ViewBag.RelatedProducts = relatedProductsDto;
         ViewBag.ShopProducts = shopProductsDto;
@@ -107,12 +162,10 @@ public class ProductsController(ApplicationDbContext db, IMapper mapper, CartSer
         ViewBag.Ratings = product.Ratings?.ToList() ?? new List<Rating>();
         ViewBag.RatingCount = ratingCount;
         ViewBag.AverageRating = averageRating;
-        ViewBag.CustomerId = userId;
         ViewBag.LikeCount = likeCount;
 
         return View("Details", productDto);
     }
-
 
     [HttpPost]
     public async Task<IActionResult> SubmitReview(RatingReqDto reviewReq)
@@ -122,12 +175,14 @@ public class ProductsController(ApplicationDbContext db, IMapper mapper, CartSer
         if (!ModelState.IsValid)
             return RedirectToAction("Details", new { id = reviewReq.ProductId });
 
-        var order = await _db.Orders
-            .Include(o => o.DetailOrders)
-            .FirstOrDefaultAsync(o =>
-                o.Customer.AccountId == userId &&
-                o.Status == OrderStatus.Shipping && 
-                o.DetailOrders.Any(d => d.ProductId == reviewReq.ProductId));
+            var order = await _db.Orders
+         .Include(o => o.SubOrders)
+             .ThenInclude(so => so.DetailOrders)
+         .FirstOrDefaultAsync(o =>
+             o.Customer.AccountId == userId &&
+             o.Status == OrderStatus.Shipping &&
+             o.SubOrders.Any(so => so.DetailOrders.Any(d => d.ProductId == reviewReq.ProductId)));
+
 
         if (order == null)
         {

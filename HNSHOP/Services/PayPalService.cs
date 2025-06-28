@@ -20,37 +20,69 @@ public class PayPalService
 
     private PayPalHttpClient GetClient() => new PayPalHttpClient(GetEnvironment());
 
-    public async Task<string?> CreateOrder(decimal total, string currency, string returnUrl, string cancelUrl)
+    //public async Task<string?> CreateOrder(decimal total, string currency, string returnUrl, string cancelUrl)
+    //{
+    //    var request = new OrdersCreateRequest();
+    //    request.Prefer("return=representation");
+    //    request.RequestBody(new OrderRequest
+    //    {
+    //        CheckoutPaymentIntent = "CAPTURE",
+    //        ApplicationContext = new ApplicationContext
+    //        {
+    //            ReturnUrl = returnUrl,
+    //            CancelUrl = cancelUrl
+    //        },
+    //        PurchaseUnits = new List<PurchaseUnitRequest>
+    //        {
+    //            new PurchaseUnitRequest
+    //            {
+    //                AmountWithBreakdown = new AmountWithBreakdown
+    //                {
+    //                    CurrencyCode = currency,
+    //                    Value = total.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)
+    //                }
+    //            }
+    //        }
+    //    });
+
+    //    var response = await GetClient().Execute(request);
+    //    var result = response.Result<Order>();
+    //    return result.Links.FirstOrDefault(l => l.Rel == "approve")?.Href;
+    //}
+
+
+public async Task<string?> CreateOrder(decimal total, string currency, string returnUrl, string cancelUrl)
+{
+    var request = new OrdersCreateRequest();
+    request.Prefer("return=representation");
+    request.RequestBody(new OrderRequest
     {
-        var request = new OrdersCreateRequest();
-        request.Prefer("return=representation");
-        request.RequestBody(new OrderRequest
+        CheckoutPaymentIntent = "CAPTURE",
+        ApplicationContext = new ApplicationContext
         {
-            CheckoutPaymentIntent = "CAPTURE",
-            ApplicationContext = new ApplicationContext
+            ReturnUrl = returnUrl,
+            CancelUrl = cancelUrl
+        },
+        PurchaseUnits = new List<PurchaseUnitRequest>
+        {
+            new PurchaseUnitRequest
             {
-                ReturnUrl = returnUrl,
-                CancelUrl = cancelUrl
-            },
-            PurchaseUnits = new List<PurchaseUnitRequest>
-            {
-                new PurchaseUnitRequest
+                AmountWithBreakdown = new AmountWithBreakdown
                 {
-                    AmountWithBreakdown = new AmountWithBreakdown
-                    {
-                        CurrencyCode = currency,
-                        Value = total.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)
-                    }
+                    CurrencyCode = currency,
+                    Value = total.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)
                 }
             }
-        });
+        }
+    });
 
-        var response = await GetClient().Execute(request);
-        var result = response.Result<Order>();
-        return result.Links.FirstOrDefault(l => l.Rel == "approve")?.Href;
-    }
+    var response = await GetClient().Execute(request);
+    var result = response.Result<PayPalCheckoutSdk.Orders.Order>(); // tránh nhầm class
 
-    public async Task<bool> CaptureOrder(string token)
+    return result.Links.FirstOrDefault(l => l.Rel == "approve")?.Href;
+}
+
+public async Task<bool> CaptureOrder(string token)
     {
         var request = new OrdersCaptureRequest(token);
         request.RequestBody(new OrderActionRequest());
