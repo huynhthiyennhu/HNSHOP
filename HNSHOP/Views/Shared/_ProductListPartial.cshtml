@@ -11,7 +11,9 @@
 						<img src="~/images/hnshop/@(product.Images.FirstOrDefault()?.Path ?? "default.jpg")"
 							 alt="@product.Name" style="height: 300px; width:260px" />
 						<h2>@product.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</h2>
-						<p>@product.Name</p>
+						<p class="fixed-height-name">@product.Name</p>
+
+
 
 						@if (User.Identity.IsAuthenticated && User.IsInRole("User"))
 						{

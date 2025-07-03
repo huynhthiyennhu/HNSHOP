@@ -2,9 +2,9 @@
 /*************************
 *******Typography******
 **************************/
-@import url(http://fonts.googleapis.com/css?family=Roboto:400,300,400italic,500,700,100);
-@import url(http://fonts.googleapis.com/css?family=Open+Sans:400,800,300,600,700);
-@import url(http://fonts.googleapis.com/css?family=Abel);
+@import url(https://fonts.googleapis.com/css?family=Roboto:400,300,400italic,500,700,100);
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,800,300,600,700);
+@import url(https://fonts.googleapis.com/css?family=Abel);
 
 html, body {
 	height: 100%;
@@ -18,14 +18,16 @@ html, body {
 	flex-direction: column;
 	min-height: 100vh;
 }
-
+.header-bottom{
+	margin-top:70px;
+}
 main {
 	flex: 1;
-	padding-top: 140px; /* tránh header đè lên nội dung */
+	padding-top: 100px;
 }
 
 /* Chỉ cần dùng 1 selector header hoặc .main-header */
-header {
+.header-middle {
 	position: fixed;
 	top: 0;
 	left: 0;
@@ -35,6 +37,8 @@ header {
 	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 	height: 70px; /* nếu biết chắc chiều cao */
 }
+
+
 
 
 ul li {
@@ -885,6 +889,17 @@ h2.title {
   right: 0;
 }
 
+.productinfo {
+	position: relative;
+	min-height: 430px; 
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	align-items: center;
+	padding: 10px;
+	box-sizing: border-box;
+}
+
 .productinfo h2{
 	color: #FE980F;
 	font-family: 'Roboto', sans-serif;
@@ -898,21 +913,40 @@ h2.title {
 	font-weight: 700;
 }
 
-
-.productinfo p{
-  font-family: 'Roboto', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  color: #696763;
+.productinfo p {
+	font-family: 'Roboto', sans-serif;
+	font-size: 14px;
+	font-weight: 400;
+	color: #696763;
+	text-align: center;
+	/* xử lý để chiều cao cố định 2 dòng */
+	height: 40px;
+	line-height: 20px;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
 }
 
-.productinfo img{
-  width: 100%;
+.productinfo img {
+	width: 100%;
+	height: 260px; 
+	object-fit: cover;
 }
+
 
 .productinfo{
  position:relative;
 }
+.fixed-height-name {
+	height: 48px; /* hoặc 2 dòng chữ */
+	line-height: 24px;
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-line-clamp: 2; /* Hiển thị tối đa 2 dòng */
+	-webkit-box-orient: vertical;
+}
+
 
 .product-overlay {
   background:#FE980F;

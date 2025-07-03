@@ -20,10 +20,11 @@
         <table class="table table-condensed">
             <thead>
                     <tr class="cart_menu">
-                        <td><b>Tên</b></td>
+                        <td><b>Hình ảnh</b></td>
+                        <td><b>Sản phẩm</b></td>
                         <td><b>Giá</b></td>
                         <td><b>Số lượng</b></td>
-                        <td><b>Hình ảnh</b></td>
+                        
                         <td><b>Hành động</b></td>
                 </tr>
             </thead>
@@ -33,17 +34,18 @@
                     foreach (var product in Model)
                     {
                         <tr>
-                            <td>@product.Name</td>
-                                <td>@product.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</td>
-                            <td>@product.Quantity</td>
                             <td>
                                 @if (product.Images != null && product.Images.Count > 0)
-                                    {
-                                        <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id">
-                                     <img src="~/images/hnshop/@product.Images[0].Path" width="60" />
-                                </a>
+                                {
+                                    <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id">
+                                        <img src="~/images/hnshop/@product.Images[0].Path" width="60" />
+                                    </a>
                                 }
                             </td>
+                            <td>@product.Name</td>
+                            <td>@product.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</td>
+                            <td>@product.Quantity</td>
+                           
                                 <td>
                                     <div class="d-flex justify-content-center gap-2">
                                         <button class="btn btn-warning btn-sm edit-btn" data-id="@product.Id">

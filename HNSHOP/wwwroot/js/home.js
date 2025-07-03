@@ -3,7 +3,7 @@ $(document).ready(function () {
 	// Cập nhật danh sách sản phẩm
 	function updateProductList(formData) {
 		$.ajax({
-			url: "@Url.Action("Index", "Home")",
+			url: "/Home/Index",
 			type: "GET",
 			data: formData,
 			success: function (data) {

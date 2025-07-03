@@ -51,15 +51,16 @@
                                     <tr id="cart-item-@item.ProductId">
                                         <td class="cart_product">
                                             <a asp-controller="Products" asp-action="Details" asp-route-id="@item.ProductId">
-                                                <img src="~/images/hnshop/@item.Image" alt="" style="width: 110px; height: 110px;" />
+                                                <img src="~/images/hnshop/@item.Image" alt="" style="width: 110px; height: 110px; margin-right: 50px" />
                                             </a>
                                         </td>
                                         <td class="cart_description">
                                             <h4>
                                                 <a asp-controller="Products" asp-action="Details" asp-route-id="@item.ProductId">
-                                                    @item.Name
+                                                    @(item.Name.Length > 40 ? item.Name.Substring(0, 37) + "..." : item.Name)
                                                 </a>
                                             </h4>
+
                                         </td>
                                         <td class="cart_price">
                                             <p id="product-price-@item.ProductId" data-price="@item.Price">

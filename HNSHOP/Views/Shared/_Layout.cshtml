@@ -10,7 +10,7 @@
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
 	<link href="~/css/bootstrap.min.css" rel="stylesheet">
-	<link href="~/css/font-awesome.min.css" rel="stylesheet">
+	@* <link href="~/css/font-awesome.min.css" rel="stylesheet"> *@
 	<link href="~/css/prettyPhoto.css" rel="stylesheet">
 	<link href="~/css/price-range.css" rel="stylesheet">
 	<link href="~/css/animate.css" rel="stylesheet">
@@ -47,11 +47,11 @@
 @RenderSection("Scripts", required: false)
 <body>
 	<div class="page-wrapper">
-		<header id="header" >
+		<header id="header">
 		<div class="header-middle">
 			<!--header-middle-->
-			<div class="container">
-				<div class="row">
+			<div class="container"  >
+				<div class="row" >
 					<div class="col-sm-4">
 						<div class="logo pull-left">
 							<a href="index.html"><img src="~/images/home/logo.png" alt="" /></a>
@@ -64,7 +64,7 @@
 								<ul class="nav navbar-nav">
 									@if (User.Identity.IsAuthenticated && User.IsInRole("User")) // Chỉ khách hàng
 									{
-										<li><a asp-controller="ACcounts" asp-action="Index"><i class="fa fa-user"></i> Tài Khoản</a></li>
+										@* <li><a asp-controller="ACcounts" asp-action="Index"><i class="fa fa-user"></i> Tài Khoản</a></li> *@
 										<li><a asp-controller="Products" asp-action="Favorites"><i class="fa fa-heart"></i> Yêu Thích</a></li>
 										<li><a asp-controller="Orders" asp-action="Index"><i class="fa fa-credit-card"></i> Đơn Hàng</a></li>
 
@@ -75,22 +75,24 @@
 										</li>
 									}
 
-									<li class="dropdown ">
-										<a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-											<span class="ml-1">@User.Identity.Name</span>
-											<img src="~/images/hnshop/avatar/@User.FindFirst("Avatar")?.Value" class="rounded-circle" style="width:32px; height:32px; border-radius: 50%" />
+										<li class="dropdown">
+												<div style="margin-top:4px;">
+												<a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+													<span class="ml-1">@User.Identity.Name</span>
+													<img src="~/images/hnshop/avatar/@User.FindFirst("Avatar")?.Value" class="rounded-circle" style="width:32px; height:32px; border-radius: 50%" />
 
-										</a>
-										<ul class="dropdown-menu">
-											<li><a asp-controller="ACcounts" asp-action="Index">Thông tin tài khoản</a></li>
-											<li>
-												<form id="logoutForm" asp-controller="Auth" asp-action="Logout" method="post">
-													<button type="submit" class="btn btn-link dropdown-item">
-														<i class="fa fa-sign-out"></i> Đăng xuất
-													</button>
-												</form>
-											</li>
-										</ul>
+												</a>
+												<ul class="dropdown-menu">
+													<li><a asp-controller="ACcounts" asp-action="Index">Thông tin tài khoản</a></li>
+													<li>
+														<form id="logoutForm" asp-controller="Auth" asp-action="Logout" method="post">
+															<button type="submit" class="btn btn-link dropdown-item">
+																<i class="fa fa-sign-out"></i> Đăng xuất
+															</button>
+														</form>
+													</li>
+												</ul>
+												</div>
 									</li>
 
 

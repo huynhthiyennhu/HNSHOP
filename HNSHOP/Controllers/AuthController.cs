@@ -94,7 +94,6 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
     {
         return View();
     }
-
     [HttpPost]
     public async Task<IActionResult> RegisterShop(RegisterShopReqDto request)
     {
@@ -112,21 +111,20 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
         }
 
         string hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
-        string verifyToken = GenerateVerificationToken();
 
         var account = new Account
         {
             Email = request.Email,
             Phone = request.Phone,
             Password = hashedPassword,
-            RoleId = 3,  // Role Shop
-            VerifyToken = verifyToken,
+            RoleId = 3,  
             CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now
+            UpdatedAt = DateTime.Now,
         };
 
         _db.Accounts.Add(account);
         await _db.SaveChangesAsync();
+
         var shop = new Shop
         {
             Name = request.Name,
@@ -136,11 +134,12 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
         _db.Shops.Add(shop);
         await _db.SaveChangesAsync();
 
-        await _emailService.SendVerificationEmail(request.Email, verifyToken);
+       
 
         TempData["Message"] = "Đăng ký shop thành công! Tài khoản đang chờ quản trị viên duyệt.";
         return RedirectToAction("Login");
     }
+
 
     // Hiển thị trang xác thực email
     [HttpGet]

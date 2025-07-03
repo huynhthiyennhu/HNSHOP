@@ -35,11 +35,11 @@ public class AdminShopController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> Approve(int id) // id ở đây là AccountId
+    public async Task<IActionResult> Approve(int id) 
     {
         var shop = await _db.Shops
             .Include(s => s.Account)
-            .FirstOrDefaultAsync(s => s.AccountId == id); // đổi từ Id → AccountId
+            .FirstOrDefaultAsync(s => s.AccountId == id); 
 
         if (shop == null || shop.Account == null)
             return Json(new { success = false, message = "Shop không tồn tại!" });
