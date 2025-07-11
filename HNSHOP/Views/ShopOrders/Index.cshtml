@@ -1,5 +1,107 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model List<HNSHOP.Models.SubOrder>
+@using HNSHOP.Utils.EnumTypes
+@using System.Globalization
+
 @{
+    ViewBag.Title = "Quản lý đơn hàng cửa hàng";
+}
+
+<h2 class="title text-center">📦 Quản lý đơn hàng của Shop</h2>
+
+<table class="table table-bordered table-hover shadow-sm">
+    <thead class="thead-light">
+        <tr>
+            <th>Mã đơn</th>
+            <th>Khách hàng</th>
+            <th>Trạng thái giao</th>
+            <th>Ngày tạo</th>
+            <th>Tổng tiền</th>
+            <th>Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var sub in Model)
+        {
+            <tr>
+                <td>@sub.Order.Id</td>
+                <td>@sub.Order.Customer.Name</td>
+                <td>
+                    <span class="badge badge-@(
+                        sub.Status switch {
+                            SubOrderStatus.Pending => "secondary",
+                            SubOrderStatus.Shipping => "info",
+                            SubOrderStatus.Delivered => "success",
+                            SubOrderStatus.Completed => "primary",
+                            SubOrderStatus.Cancelled => "danger",
+                            _ => "light"
+                        })">
+                        @sub.Status.ToString()
+                    </span>
+                </td>
+                <td>@sub.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@sub.Total.ToString("N0", CultureInfo.GetCultureInfo("vi-VN")) đ</td>
+                <td>
+                    @if (sub.Status == SubOrderStatus.Pending)
+                    {
+                        <form asp-action="ApproveSubOrder" method="post" style="display:inline">
+                            <input type="hidden" name="id" value="@sub.Id" />
+                            <button class="btn btn-sm btn-success mb-1">
+                                <i class="fa fa-check"></i> Duyệt giao hàng
+                            </button>
+                        </form>
+                        <form asp-action="CancelSubOrder" method="post" style="display:inline">
+                            <input type="hidden" name="id" value="@sub.Id" />
+                            <button class="btn btn-sm btn-danger mb-1" onclick="return confirm('Bạn chắc chắn muốn huỷ đơn hàng này?')">
+                                <i class="fa fa-times"></i> Huỷ đơn
+                            </button>
+                        </form>
+                    }
+                    else if (sub.Status == SubOrderStatus.Shipping)
+                    {
+                        <form asp-action="MarkDelivered" method="post" style="display:inline">
+                            <input type="hidden" name="id" value="@sub.Id" />
+                            <button class="btn btn-sm btn-primary mb-1">
+                                <i class="fa fa-truck"></i> Đã giao hàng
+                            </button>
+                        </form>
+                    }
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="6" class="p-0">
+                    <table class="table table-sm mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th class="text-center">Số lượng</th>
+                                <th class="text-right">Đơn giá</th>
+                                <th class="text-right">Tạm tính</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in sub.DetailOrders)
+                            {
+                                <tr>
+                                    <td>@item.Product.Name</td>
+                                    <td class="text-center">@item.Quantity</td>
+                                    <td class="text-right">@item.UnitPrice.ToString("N0", CultureInfo.GetCultureInfo("vi-VN")) đ</td>
+                                    <td class="text-right">@((item.UnitPrice * item.Quantity).ToString("N0", CultureInfo.GetCultureInfo("vi-VN"))) đ</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success mt-3">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger mt-3">@TempData["ErrorMessage"]</div>
 }

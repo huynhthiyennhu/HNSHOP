@@ -1,0 +1,111 @@
+﻿@model HNSHOP.Models.SubOrder
+
+@{
+    ViewData["Title"] = "Đánh giá sản phẩm";
+}
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+
+<style>
+    .rating-star i {
+        font-size: 24px;
+        color: #ccc;
+        cursor: pointer;
+    }
+
+        .rating-star i.selected {
+            color: #ffcc00;
+        }
+
+    .product-review-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+        background-color: #fff;
+    }
+
+    .submit-btn {
+        background-color: #ff5722;
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        font-weight: bold;
+    }
+
+        .submit-btn:hover {
+            background-color: #e64a19;
+        }
+</style>
+
+<h3 class="text-center">Đánh giá đơn hàng #@Model.OrderId - @Model.Shop.Name</h3>
+
+<form asp-action="Create" method="post">
+    <input type="hidden" name="SubOrderId" value="@Model.Id" />
+    <div class="container">
+        @for (int i = 0; i < Model.DetailOrders.Count; i++)
+        {
+            var detail = Model.DetailOrders[i];
+            var product = detail.Product;
+
+            <div class="product-review-card row">
+                <div class="col-md-2 d-flex align-items-center justify-content-center">
+                    <img src="~/images/hnshop/@(product.ProductImages.FirstOrDefault()?.Path ?? "no-image.png")"
+                         class="img-fluid rounded"
+                         alt="@product.Name"
+                         style="max-width: 100px; max-height: 100px; object-fit: cover;" />
+
+                </div>
+
+                <div class="col-md-10">
+                    <h5 class="mb-2">@product.Name</h5>
+                    <input type="hidden" name="ratings[@i].ProductId" value="@product.Id" />
+                    <input type="hidden" name="ratings[@i].SubOrderId" value="@Model.Id" />
+
+                    <div class="form-group mb-2">
+                        <label>Đánh giá:</label>
+                        <div class="rating-star" data-index="@i">
+                            @for (int star = 1; star <= 5; star++)
+                            {
+                                <i class="fa-regular fa-star" data-value="@star"></i>
+                            }
+                        </div>
+                        <input type="hidden" name="ratings[@i].RatingValue" id="ratingValue-@i" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Bình luận:</label>
+                        <textarea name="ratings[@i].Comment" class="form-control" rows="3"
+                                  placeholder="Viết cảm nhận của bạn..." required></textarea>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="text-center mb-5">
+            <button type="submit" class="btn submit-btn">Gửi đánh giá</button>
+            <a asp-controller="Orders" asp-action="Index" class="btn btn-secondary ml-2">Quay lại</a>
+        </div>
+    </div>
+</form>
+
+<script>
+    document.querySelectorAll(".rating-star").forEach(group => {
+        const index = group.dataset.index;
+        const input = document.getElementById(`ratingValue-${index}`);
+        const stars = group.querySelectorAll("i");
+
+        stars.forEach(star => {
+            star.addEventListener("click", () => {
+                const value = star.dataset.value;
+                input.value = value;
+                stars.forEach(s => {
+                    s.classList.remove("selected");
+                    if (s.dataset.value <= value) {
+                        s.classList.add("selected");
+                    }
+                });
+            });
+        });
+    });
+</script>

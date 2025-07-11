@@ -23,7 +23,7 @@ html, body {
 }
 main {
 	flex: 1;
-	padding-top: 100px;
+	padding-top: 50px;
 }
 
 /* Chỉ cần dùng 1 selector header hoặc .main-header */
@@ -2652,4 +2652,55 @@ h2.title {
 /* Hiệu ứng hover */
 .sort-toggle:hover i {
     color: #007bff;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+.suborder-card {
+	border: 1px solid #ddd;
+	padding: 12px;
+	margin-bottom: 20px;
+	background: #fff;
+	border-radius: 6px;
+}
+
+.suborder-header {
+	display: flex;
+	justify-content: space-between;
+	font-weight: bold;
+	margin-bottom: 8px;
+}
+
+.product-item {
+	display: flex;
+	margin-bottom: 10px;
+}
+
+.product-image {
+	width: 60px;
+	height: 60px;
+	object-fit: cover;
+	border-radius: 4px;
+	margin-right: 10px;
+}
+
+.product-info .product-name {
+	font-weight: 500;
+	margin-bottom: 4px;
+}
+
+.suborder-footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: 10px;
 }

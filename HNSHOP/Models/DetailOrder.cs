@@ -12,6 +12,8 @@ public class DetailOrder
     public int ProductId { get; set; }
     [ForeignKey(nameof(ProductId))]
     public Product Product { get; set; } = null!;
+    [Column(TypeName = "float")]
+    public float DiscountPercent { get; set; } = 0;
 
     public int Quantity { get; set; }
 

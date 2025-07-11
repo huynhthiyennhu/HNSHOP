@@ -243,6 +243,11 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
         new Claim("Avatar", account.Avatar ?? "default.png") 
     };
 
+        if (account.Shop != null)
+        {
+            claims.Add(new Claim("ShopId", account.Shop.Id.ToString()));
+        }
+
         var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var authProperties = new AuthenticationProperties
         {

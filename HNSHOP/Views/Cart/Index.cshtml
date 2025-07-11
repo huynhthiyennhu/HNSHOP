@@ -93,9 +93,35 @@
                                 }
                             </tbody>
                         </table>
+                       
                     </div>
+
                 </div>
             }
+            <div class="table-responsive cart_info" style="max-width: 400px; margin-left: auto;">
+                <table class="table table-condensed total-result">
+                    <tr>
+                        <td>Tổng tiền hàng</td>
+                        <td id="cart-total">@ViewBag.Total.ToString("N0") VNĐ</td>
+                    </tr>
+                    <tr>
+                        <td>Phí vận chuyển</td>
+                        <td>Miễn phí</td>
+                    </tr>
+                    <tr>
+                        <td>Tổng giảm giá</td>
+                        <td><span class="text-danger" id="cart-discount">- @ViewBag.TotalDiscount.ToString("N0") VNĐ</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tổng thanh toán</strong></td>
+                        <td>
+                            <input type="hidden" id="finalTotal" value="@ViewBag.FinalTotal" />
+                            <span id="cart-total-final">@ViewBag.FinalTotal.ToString("N0") VNĐ</span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
 
             <hr />
             <div class="cart-buttons text-right">
@@ -107,7 +133,7 @@
             </div>
 
             <br />
-            <div class="col-md-6 text-right">
+            <div class="text-right cart-buttons">
                 <a asp-controller="Orders" asp-action="Create" class="btn btn-success btn-lg">
                     <i class="fa fa-check-circle"></i> Đặt hàng
                 </a>

@@ -73,7 +73,6 @@ namespace HNSHOP.Controllers
 
         //    return View(orderDtos);
         //}
-
         public async Task<IActionResult> Index()
         {
             int userId = GetUserIdFromToken();
@@ -94,6 +93,16 @@ namespace HNSHOP.Controllers
             if (customer == null)
                 return NotFound("Không tìm thấy thông tin khách hàng.");
 
+            // Lấy danh sách sản phẩm đã được đánh giá bởi người dùng hiện tại
+            var ratedProductPairs = await _db.Ratings
+                .Where(r => r.CustomerId == customer.Id)
+                .Select(r => new { r.ProductId, r.SubOrderId })
+                .ToListAsync();
+
+            // Gán ViewBag để dùng trong view kiểm tra đã đánh giá chưa
+            ViewBag.RatedProductPairs = ratedProductPairs;
+
+            // Tạo danh sách DTO để truyền qua View
             var orderDtos = customer.Orders.Select(o => new OrderResDto
             {
                 Id = o.Id,
@@ -110,9 +119,11 @@ namespace HNSHOP.Controllers
                 Customer = o.Customer,
                 SubOrders = o.SubOrders.Select(so => new SubOrderResDto
                 {
+                    Id = so.Id,
                     ShopId = so.Shop.Id,
                     ShopName = so.Shop.Name,
                     Status = so.Status,
+                    Total = so.Total,
                     DetailOrders = so.DetailOrders.Select(d => new DetailOrderResDto
                     {
                         Quantity = d.Quantity,
@@ -127,8 +138,8 @@ namespace HNSHOP.Controllers
                                 Id = img.Id,
                                 Path = img.Path
                             }).ToList(),
-                            IsRated = _db.Ratings.Any(r => r.ProductId == d.Product.Id && r.CustomerId == userId)
-
+                            // Không cần gán IsRated vì đã kiểm tra bằng ViewBag.RatedProductPairs
+                            IsRated = false
                         }
                     }).ToList()
                 }).ToList()
@@ -136,6 +147,7 @@ namespace HNSHOP.Controllers
 
             return View(orderDtos);
         }
+
 
         [HttpGet]
         public IActionResult Create()
@@ -149,7 +161,7 @@ namespace HNSHOP.Controllers
                     return RedirectToAction("Login", "Account");
                 }
 
-                // Lấy danh sách địa chỉ của người dùng
+                // Lấy danh sách địa chỉ
                 var addresses = _db.Addresses
                     .Where(a => a.Customer.AccountId == userId)
                     .Select(a => new AddressResDto
@@ -158,10 +170,9 @@ namespace HNSHOP.Controllers
                         AddressDetail = a.AddressDetail
                     })
                     .ToList();
-
                 ViewBag.Addresses = addresses ?? new List<AddressResDto>();
 
-                // Lấy giỏ hàng từ Service thay vì Session
+                // Lấy giỏ hàng
                 var cartItems = _cartService.GetCartItems();
                 if (cartItems == null || !cartItems.Any())
                 {
@@ -169,6 +180,18 @@ namespace HNSHOP.Controllers
                     return RedirectToAction("Index", "Home");
                 }
 
+                // Gom nhóm theo Shop
+                var grouped = cartItems
+                    .GroupBy(x => new { x.ShopId, x.ShopName })
+                    .Select(g => new ShopCartGroupDto
+                    {
+                        ShopId = g.Key.ShopId,
+                        ShopName = g.Key.ShopName,
+                        Items = g.ToList()
+                    }).ToList();
+                ViewBag.GroupedCartItems = grouped;
+
+                // Tính tổng
                 decimal totalOrder = cartItems.Sum(item => item.Total);
                 decimal totalDiscount = 0;
 
@@ -198,7 +221,6 @@ namespace HNSHOP.Controllers
                     }).ToList()
                 };
 
-                ViewBag.CartItems = cartItems;
                 ViewBag.Total = totalOrder;
                 ViewBag.TotalDiscount = totalDiscount;
                 ViewBag.FinalTotal = totalOrder - totalDiscount;
@@ -215,249 +237,147 @@ namespace HNSHOP.Controllers
 
 
 
-        //[HttpPost]
-        //public async Task<IActionResult> Create([FromBody] CreateOrderReqDto orderRequest)
-        //{
-        //    try
-        //    {
-        //        if (orderRequest == null || orderRequest.DetailOrderReqDtos == null || !orderRequest.DetailOrderReqDtos.Any())
-        //        {
-        //            return BadRequest("Dữ liệu đơn hàng không hợp lệ.");
-        //        }
 
-        //        int userId = GetUserIdFromToken();
-        //        var customer = await _db.Customers.Include(c => c.Account).FirstOrDefaultAsync(c => c.AccountId == userId);
-        //        if (customer == null) return NotFound("Khách hàng không tồn tại.");
-
-        //        Address address;
-        //        if (!string.IsNullOrWhiteSpace(orderRequest.NewAddress))
-        //        {
-        //            try
-        //            {
-        //                var newAddress = JsonConvert.DeserializeObject<AddressReqDto>(orderRequest.NewAddress);
-        //                if (newAddress == null || string.IsNullOrWhiteSpace(newAddress.HouseNumber) ||
-        //                    string.IsNullOrWhiteSpace(newAddress.Street) || string.IsNullOrWhiteSpace(newAddress.Ward) ||
-        //                    string.IsNullOrWhiteSpace(newAddress.District) || string.IsNullOrWhiteSpace(newAddress.City))
-        //                {
-        //                    return BadRequest("Vui lòng nhập đầy đủ thông tin địa chỉ.");
-        //                }
-
-        //                string addressDetail = $"{newAddress.HouseNumber}, {newAddress.Street}, {newAddress.Ward}, {newAddress.District}, {newAddress.City}";
-        //                address = new Address { CustomerId = customer.Id, AddressDetail = addressDetail };
-
-        //                _db.Addresses.Add(address);
-        //                await _db.SaveChangesAsync();
-        //            }
-        //            catch (JsonException ex)
-        //            {
-        //                return BadRequest($"Lỗi xử lý địa chỉ mới: {ex.Message}");
-        //            }
-        //        }
-        //        else
-        //        {
-        //            address = await _db.Addresses.FirstOrDefaultAsync(a => a.Id == orderRequest.AddressId && a.CustomerId == customer.Id);
-        //            if (address == null) return BadRequest("Không tìm thấy địa chỉ đã chọn.");
-        //        }
-
-        //        // Lấy giỏ hàng từ CartService thay vì Session
-        //        var cartItems = _cartService.GetCartItems();
-        //        if (cartItems == null || !cartItems.Any())
-        //        {
-        //            return BadRequest("Giỏ hàng trống!");
-        //        }
-
-        //        var products = await _db.Products.Include(p => p.ProductSaleEvents).ToListAsync();
-        //        decimal totalOrder = 0;
-        //        var orderDetails = new List<DetailOrder>();
-
-        //        foreach (var item in cartItems)
-        //        {
-        //            var product = products.FirstOrDefault(p => p.Id == item.ProductId);
-        //            if (product == null) continue;
-
-        //            var discount = await _db.SaleEvents
-        //                .Where(se => product.ProductSaleEvents.Select(pse => pse.SaleEventId).Contains(se.Id) &&
-        //                             se.StartDate <= DateTime.UtcNow && se.EndDate >= DateTime.UtcNow)
-        //                .Select(se => se.Discount)
-        //                .FirstOrDefaultAsync();
-
-        //            var finalPrice = product.Price * (1 - (decimal)discount / 100);
-        //            totalOrder += finalPrice * item.Quantity;
-
-        //            orderDetails.Add(new DetailOrder
-        //            {
-        //                ProductId = product.Id,
-        //                Quantity = item.Quantity,
-        //                UnitPrice = finalPrice
-        //            });
-        //        }
-
-        //        var order = new Order
-        //        {
-        //            CustomerId = customer.Id,
-        //            AddressId = address.Id,
-        //            Total = totalOrder,
-        //            CreatedAt = DateTime.UtcNow,
-        //            UpdatedAt = DateTime.UtcNow,
-        //            Status = OrderStatus.Processing,
-        //            PaymentStatus = PaymentStatus.Pending,
-        //            DetailOrders = orderDetails
-        //        };
-
-        //        _db.Orders.Add(order);
-        //        await _db.SaveChangesAsync();
-
-        //        // Xóa giỏ hàng sau khi đặt hàng thành công
-        //        _cartService.ClearCart();
-
-        //        TempData["SuccessMessage"] = "Đơn hàng đã được đặt thành công!";
-        //        return RedirectToAction("Index");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError($"Lỗi khi xử lý đơn hàng: {ex.Message}");
-        //        return StatusCode(500, "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.");
-        //    }
-        //}
+       
         [HttpPost]
-public async Task<IActionResult> Create([FromBody] CreateOrderReqDto orderRequest)
-{
-    try
-    {
-        if (orderRequest == null || orderRequest.DetailOrderReqDtos == null || !orderRequest.DetailOrderReqDtos.Any())
-        {
-            return BadRequest("Dữ liệu đơn hàng không hợp lệ.");
-        }
-
-        int userId = GetUserIdFromToken();
-        var customer = await _db.Customers.Include(c => c.Account).FirstOrDefaultAsync(c => c.AccountId == userId);
-        if (customer == null) return NotFound("Khách hàng không tồn tại.");
-
-        // Xử lý địa chỉ
-        Address address;
-        if (!string.IsNullOrWhiteSpace(orderRequest.NewAddress))
+        public async Task<IActionResult> Create([FromBody] CreateOrderReqDto orderRequest)
         {
             try
             {
-                var newAddress = JsonConvert.DeserializeObject<AddressReqDto>(orderRequest.NewAddress);
-                if (newAddress == null ||
-                    string.IsNullOrWhiteSpace(newAddress.HouseNumber) ||
-                    string.IsNullOrWhiteSpace(newAddress.Street) ||
-                    string.IsNullOrWhiteSpace(newAddress.Ward) ||
-                    string.IsNullOrWhiteSpace(newAddress.District) ||
-                    string.IsNullOrWhiteSpace(newAddress.City))
+                if (orderRequest == null || orderRequest.DetailOrderReqDtos == null || !orderRequest.DetailOrderReqDtos.Any())
                 {
-                    return BadRequest("Vui lòng nhập đầy đủ thông tin địa chỉ.");
+                    return BadRequest("Dữ liệu đơn hàng không hợp lệ.");
                 }
 
-                string addressDetail = $"{newAddress.HouseNumber}, {newAddress.Street}, {newAddress.Ward}, {newAddress.District}, {newAddress.City}";
-                address = new Address { CustomerId = customer.Id, AddressDetail = addressDetail };
+                int userId = GetUserIdFromToken();
+                var customer = await _db.Customers.Include(c => c.Account).FirstOrDefaultAsync(c => c.AccountId == userId);
+                if (customer == null) return NotFound("Khách hàng không tồn tại.");
 
-                _db.Addresses.Add(address);
-                await _db.SaveChangesAsync();
-            }
-            catch (JsonException ex)
-            {
-                return BadRequest($"Lỗi xử lý địa chỉ mới: {ex.Message}");
-            }
-        }
-        else
-        {
-            address = await _db.Addresses.FirstOrDefaultAsync(a => a.Id == orderRequest.AddressId && a.CustomerId == customer.Id);
-            if (address == null) return BadRequest("Không tìm thấy địa chỉ đã chọn.");
-        }
-
-        // Lấy giỏ hàng
-        var cartItems = _cartService.GetCartItems();
-        if (cartItems == null || !cartItems.Any())
-        {
-            return BadRequest("Giỏ hàng trống!");
-        }
-
-        // Lấy sản phẩm liên quan
-        var products = await _db.Products
-            .Include(p => p.Shop)
-            .Include(p => p.ProductSaleEvents)
-            .ThenInclude(pse => pse.SaleEvent)
-            .ToListAsync();
-
-        // Nhóm sản phẩm theo shop
-        var groupedByShop = cartItems.GroupBy(ci =>
-        {
-            var product = products.FirstOrDefault(p => p.Id == ci.ProductId);
-            return product?.ShopId ?? 0;
-        });
-
-        var subOrders = new List<SubOrder>();
-        decimal totalOrder = 0;
-
-        foreach (var group in groupedByShop)
-        {
-            int shopId = group.Key;
-            var subOrderDetails = new List<DetailOrder>();
-            decimal subTotal = 0;
-
-            foreach (var item in group)
-            {
-                var product = products.FirstOrDefault(p => p.Id == item.ProductId);
-                if (product == null) continue;
-
-                // Tìm giảm giá nếu có
-                var discount = product.ProductSaleEvents
-                    .Where(pse => pse.SaleEvent.StartDate <= DateTime.UtcNow && pse.SaleEvent.EndDate >= DateTime.UtcNow)
-                    .Select(pse => pse.SaleEvent.Discount)
-                    .FirstOrDefault();
-
-                var finalPrice = product.Price * (1 - (decimal)discount / 100);
-                subTotal += finalPrice * item.Quantity;
-
-                subOrderDetails.Add(new DetailOrder
+                // Xử lý địa chỉ
+                Address address;
+                if (!string.IsNullOrWhiteSpace(orderRequest.NewAddress))
                 {
-                    ProductId = product.Id,
-                    Quantity = item.Quantity,
-                    UnitPrice = finalPrice
+                    try
+                    {
+                        var newAddress = JsonConvert.DeserializeObject<AddressReqDto>(orderRequest.NewAddress);
+                        if (newAddress == null ||
+                            string.IsNullOrWhiteSpace(newAddress.HouseNumber) ||
+                            string.IsNullOrWhiteSpace(newAddress.Street) ||
+                            string.IsNullOrWhiteSpace(newAddress.Ward) ||
+                            string.IsNullOrWhiteSpace(newAddress.District) ||
+                            string.IsNullOrWhiteSpace(newAddress.City))
+                        {
+                            return BadRequest("Vui lòng nhập đầy đủ thông tin địa chỉ.");
+                        }
+
+                        string addressDetail = $"{newAddress.HouseNumber}, {newAddress.Street}, {newAddress.Ward}, {newAddress.District}, {newAddress.City}";
+                        address = new Address { CustomerId = customer.Id, AddressDetail = addressDetail };
+
+                        _db.Addresses.Add(address);
+                        await _db.SaveChangesAsync();
+                    }
+                    catch (JsonException ex)
+                    {
+                        return BadRequest($"Lỗi xử lý địa chỉ mới: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    address = await _db.Addresses.FirstOrDefaultAsync(a => a.Id == orderRequest.AddressId && a.CustomerId == customer.Id);
+                    if (address == null) return BadRequest("Không tìm thấy địa chỉ đã chọn.");
+                }
+
+                // Lấy giỏ hàng
+                var cartItems = _cartService.GetCartItems();
+                if (cartItems == null || !cartItems.Any())
+                {
+                    return BadRequest("Giỏ hàng trống!");
+                }
+
+                // Lấy sản phẩm liên quan
+                var products = await _db.Products
+                    .Include(p => p.Shop)
+                    .Include(p => p.ProductSaleEvents)
+                    .ThenInclude(pse => pse.SaleEvent)
+                    .ToListAsync();
+
+                // Nhóm sản phẩm theo shop
+                var groupedByShop = cartItems.GroupBy(ci =>
+                {
+                    var product = products.FirstOrDefault(p => p.Id == ci.ProductId);
+                    return product?.ShopId ?? 0;
                 });
+
+                var subOrders = new List<SubOrder>();
+                decimal totalOrder = 0;
+
+                foreach (var group in groupedByShop)
+                {
+                    int shopId = group.Key;
+                    var subOrderDetails = new List<DetailOrder>();
+                    decimal subTotal = 0;
+
+                    foreach (var item in group)
+                    {
+                        var product = products.FirstOrDefault(p => p.Id == item.ProductId);
+                        if (product == null) continue;
+
+                        // Tìm giảm giá nếu có
+                        var discount = product.ProductSaleEvents
+                            .Where(pse => pse.SaleEvent.StartDate <= DateTime.UtcNow && pse.SaleEvent.EndDate >= DateTime.UtcNow)
+                            .Select(pse => pse.SaleEvent.Discount)
+                            .FirstOrDefault();
+
+                        var finalPrice = product.Price * (1 - (decimal)discount / 100);
+                        subTotal += finalPrice * item.Quantity;
+
+                        subOrderDetails.Add(new DetailOrder
+                        {
+                            ProductId = product.Id,
+                            Quantity = item.Quantity,
+                            UnitPrice = finalPrice
+                        });
+                    }
+
+                    subOrders.Add(new SubOrder
+                    {
+                        ShopId = shopId,
+                        Status = SubOrderStatus.Pending,
+                        DetailOrders = subOrderDetails,
+                        SubTotal = subTotal,
+                        Total = subTotal, // Có thể thêm phí ship nếu cần
+                        CreatedAt = DateTime.UtcNow
+                    });
+
+                    totalOrder += subTotal;
+                }
+
+                var order = new Order
+                {
+                    CustomerId = customer.Id,
+                    AddressId = address.Id,
+                    Total = totalOrder,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    Status = OrderStatus.Processing,
+                    PaymentStatus = PaymentStatus.Pending,
+                    SubOrders = subOrders
+                };
+
+                _db.Orders.Add(order);
+                await _db.SaveChangesAsync();
+
+                _cartService.ClearCart();
+
+                TempData["SuccessMessage"] = "Đơn hàng đã được đặt thành công!";
+                return RedirectToAction("Index");
             }
-
-            subOrders.Add(new SubOrder
+            catch (Exception ex)
             {
-                ShopId = shopId,
-                Status = SubOrderStatus.Pending,
-                DetailOrders = subOrderDetails,
-                SubTotal = subTotal,
-                Total = subTotal, // Có thể thêm phí ship nếu cần
-                CreatedAt = DateTime.UtcNow
-            });
-
-            totalOrder += subTotal;
+                _logger.LogError($"Lỗi khi xử lý đơn hàng: {ex.Message}");
+                return StatusCode(500, "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.");
+            }
         }
-
-        var order = new Order
-        {
-            CustomerId = customer.Id,
-            AddressId = address.Id,
-            Total = totalOrder,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-            Status = OrderStatus.Processing,
-            PaymentStatus = PaymentStatus.Pending,
-            SubOrders = subOrders
-        };
-
-        _db.Orders.Add(order);
-        await _db.SaveChangesAsync();
-
-        _cartService.ClearCart();
-
-        TempData["SuccessMessage"] = "Đơn hàng đã được đặt thành công!";
-        return RedirectToAction("Index");
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError($"Lỗi khi xử lý đơn hàng: {ex.Message}");
-        return StatusCode(500, "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.");
-    }
-}
 
 
 
@@ -615,6 +535,7 @@ public async Task<IActionResult> Create([FromBody] CreateOrderReqDto orderReques
                     Customer = order.Customer,
                     SubOrders = order.SubOrders.Select(so => new SubOrderResDto
                     {
+                        Id = so.Id,
                         ShopId = so.Shop.Id,
                         ShopName = so.Shop.Name,
                         Status = so.Status,
@@ -744,6 +665,43 @@ public async Task<IActionResult> Create([FromBody] CreateOrderReqDto orderReques
         public IActionResult PaypalCancel() => View("Cancel");
         public IActionResult PaypalConfirmed() => View("Success");
 
+        [HttpPost]
+        public async Task<IActionResult> ConfirmReceived(int id, int subOrderId)
+        {
+            var userId = GetUserIdFromToken(); // hoặc từ HttpContext
+
+            var customer = await _db.Customers
+                .Include(c => c.Orders)
+                .ThenInclude(o => o.SubOrders)
+                .FirstOrDefaultAsync(c => c.AccountId == userId);
+
+            if (customer == null)
+                return Unauthorized();
+
+            var order = customer.Orders.FirstOrDefault(o => o.Id == id);
+            if (order == null)
+                return NotFound("Đơn hàng không tồn tại.");
+
+            var subOrder = order.SubOrders.FirstOrDefault(so => so.Id == subOrderId);
+            if (subOrder == null || subOrder.Status != SubOrderStatus.Delivered)
+                return BadRequest("Đơn hàng không hợp lệ hoặc chưa thể xác nhận.");
+
+            // ✅ Cập nhật trạng thái subOrder
+            subOrder.Status = SubOrderStatus.Completed;
+            //subOrder.UpdatedAt = DateTime.UtcNow;
+
+            // ✅ Nếu tất cả subOrder đã hoàn tất → order cũng hoàn tất
+            bool allCompleted = order.SubOrders.All(so => so.Status == SubOrderStatus.Completed);
+            if (allCompleted)
+            {
+                order.Status = OrderStatus.Completed;
+                order.UpdatedAt = DateTime.UtcNow;
+            }
+
+            await _db.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Bạn đã xác nhận đã nhận hàng thành công.";
+            return RedirectToAction("Index");
+        }
 
     }
 }

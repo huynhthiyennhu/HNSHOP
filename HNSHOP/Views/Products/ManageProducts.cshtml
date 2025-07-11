@@ -5,6 +5,31 @@
     ViewBag.Title = "Quản lý sản phẩm";
 
 }
+<style>
+    /* Canh giữa và nằm ngang phần tìm kiếm */
+    div.dataTables_filter {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+       margin: 10px;
+    }
+
+        div.dataTables_filter label {
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        div.dataTables_filter input {
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 200px;
+        }
+</style>
+
 
 <section id="cart_items">
     <div class="container p-5">
@@ -17,8 +42,8 @@
         <h2 class="title text-center">Quản lý Sản phẩm của Shop</h2>
         <br />
         <div class="table-responsive cart_info">
-        <table class="table table-condensed">
-            <thead>
+            <table id="productTable" class="table table-condensed">
+                <thead>
                     <tr class="cart_menu">
                         <td><b>Hình ảnh</b></td>
                         <td><b>Sản phẩm</b></td>
@@ -390,6 +415,34 @@
                 });
             });
 
+        });
+    </script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#productTable').DataTable({
+                "paging": true,
+                "pageLength": 5,
+                "lengthChange": false,
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false,
+                "language": {
+                    "lengthMenu": "Hiển thị _MENU_ sản phẩm mỗi trang",
+                    "zeroRecords": "Không tìm thấy sản phẩm nào",
+                    "info": "Trang _PAGE_ / _PAGES_",
+                    "infoEmpty": "Không có dữ liệu",
+                    "infoFiltered": "(lọc từ _MAX_ sản phẩm)",
+                    "search": "Tìm kiếm:",
+                    "paginate": {
+                        "previous": "Trước",
+                        "next": "Tiếp"
+                    }
+                }
+            });
         });
     </script>
 }

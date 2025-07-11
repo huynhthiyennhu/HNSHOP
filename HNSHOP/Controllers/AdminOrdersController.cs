@@ -43,35 +43,65 @@ namespace HNSHOP.Controllers
                 .Include(o => o.SubOrders)
                     .ThenInclude(so => so.DetailOrders)
                         .ThenInclude(d => d.Product)
+                            .ThenInclude(p => p.ProductSaleEvents)
+                                .ThenInclude(pse => pse.SaleEvent)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
-            if (order == null) return NotFound("Không tìm thấy đơn hàng.");
+            if (order == null)
+                return NotFound("Không tìm thấy đơn hàng.");
+
             if (order.Status != OrderStatus.Processing)
                 return BadRequest("Chỉ có thể duyệt đơn hàng đang xử lý.");
 
-            order.Status = OrderStatus.Shipping;
+            order.Status = OrderStatus.Preparing;
             order.UpdatedAt = DateTime.UtcNow;
+
+            decimal orderTotal = 0;
 
             foreach (var subOrder in order.SubOrders)
             {
-                subOrder.Status = SubOrderStatus.Shipping;
+                subOrder.Status = SubOrderStatus.Pending;
+                decimal subTotal = 0;
 
                 foreach (var detail in subOrder.DetailOrders)
                 {
                     var product = detail.Product;
-                    if (product != null)
-                    {
-                        product.Quantity -= detail.Quantity;
+                    if (product == null) continue;
 
-                        // Optional: Ghi nhận chi tiết đơn hàng đã bán
-                        product.DetailOrders ??= new List<DetailOrder>();
-                        product.DetailOrders.Add(detail);
-                    }
+                    // Tìm sự kiện giảm giá đang áp dụng
+                    var activeSaleEvent = product.ProductSaleEvents?
+                        .Select(pse => pse.SaleEvent)
+                        .FirstOrDefault(se => se.StartDate <= DateTime.UtcNow && se.EndDate >= DateTime.UtcNow);
+
+                    float discount = activeSaleEvent?.Discount ?? 0f;
+                    decimal unitPrice = product.Price;
+                    decimal finalPrice = unitPrice * (1 - (decimal)discount / 100);
+
+                    // Lưu giá và giảm giá vào chi tiết đơn hàng
+                    detail.UnitPrice = unitPrice;
+                    detail.DiscountPercent = discount;
+
+                    // Trừ kho
+                    product.Quantity -= detail.Quantity;
+
+                    // Tính tiền
+                    decimal itemTotal = finalPrice * detail.Quantity;
+                    subTotal += itemTotal;
+
+                    // Optional: liên kết đơn hàng lại (nếu cần)
+                    product.DetailOrders ??= new List<DetailOrder>();
+                    product.DetailOrders.Add(detail);
                 }
+
+                subOrder.SubTotal = subTotal;
+                subOrder.Total = subTotal; // Nếu không có thêm phí vận chuyển riêng
+                orderTotal += subTotal;
             }
 
+            order.Total = orderTotal;
+
             await _db.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Đã duyệt đơn hàng thành công! Các shop có thể tiến hành giao hàng.";
+            TempData["SuccessMessage"] = "Đã duyệt đơn hàng thành công! Các shop có thể tiến hành chuẩn bị giao hàng.";
             return RedirectToAction("Index");
         }
 

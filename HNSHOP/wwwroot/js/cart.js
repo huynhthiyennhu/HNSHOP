@@ -60,7 +60,9 @@
                 if (res.success) {
                     input.val(quantity)
                     updateTotalPrice(productId, quantity)
-                    updateCartCount(res.cartCount)
+                    updateCartCount(res.cartCount)       
+                    updateCartTotals()
+
                 } else {
                     Swal.fire({ icon: "error", title: "Lỗi!", text: "Không thể cập nhật số lượng." })
                 }
@@ -170,6 +172,7 @@
         const price = parseFloat($(`#product-price-${productId}`).data("price"))
         const total = price * quantity
         $(`#product-total-${productId}`).text(total.toLocaleString() + " VNĐ")
+
     }
 
     // Cập nhật số sản phẩm trong biểu tượng
@@ -178,6 +181,23 @@
         if (count > 0) $cart.text(count).show()
         else $cart.text(0).hide()
     }
+    function updateCartTotals() {
+        let total = 0
+        let totalDiscount = 0 // Nếu cần hỗ trợ giảm giá từng sản phẩm thì xử lý tại đây
+
+        $(".cart_total_price").each(function () {
+            const raw = $(this).text().replace(/[^\d]/g, "")
+            const value = parseInt(raw)
+            if (!isNaN(value)) total += value
+        })
+
+        const final = total - totalDiscount
+        $("#cart-total").text(total.toLocaleString("vi-VN") + " VNĐ")
+        $("#cart-discount").text("- " + totalDiscount.toLocaleString("vi-VN") + " VNĐ")
+        $("#cart-total-final").text(final.toLocaleString("vi-VN") + " VNĐ")
+        $("#finalTotal").val(final)
+    }
+
 
     // Gọi khi load trang
     $.get("/Cart/GetCartCount", function (res) {

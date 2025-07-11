@@ -123,19 +123,24 @@
 							<ul class="nav navbar-nav collapse navbar-collapse">
 								<li><a asp-controller="Home" asp-action="Index" class="active">Home</a></li>
 
-								@if (User.Identity.IsAuthenticated && User.IsInRole("Shop")) 
-								{
-									<li class="dropdown">
-										<a href="#">Cửa Hàng<i class="fa fa-angle-down"></i></a>
-										<ul role="menu" class="sub-menu">
-											<li>
-												<a asp-controller="Products" asp-action="Manage">Quản lý sản phẩm</a>
-											</li>
-											<li><a asp-controller="ACcounts" asp-action="Index">Tài Khoản</a></li>
+									@if (User.Identity.IsAuthenticated && User.IsInRole("Shop"))
+									{
+										<li class="dropdown">
+											<a href="#">Cửa Hàng <i class="fa fa-angle-down"></i></a>
+											<ul role="menu" class="sub-menu">
+												<li>
+													<a asp-controller="Products" asp-action="Manage">Quản lý sản phẩm</a>
+												</li>
+												<li>
+													<a asp-controller="ShopOrders" asp-action="Index">Quản lý đơn hàng</a>
+												</li>
+												<li>
+													<a asp-controller="ACcounts" asp-action="Index">Tài Khoản</a>
+												</li>
+											</ul>
+										</li>
+									}
 
-										</ul>
-									</li>
-								}
 
 								@if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
 								{

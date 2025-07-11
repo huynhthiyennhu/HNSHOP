@@ -167,56 +167,56 @@ public class ProductsController(ApplicationDbContext db, IMapper mapper, CartSer
         return View("Details", productDto);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> SubmitReview(RatingReqDto reviewReq)
-    {
-        int userId = GetUserIdFromToken();
+    //[HttpPost]
+    //public async Task<IActionResult> SubmitReview(RatingReqDto reviewReq)
+    //{
+    //    int userId = GetUserIdFromToken();
 
-        if (!ModelState.IsValid)
-            return RedirectToAction("Details", new { id = reviewReq.ProductId });
+    //    if (!ModelState.IsValid)
+    //        return RedirectToAction("Details", new { id = reviewReq.ProductId });
 
-            var order = await _db.Orders
-         .Include(o => o.SubOrders)
-             .ThenInclude(so => so.DetailOrders)
-         .FirstOrDefaultAsync(o =>
-             o.Customer.AccountId == userId &&
-             o.Status == OrderStatus.Shipping &&
-             o.SubOrders.Any(so => so.DetailOrders.Any(d => d.ProductId == reviewReq.ProductId)));
+    //        var order = await _db.Orders
+    //     .Include(o => o.SubOrders)
+    //         .ThenInclude(so => so.DetailOrders)
+    //     .FirstOrDefaultAsync(o =>
+    //         o.Customer.AccountId == userId &&
+    //         o.Status == OrderStatus.Shipping &&
+    //         o.SubOrders.Any(so => so.DetailOrders.Any(d => d.ProductId == reviewReq.ProductId)));
 
 
-        if (order == null)
-        {
-            TempData["ErrorMessage"] = "Bạn chỉ có thể đánh giá sản phẩm sau khi đã mua.";
-            return RedirectToAction("Details", new { id = reviewReq.ProductId });
-        }
+    //    if (order == null)
+    //    {
+    //        TempData["ErrorMessage"] = "Bạn chỉ có thể đánh giá sản phẩm sau khi đã mua.";
+    //        return RedirectToAction("Details", new { id = reviewReq.ProductId });
+    //    }
 
-        bool alreadyReviewed = await _db.Ratings.AnyAsync(r =>
-            r.ProductId == reviewReq.ProductId && r.CustomerId == order.CustomerId);
+    //    bool alreadyReviewed = await _db.Ratings.AnyAsync(r =>
+    //        r.ProductId == reviewReq.ProductId && r.CustomerId == order.CustomerId);
 
-        if (alreadyReviewed)
-        {
-            TempData["ErrorMessage"] = "Bạn đã đánh giá sản phẩm này rồi.";
-            return RedirectToAction("Details", new { id = reviewReq.ProductId });
-        }
-        var customer = await _db.Customers.FirstOrDefaultAsync(c => c.AccountId == userId);
+    //    if (alreadyReviewed)
+    //    {
+    //        TempData["ErrorMessage"] = "Bạn đã đánh giá sản phẩm này rồi.";
+    //        return RedirectToAction("Details", new { id = reviewReq.ProductId });
+    //    }
+    //    var customer = await _db.Customers.FirstOrDefaultAsync(c => c.AccountId == userId);
 
-        var rating = new Rating
-        {
-            ProductId = reviewReq.ProductId,
-            CustomerId = order.CustomerId,
-            OrderId = order.Id,
-            UserName = customer.Name ?? "Người dùng ẩn danh",
-            Comment = reviewReq.Comment,
-            RatingValue = reviewReq.Rating,
-            CreatedAt = DateTime.Now
-        };
+    //    var rating = new Rating
+    //    {
+    //        ProductId = reviewReq.ProductId,
+    //        CustomerId = order.CustomerId,
+    //        OrderId = order.Id,
+    //        UserName = customer.Name ?? "Người dùng ẩn danh",
+    //        Comment = reviewReq.Comment,
+    //        RatingValue = reviewReq.Rating,
+    //        CreatedAt = DateTime.Now
+    //    };
 
-        _db.Ratings.Add(rating);
-        await _db.SaveChangesAsync();
+    //    _db.Ratings.Add(rating);
+    //    await _db.SaveChangesAsync();
 
-        TempData["SuccessMessage"] = "Cảm ơn bạn đã đánh giá sản phẩm!";
-        return RedirectToAction("Details", new { id = reviewReq.ProductId });
-    }
+    //    TempData["SuccessMessage"] = "Cảm ơn bạn đã đánh giá sản phẩm!";
+    //    return RedirectToAction("Details", new { id = reviewReq.ProductId });
+    //}
 
 
     private int GetUserIdFromToken()

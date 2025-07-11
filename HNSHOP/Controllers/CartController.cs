@@ -30,8 +30,36 @@ public class CartController : Controller
                 Items = g.ToList()
             }).ToList();
 
+        decimal total = 0;
+        decimal totalDiscount = 0;
+        decimal finalTotal = 0;
+
+        foreach (var item in cartItems)
+        {
+            var product = _db.Products.Find(item.ProductId);
+
+            var discount = product.ProductSaleEvents
+                .Where(pse => pse.SaleEvent.StartDate <= DateTime.UtcNow && pse.SaleEvent.EndDate >= DateTime.UtcNow)
+                .Select(pse => pse.SaleEvent.Discount)
+                .FirstOrDefault(); // mặc định là 0 nếu không có khuyến mãi
+
+            decimal itemPrice = product.Price;
+            decimal discountAmount = itemPrice * ((decimal)discount / 100);
+            decimal finalPrice = itemPrice - discountAmount;
+
+            total += itemPrice * item.Quantity;
+            totalDiscount += discountAmount * item.Quantity;
+            finalTotal += finalPrice * item.Quantity;
+        }
+
+        ViewBag.Total = total;
+        ViewBag.TotalDiscount = totalDiscount;
+        ViewBag.FinalTotal = finalTotal;
+
         return View(grouped);
     }
+
+
 
 
     // Thêm sản phẩm vào giỏ hàng

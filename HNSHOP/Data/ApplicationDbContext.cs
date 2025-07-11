@@ -177,16 +177,25 @@ namespace HNSHOP.Data
 
             // --- Cấu hình Rating ---
             modelBuilder.Entity<Rating>()
-                .HasOne(r => r.Customer)
-                .WithMany(c => c.Ratings)
-                .HasForeignKey(r => r.CustomerId)
-                .OnDelete(DeleteBehavior.Cascade);
+            .HasOne(r => r.Customer)
+            .WithMany(c => c.Ratings)
+            .HasForeignKey(r => r.CustomerId)
+            .OnDelete(DeleteBehavior.Restrict); // Hoặc .NoAction nếu tránh vòng lặp
 
             modelBuilder.Entity<Rating>()
                 .HasOne(r => r.Product)
                 .WithMany(p => p.Ratings)
                 .HasForeignKey(r => r.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Rating>()
+             .HasOne(r => r.SubOrder)
+             .WithMany()
+             .HasForeignKey(r => r.SubOrderId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+
+
 
             // --- Cấu hình CustomerNotification ---
             modelBuilder.Entity<CustomerNotification>()
