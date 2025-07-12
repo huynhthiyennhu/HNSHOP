@@ -137,31 +137,33 @@
 												<li>
 													<a asp-controller="ACcounts" asp-action="Index">Tài Khoản</a>
 												</li>
+												<li><a asp-controller="ShopStats" asp-action="Index">Thống kê của Shop</a></li>
+
 											</ul>
 										</li>
 									}
 
 
-								@if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
-								{
-									<li class="dropdown">
-										<a href="#">Quản Trị<i class="fa fa-angle-down"></i></a>
-										<ul role="menu" class="sub-menu">
-											<li><a asp-controller="SaleEvent" asp-action="Index">Quản Lý giảm giá</a></li>
-											<li><a asp-controller="AdminOrders" asp-action="Index">Kiểm tra đơn hàng</a></li>
-											<li><a asp-controller="ProductType" asp-action="Index">Quản lý loại sản phẩm</a></li>
-											
-										</ul>
-									</li>
-									<li class="dropdown">
-										<a href="#">Quản Tài Khoản<i class="fa fa-angle-down"></i></a>
-										<ul role="menu" class="sub-menu">
-											<li><a asp-controller="AdminShop" asp-action="Index">Quản lý Shop</a></li>
-											<li><a asp-controller="Customers" asp-action="Index">Quản lý khách hàng</a></li>
-										</ul>
-									</li>
-									
-								}
+									@if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
+									{
+										<li class="dropdown">
+											<a href="#">Quản Trị <i class="fa fa-angle-down"></i></a>
+											<ul role="menu" class="sub-menu">
+												<li><a asp-controller="SaleEvent" asp-action="Index">Quản Lý giảm giá</a></li>
+												<li><a asp-controller="AdminOrders" asp-action="Index">Kiểm tra đơn hàng</a></li>
+												<li><a asp-controller="ProductType" asp-action="Index">Quản lý loại sản phẩm</a></li>
+												<li><a asp-controller="AdminStats" asp-action="Index">📊 Thống kê sản phẩm</a></li> <!-- thêm dòng này -->
+											</ul>
+										</li>
+										<li class="dropdown">
+											<a href="#">Quản Tài Khoản <i class="fa fa-angle-down"></i></a>
+											<ul role="menu" class="sub-menu">
+												<li><a asp-controller="AdminShop" asp-action="Index">Quản lý Shop</a></li>
+												<li><a asp-controller="Customers" asp-action="Index">Quản lý khách hàng</a></li>
+											</ul>
+										</li>
+									}
+
 								<li class="dropdown">
 									<a href="#">Đăng Ký<i class="fa fa-angle-down"></i></a>
 									<ul role="menu" class="sub-menu">

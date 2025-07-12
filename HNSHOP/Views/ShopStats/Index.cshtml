@@ -1,0 +1,239 @@
+﻿@using Newtonsoft.Json
+@{
+    ViewData["Title"] = "Thống kê sản phẩm của Shop";
+    Layout = "_Layout";
+
+    var categoryStats = ViewBag.ProductByCategory as IEnumerable<dynamic>;
+    var topStats = ViewBag.TopSellingProducts as IEnumerable<dynamic>;
+    var lowStockStats = ViewBag.LowStockProducts as IEnumerable<dynamic>;
+    var hiddenStats = ViewBag.HiddenOrExpiredProducts as IEnumerable<dynamic>;
+}
+
+<section id="cart_items">
+    <div class="container p-5">
+        <div class="breadcrumbs">
+            <ol class="breadcrumb">
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li class="active">Thống kê sản phẩm</li>
+            </ol>
+        </div>
+        <h2 class="title text-center">📊 Thống kê sản phẩm - Tổng  @ViewBag.TotalProducts sản phẩm </h2>
+        <div class="table-responsive cart_info">
+        <!-- 1. Sản phẩm theo danh mục -->
+        @if (categoryStats != null && categoryStats.Any())
+        {
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h4 class="text-center">Sản phẩm theo danh mục</h4>
+                    <table class="table table-condensed">
+                        <thead><tr class="cart_menu"><th>Danh mục</th><th>Số lượng</th></tr></thead>
+                        <tbody>
+                            @foreach (var item in categoryStats)
+                            {
+                                <tr><td>@item.CategoryName</td><td>@item.Count</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h4 class="text-center">Biểu đồ: Theo danh mục</h4>
+                    <canvas id="chartCategory" style="max-height:300px; width:100%;"></canvas>
+                </div>
+            </div>
+            <hr />
+        }
+
+        <!-- 2. Top sản phẩm bán chạy -->
+        @if (topStats != null && topStats.Any())
+        {
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h4 class="text-center">Top sản phẩm bán chạy</h4>
+                    <table class="table table-condensed">
+                            <thead><tr class="cart_menu"><th>Tên</th><th>SL</th></tr></thead>
+                        <tbody>
+                            @foreach (var item in topStats)
+                            {
+                                <tr>
+                                    <td title="@item.ProductName">
+                                        @item.ProductName
+                                    </td>
+                                    <td>@item.Sold</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h4 class="text-center">Biểu đồ: Top bán chạy</h4>
+                    <canvas id="chartTopSelling" style="max-height:300px; width:100%;"></canvas>
+                </div>
+            </div>
+            <hr />
+        }
+
+        <!-- 3. Tồn kho thấp -->
+        @if (lowStockStats != null && lowStockStats.Any())
+        {
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h4 class="text-center">Tồn kho thấp (&lt; 10)</h4>
+                    <table class="table table-condensed">
+                        <thead><tr class="cart_menu"><th>Tên</th><th>SL</th></tr></thead>
+                        <tbody>
+                            @foreach (var item in lowStockStats)
+                            {
+                                <tr>
+                                    <td title="@item.Name">
+                                        @item.Name
+                                    </td>
+                                    <td>@item.Quantity</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h4 class="text-center">Biểu đồ: Tồn kho thấp</h4>
+                    <canvas id="chartLowStock" style="max-height:300px; width:100%;"></canvas>
+                </div>
+            </div>
+            <hr />
+        }
+
+        <!-- 4. Sản phẩm bị ẩn -->
+        @if (hiddenStats != null && hiddenStats.Any())
+        {
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h4 class="text-center">Sản phẩm bị ẩn / hết hạn</h4>
+                    <table class="table table-condensed">
+                        <thead><tr class="cart_menu"><th>Tên</th><th>Danh mục</th></tr></thead>
+                        <tbody>
+                            @foreach (var item in hiddenStats)
+                            {
+                                <tr>
+                                    <td title="@item.Name">
+                                        @(item.Name.Length > 50 ? item.Name.Substring(0, 30) + "..." : item.Name)
+                                    </td>
+                                    <td>@item.ProductType.Name</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h4 class="text-center">Biểu đồ: Bị ẩn / hết hạn</h4>
+                    <canvas id="chartHidden" style="max-height:300px; width:100%;"></canvas>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const COLORS = [
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                '#9966FF', '#FF9F40', '#2ecc71', '#e74c3c',
+                '#3498db', '#9b59b6', '#e67e22', '#1abc9c',
+                '#c0392b', '#f1c40f', '#7f8c8d'
+            ];
+
+            const categoryStats = @Html.Raw(JsonConvert.SerializeObject(categoryStats ?? new List<dynamic>()));
+            const topStats = @Html.Raw(JsonConvert.SerializeObject(topStats ?? new List<dynamic>()));
+            const lowStock = @Html.Raw(JsonConvert.SerializeObject(((IEnumerable<dynamic>)ViewBag.LowStockProducts ?? new List<dynamic>()).Select(x => new { Name = x.Name, Quantity = x.Quantity })));
+            const hiddenStats = @Html.Raw(JsonConvert.SerializeObject(((IEnumerable<dynamic>)ViewBag.HiddenOrExpiredProducts ?? new List<dynamic>()).Select(x => new { Name = x.Name })));
+
+            // Chart: Category
+            if (document.getElementById('chartCategory') && categoryStats.length > 0) {
+                new Chart(document.getElementById('chartCategory'), {
+                    type: 'pie',
+                    data: {
+                        labels: categoryStats.map(x => x.CategoryName),
+                        datasets: [{
+                            data: categoryStats.map(x => x.Count),
+                            backgroundColor: categoryStats.map((_, i) => COLORS[i % COLORS.length])
+                        }]
+                    },
+                    options: { responsive: true }
+                });
+            }
+
+            // Chart: Top Selling
+            if (document.getElementById('chartTopSelling') && topStats.length > 0) {
+                new Chart(document.getElementById('chartTopSelling'), {
+                    type: 'bar',
+                    data: {
+                        labels: topStats.map(x => x.ProductName.length > 30 ? x.ProductName.substring(0, 30) + '...' : x.ProductName),
+                        datasets: [{
+                            label: 'Đã bán',
+                            data: topStats.map(x => x.Sold),
+                            backgroundColor: topStats.map((_, i) => COLORS[i % COLORS.length])
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        indexAxis: 'y',
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    title: (tooltipItems) => {
+                                        const index = tooltipItems[0].dataIndex;
+                                        return topStats[index].ProductName;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Chart: Low Stock
+            if (document.getElementById('chartLowStock') && lowStock.length > 0) {
+                new Chart(document.getElementById('chartLowStock'), {
+                    type: 'bar',
+                    data: {
+                        labels: lowStock.map(x => x.Name.length > 30 ? x.Name.substring(0, 30) + '...' : x.Name),
+                        datasets: [{
+                            label: 'Tồn kho',
+                            data: lowStock.map(x => x.Quantity),
+                            backgroundColor: lowStock.map((_, i) => COLORS[i % COLORS.length])
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+
+            // Chart: Hidden Products
+            if (document.getElementById('chartHidden') && hiddenStats.length > 0) {
+                new Chart(document.getElementById('chartHidden'), {
+                    type: 'bar',
+                    data: {
+                        labels: hiddenStats.map(x => x.Name.length > 30 ? x.Name.substring(0, 30) + '...' : x.Name),
+                        datasets: [{
+                            label: 'Sản phẩm',
+                            data: hiddenStats.map(() => 1),
+                            backgroundColor: hiddenStats.map((_, i) => COLORS[i % COLORS.length])
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { stepSize: 1 }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+}
