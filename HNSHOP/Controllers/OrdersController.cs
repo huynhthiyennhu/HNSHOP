@@ -238,20 +238,18 @@ namespace HNSHOP.Controllers
 
 
 
-       
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateOrderReqDto orderRequest)
         {
             try
             {
                 if (orderRequest == null || orderRequest.DetailOrderReqDtos == null || !orderRequest.DetailOrderReqDtos.Any())
-                {
                     return BadRequest("Dữ liệu đơn hàng không hợp lệ.");
-                }
 
                 int userId = GetUserIdFromToken();
                 var customer = await _db.Customers.Include(c => c.Account).FirstOrDefaultAsync(c => c.AccountId == userId);
-                if (customer == null) return NotFound("Khách hàng không tồn tại.");
+                if (customer == null)
+                    return NotFound("Khách hàng không tồn tại.");
 
                 // Xử lý địa chỉ
                 Address address;
@@ -260,18 +258,36 @@ namespace HNSHOP.Controllers
                     try
                     {
                         var newAddress = JsonConvert.DeserializeObject<AddressReqDto>(orderRequest.NewAddress);
-                        if (newAddress == null ||
-                            string.IsNullOrWhiteSpace(newAddress.HouseNumber) ||
-                            string.IsNullOrWhiteSpace(newAddress.Street) ||
-                            string.IsNullOrWhiteSpace(newAddress.Ward) ||
-                            string.IsNullOrWhiteSpace(newAddress.District) ||
-                            string.IsNullOrWhiteSpace(newAddress.City))
+                        if (newAddress == null || string.IsNullOrWhiteSpace(newAddress.PhoneNumber))
+                            return BadRequest("Vui lòng nhập đầy đủ thông tin địa chỉ và số điện thoại.");
+
+                        string addressDetail;
+
+                        if (!string.IsNullOrWhiteSpace(newAddress.AddressDetail))
                         {
-                            return BadRequest("Vui lòng nhập đầy đủ thông tin địa chỉ.");
+                            // Nhập toàn bộ địa chỉ bằng tay
+                            addressDetail = $"SĐT: {newAddress.PhoneNumber} - {newAddress.AddressDetail}";
+                        }
+                        else
+                        {
+                            // Nhập từng phần
+                            if (string.IsNullOrWhiteSpace(newAddress.HouseNumber) ||
+                                string.IsNullOrWhiteSpace(newAddress.Street) ||
+                                string.IsNullOrWhiteSpace(newAddress.Ward) ||
+                                string.IsNullOrWhiteSpace(newAddress.District) ||
+                                string.IsNullOrWhiteSpace(newAddress.City))
+                            {
+                                return BadRequest("Vui lòng nhập đầy đủ địa chỉ chi tiết.");
+                            }
+
+                            addressDetail = $"SĐT: {newAddress.PhoneNumber} - {newAddress.HouseNumber}, {newAddress.Street}, {newAddress.Ward}, {newAddress.District}, {newAddress.City}";
                         }
 
-                        string addressDetail = $"{newAddress.HouseNumber}, {newAddress.Street}, {newAddress.Ward}, {newAddress.District}, {newAddress.City}";
-                        address = new Address { CustomerId = customer.Id, AddressDetail = addressDetail };
+                        address = new Address
+                        {
+                            CustomerId = customer.Id,
+                            AddressDetail = addressDetail
+                        };
 
                         _db.Addresses.Add(address);
                         await _db.SaveChangesAsync();
@@ -284,21 +300,20 @@ namespace HNSHOP.Controllers
                 else
                 {
                     address = await _db.Addresses.FirstOrDefaultAsync(a => a.Id == orderRequest.AddressId && a.CustomerId == customer.Id);
-                    if (address == null) return BadRequest("Không tìm thấy địa chỉ đã chọn.");
+                    if (address == null)
+                        return BadRequest("Không tìm thấy địa chỉ đã chọn.");
                 }
 
                 // Lấy giỏ hàng
                 var cartItems = _cartService.GetCartItems();
                 if (cartItems == null || !cartItems.Any())
-                {
                     return BadRequest("Giỏ hàng trống!");
-                }
 
-                // Lấy sản phẩm liên quan
+                // Lấy sản phẩm
                 var products = await _db.Products
                     .Include(p => p.Shop)
                     .Include(p => p.ProductSaleEvents)
-                    .ThenInclude(pse => pse.SaleEvent)
+                        .ThenInclude(pse => pse.SaleEvent)
                     .ToListAsync();
 
                 // Nhóm sản phẩm theo shop
@@ -322,7 +337,6 @@ namespace HNSHOP.Controllers
                         var product = products.FirstOrDefault(p => p.Id == item.ProductId);
                         if (product == null) continue;
 
-                        // Tìm giảm giá nếu có
                         var discount = product.ProductSaleEvents
                             .Where(pse => pse.SaleEvent.StartDate <= DateTime.UtcNow && pse.SaleEvent.EndDate >= DateTime.UtcNow)
                             .Select(pse => pse.SaleEvent.Discount)
@@ -345,7 +359,7 @@ namespace HNSHOP.Controllers
                         Status = SubOrderStatus.Pending,
                         DetailOrders = subOrderDetails,
                         SubTotal = subTotal,
-                        Total = subTotal, // Có thể thêm phí ship nếu cần
+                        Total = subTotal,
                         CreatedAt = DateTime.UtcNow
                     });
 

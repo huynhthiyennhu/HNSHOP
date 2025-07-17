@@ -29,6 +29,9 @@ namespace HNSHOP.Data
         public DbSet<SaleEvent> SaleEvents { get; set; }
         public DbSet<Shop> Shops { get; set; }
         public DbSet<SubOrder> SubOrders { get; set; }
+        public DbSet<Conversation> Conversations { get; set; }
+        public DbSet<Message> Messages { get; set; }
+
 
 
 
@@ -213,6 +216,25 @@ namespace HNSHOP.Data
                 .HasForeignKey(cn => cn.NotificationId)
                 .OnDelete(DeleteBehavior.Cascade);
             modelBuilder.SeedAllData();
+
+            modelBuilder.Entity<Conversation>()
+                .HasOne(c => c.Customer)
+                .WithMany()
+                .HasForeignKey(c => c.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Conversation>()
+                .HasOne(c => c.Shop)
+                .WithMany()
+                .HasForeignKey(c => c.ShopId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Conversation)
+                .WithMany(c => c.Messages)
+                .HasForeignKey(m => m.ConversationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
 
         }
 

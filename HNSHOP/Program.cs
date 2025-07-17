@@ -11,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Options;
 using System.Configuration;
+using Microsoft.AspNetCore.SignalR;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -101,6 +103,8 @@ builder.Services.AddAuthorizationBuilder()
 //    options.AddPolicy("ShopPolicy", policy => policy.RequireRole("shop"));
 //    options.AddPolicy("UserPolicy", policy => policy.RequireRole("user"));
 //});
+builder.Services.AddSignalR();
+
 builder.Services.AddSession();
 builder.Services.AddHttpContextAccessor();
 
@@ -128,6 +132,11 @@ app.UseEndpoints(endpoints =>
     endpoints.MapControllerRoute(
         name: "default",
         pattern: "{controller=Home}/{action=Index}/{id?}");
+
+    // Đăng ký ChatHub
+    endpoints.MapHub<ChatHub>("/chathub");
 });
+
+
 
 app.Run();

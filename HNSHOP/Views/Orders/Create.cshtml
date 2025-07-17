@@ -43,26 +43,46 @@
                     </select>
 
                     <button type="button" class="btn btn-primary mt-2" id="addNewAddressBtn">Nhập địa chỉ mới</button>
+                    <div id="newAddressForm" class="mt-2" style="display: none;">
 
-                    <div id="newAddressForm" style="display: none;" class="mt-2">
-                        <input type="text" id="houseNumber" class="form-control" placeholder="Số nhà">
-                        <br />
+                        <!-- Radio lựa chọn nhập địa chỉ -->
+                        <div class="form-group">
+                            <label><strong>Phương thức nhập địa chỉ</strong></label><br />
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="addressInputMode" id="structuredAddress" value="structured" checked />
+                                <label class="form-check-label" for="structuredAddress">Nhập từng phần</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="addressInputMode" id="manualAddress" value="manual" />
+                                <label class="form-check-label" for="manualAddress">Nhập tay toàn bộ</label>
+                            </div>
+                        </div>
+
+                        <!-- Textarea khi chọn nhập toàn bộ -->
+<textarea id="manualAddressDetail" class="form-control d-none" placeholder="Nhập toàn bộ địa chỉ..."></textarea>
+
+                        <!-- Nhập từng phần -->
+                        <input type="text" id="houseNumber" class="form-control mt-2" placeholder="Số nhà" />
+                        <input type="text" id="phoneNumber" class="form-control mt-2" placeholder="Số điện thoại người nhận" />
+
+                        <!-- Chọn tỉnh -->
                         <select id="citySelect" class="form-control mt-2">
                             <option value="">Chọn Tỉnh/Thành phố</option>
                         </select>
-                        <br />
+
+                        <!-- Quận, phường, đường -->
                         <select id="districtSelect" class="form-control mt-2">
                             <option value="">Chọn Quận/Huyện</option>
                         </select>
-                        <br />
                         <select id="wardSelect" class="form-control mt-2">
                             <option value="">Chọn Phường/Xã</option>
                         </select>
-                        <br />
                         <select id="streetSelect" class="form-control mt-2">
                             <option value="">Chọn Đường/Phố</option>
                         </select>
                     </div>
+
+
                 </div>
             </div>
 
@@ -169,175 +189,214 @@
         <br />
     </div>
 </section>
-
 @section Scripts {
-<script>
-    $(document).ready(function () {
-        let locations = [];
+    <script>
+        $(document).ready(function () {
+            let locations = [];
 
-        // Load JSON địa phương
-        $.getJSON("/json/local.json", function (data) {
-            locations = data;
-            loadCities();
-        });
-
-        function loadCities() {
-            $("#citySelect").empty().append('<option value="">Chọn Tỉnh/Thành phố</option>');
-            locations.forEach(city => {
-                $("#citySelect").append(`<option value="${city.id}">${city.name}</option>`);
+            // Load danh sách địa phương
+            $.getJSON("/json/local.json", function (data) {
+                locations = data;
+                loadCities();
             });
-        }
 
-        $("#citySelect").change(function () {
-            let cityId = $(this).val();
-            let city = locations.find(c => c.id === cityId);
-            $("#districtSelect").empty().append('<option value="">Chọn Quận/Huyện</option>');
-            $("#wardSelect").empty().append('<option value="">Chọn Phường/Xã</option>');
-            $("#streetSelect").empty().append('<option value="">Chọn Đường/Phố</option>');
-
-            if (!city) return;
-            city.districts.forEach(d => {
-                $("#districtSelect").append(`<option value="${d.id}">${d.name}</option>`);
-            });
-        });
-
-        $("#districtSelect").change(function () {
-            let cityId = $("#citySelect").val();
-            let districtId = $(this).val();
-            let city = locations.find(c => c.id === cityId);
-            let district = city?.districts.find(d => d.id === districtId);
-
-            $("#wardSelect").empty().append('<option value="">Chọn Phường/Xã</option>');
-            $("#streetSelect").empty().append('<option value="">Chọn Đường/Phố</option>');
-
-            if (!district) return;
-            district.wards.forEach(w => {
-                $("#wardSelect").append(`<option value="${w.id}">${w.prefix} ${w.name}</option>`);
-            });
-            district.streets.forEach(s => {
-                $("#streetSelect").append(`<option value="${s.id}">${s.prefix} ${s.name}</option>`);
-            });
-        });
-
-        $("#addressSelect").change(function () {
-            if ($(this).val()) {
-                $("#newAddressForm").hide();
-            }
-        });
-
-        $("#addNewAddressBtn").click(function () {
-            $("#newAddressForm").toggle();
-            $("#addressSelect").val("");
-        });
-
-               $("#placeOrderBtn").click(function () {
-            let selectedAddressId = $("#addressSelect").val();
-            let paymentMethod = $("input[name='paymentMethod']:checked").val();
-
-            // Kiểm tra địa chỉ mới nếu đang hiển thị form
-            let newAddress = null;
-            if ($("#newAddressForm").is(":visible")) {
-                const requiredFields = ["#houseNumber", "#citySelect", "#districtSelect", "#wardSelect", "#streetSelect"];
-                for (const field of requiredFields) {
-                    if (!$(field).val()) {
-                        alert("Vui lòng điền đầy đủ địa chỉ mới.");
-                        return;
-                    }
-                }
-
-                newAddress = JSON.stringify({
-                    HouseNumber: $("#houseNumber").val(),
-                    Street: $("#streetSelect option:selected").text(),
-                    Ward: $("#wardSelect option:selected").text(),
-                    District: $("#districtSelect option:selected").text(),
-                    City: $("#citySelect option:selected").text()
+            function loadCities() {
+                $("#citySelect").empty().append('<option value="">Chọn Tỉnh/Thành phố</option>');
+                locations.forEach(city => {
+                    $("#citySelect").append(`<option value="${city.id}">${city.name}</option>`);
                 });
             }
 
-            // ✅ Lấy sản phẩm từ tất cả các <tr> có data-id và data-quantity
-            let cartItems = [];
-            $("tr[data-id][data-quantity]").each(function () {
-                const productId = $(this).data("id");
-                const quantity = $(this).data("quantity");
+            // Load quận/huyện
+            $("#citySelect").change(function () {
+                const cityId = $(this).val();
+                const city = locations.find(c => c.id === cityId);
 
-                console.log("✔ Debug - ProductId:", productId, "Quantity:", quantity);
+                $("#districtSelect").empty().append('<option value="">Chọn Quận/Huyện</option>');
+                $("#wardSelect").empty().append('<option value="">Chọn Phường/Xã</option>');
+                $("#streetSelect").empty().append('<option value="">Chọn Đường/Phố</option>');
 
-                if (!isNaN(productId) && !isNaN(quantity)) {
-                    cartItems.push({
-                        ProductId: parseInt(productId),
-                        Quantity: parseInt(quantity)
-                    });
+                if (!city) return;
+                city.districts.forEach(d => {
+                    $("#districtSelect").append(`<option value="${d.id}">${d.name}</option>`);
+                });
+            });
+
+            // Load phường/xã, đường
+            $("#districtSelect").change(function () {
+                const cityId = $("#citySelect").val();
+                const districtId = $(this).val();
+                const city = locations.find(c => c.id === cityId);
+                const district = city?.districts.find(d => d.id === districtId);
+
+                $("#wardSelect").empty().append('<option value="">Chọn Phường/Xã</option>');
+                $("#streetSelect").empty().append('<option value="">Chọn Đường/Phố</option>');
+
+                if (!district) return;
+                district.wards.forEach(w => {
+                    $("#wardSelect").append(`<option value="${w.id}">${w.prefix} ${w.name}</option>`);
+                });
+                district.streets.forEach(s => {
+                    $("#streetSelect").append(`<option value="${s.id}">${s.prefix} ${s.name}</option>`);
+                });
+            });
+
+            // Ẩn form nhập mới nếu chọn địa chỉ cũ
+            $("#addressSelect").change(function () {
+                if ($(this).val()) {
+                    $("#newAddressForm").hide();
                 }
             });
 
-            if (!selectedAddressId && !newAddress) {
-                alert("Vui lòng chọn hoặc nhập địa chỉ giao hàng.");
-                return;
-            }
-            if (!paymentMethod) {
-                alert("Vui lòng chọn phương thức thanh toán.");
-                return;
-            }
-            if (cartItems.length === 0) {
-                alert("Giỏ hàng trống!");
-                return;
-            }
+            // Hiện/ẩn form nhập địa chỉ mới
+            $("#addNewAddressBtn").click(function () {
+                $("#newAddressForm").toggle();
+                $("#addressSelect").val("");
+            });
 
-            let orderData = {
-                AddressId: selectedAddressId || 0,
-                NewAddress: newAddress,
-                PaymentMethod: paymentMethod,
-                DetailOrderReqDtos: cartItems
-            };
+                   $("input[name='addressInputMode']").change(function () {
+            const isManual = $(this).val() === "manual";
 
-            $("#placeOrderBtn").prop("disabled", true).text("Đang xử lý...");
+            if (isManual) {
+                $("#manualAddressDetail").removeClass("d-none");
+                $("#houseNumber, #phoneNumber, #citySelect, #districtSelect, #wardSelect, #streetSelect")
+                    .closest(".form-group, .form-control").hide();
+            } else {
+                $("#manualAddressDetail").addClass("d-none");
+                $("#houseNumber, #phoneNumber, #citySelect, #districtSelect, #wardSelect, #streetSelect")
+                    .closest(".form-group, .form-control").show();
+            }
+        }).trigger("change");
 
-            if (paymentMethod === "paypal") {
-                let total = parseFloat($("#finalTotal").val());
-                if (total <= 0) {
-                    alert("Tổng tiền phải lớn hơn 0 để thanh toán bằng PayPal.");
+
+            // Xử lý đặt hàng
+            $("#placeOrderBtn").click(function () {
+                const selectedAddressId = $("#addressSelect").val();
+                const paymentMethod = $("input[name='paymentMethod']:checked").val();
+                let newAddress = null;
+
+                if ($("#newAddressForm").is(":visible")) {
+                    const addressMode = $("input[name='addressInputMode']:checked").val();
+                    const phone = $("#phoneNumber").val();
+
+                    if (!phone) {
+                        alert("Vui lòng nhập số điện thoại.");
+                        return;
+                    }
+
+                    if (addressMode === "manual") {
+                        const fullAddress = $("#manualAddressDetail").val();
+                        if (!fullAddress) {
+                            alert("Vui lòng nhập đầy đủ địa chỉ.");
+                            return;
+                        }
+
+                        newAddress = JSON.stringify({
+                            AddressDetail: fullAddress,
+                            PhoneNumber: phone
+                        });
+                    } else {
+                        const requiredFields = ["#houseNumber", "#districtSelect", "#wardSelect", "#streetSelect", "#citySelect"];
+                        for (const field of requiredFields) {
+                            if (!$(field).val()) {
+                                alert("Vui lòng điền đầy đủ thông tin địa chỉ.");
+                                return;
+                            }
+                        }
+
+                        newAddress = JSON.stringify({
+                            HouseNumber: $("#houseNumber").val(),
+                            Street: $("#streetSelect option:selected").text(),
+                            Ward: $("#wardSelect option:selected").text(),
+                            District: $("#districtSelect option:selected").text(),
+                            City: $("#citySelect option:selected").text(),
+                            PhoneNumber: phone
+                        });
+                    }
+                }
+
+                // Lấy sản phẩm trong giỏ
+                const cartItems = [];
+                $("tr[data-id][data-quantity]").each(function () {
+                    const productId = $(this).data("id");
+                    const quantity = $(this).data("quantity");
+                    if (!isNaN(productId) && !isNaN(quantity)) {
+                        cartItems.push({
+                            ProductId: parseInt(productId),
+                            Quantity: parseInt(quantity)
+                        });
+                    }
+                });
+
+                if (!selectedAddressId && !newAddress) {
+                    alert("Vui lòng chọn hoặc nhập địa chỉ giao hàng.");
                     return;
                 }
 
+                if (!paymentMethod) {
+                    alert("Vui lòng chọn phương thức thanh toán.");
+                    return;
+                }
+
+                if (cartItems.length === 0) {
+                    alert("Giỏ hàng trống!");
+                    return;
+                }
+
+                const orderData = {
+                    AddressId: selectedAddressId || 0,
+                    NewAddress: newAddress,
+                    PaymentMethod: paymentMethod,
+                    DetailOrderReqDtos: cartItems
+                };
+
+                $("#placeOrderBtn").prop("disabled", true).text("Đang xử lý...");
+
+                if (paymentMethod === "paypal") {
+                    const total = parseFloat($("#finalTotal").val());
+                    if (total <= 0) {
+                        alert("Tổng tiền phải lớn hơn 0 để thanh toán bằng PayPal.");
+                        return;
+                    }
+
+                    $.ajax({
+                        url: "/Orders/PreparePaypal",
+                        type: "POST",
+                        contentType: "application/json",
+                        data: JSON.stringify(orderData),
+                        success: function (res) {
+                            if (res.redirectUrl) {
+                                window.location.href = res.redirectUrl;
+                            } else {
+                                alert("Không thể tạo đơn hàng PayPal.");
+                            }
+                        },
+                        error: function (xhr) {
+                            alert("Lỗi tạo đơn PayPal: " + xhr.responseText);
+                            $("#placeOrderBtn").prop("disabled", false).text("Đặt hàng");
+                        }
+                    });
+
+                    return;
+                }
+
+                // Đặt hàng thường
                 $.ajax({
-                    url: "/Orders/PreparePaypal",
+                    url: "/Orders/Create",
                     type: "POST",
                     contentType: "application/json",
                     data: JSON.stringify(orderData),
-                    success: function (res) {
-                        if (res.redirectUrl) {
-                            window.location.href = res.redirectUrl;
-                        } else {
-                            alert("Không thể tạo đơn hàng PayPal.");
-                        }
+                    success: function () {
+                        alert("Đặt hàng thành công!");
+                        window.location.href = "/Orders/Index";
                     },
                     error: function (xhr) {
-                        alert("Lỗi tạo đơn PayPal: " + xhr.responseText);
+                        alert("Có lỗi xảy ra khi đặt hàng: " + xhr.responseText);
                         $("#placeOrderBtn").prop("disabled", false).text("Đặt hàng");
                     }
                 });
-
-                return;
-            }
-
-            // Đặt hàng thường
-            $.ajax({
-                url: "/Orders/Create",
-                type: "POST",
-                contentType: "application/json",
-                data: JSON.stringify(orderData),
-                success: function () {
-                    alert("Đặt hàng thành công!");
-                    window.location.href = "/Orders/Index";
-                },
-                error: function (xhr) {
-                    alert("Có lỗi xảy ra khi đặt hàng: " + xhr.responseText);
-                    $("#placeOrderBtn").prop("disabled", false).text("Đặt hàng");
-                }
             });
         });
-
-
-    });
-</script>
+    </script>
 }
+

@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.EntityFrameworkCore
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="utf-8">
@@ -62,6 +64,75 @@
 						<div class="shop-menu pull-right">
 							@if (User.Identity.IsAuthenticated){
 								<ul class="nav navbar-nav">
+									@using System.Security.Claims
+									@inject HNSHOP.Data.ApplicationDbContext _context
+
+										@{
+											var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+											int userId = userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
+
+											int? partnerId = null;
+											string chatAction = "";
+											string controller = "Chat";
+
+											string userRole = User.IsInRole("User") ? "User" :
+											User.IsInRole("Shop") ? "Shop" : null;
+
+											int unreadCount = 0;
+
+											if (userRole != null)
+											{
+												var convo = _context.Conversations
+												.Include(c => c.Messages)
+												.Where(c =>
+												(userRole == "User" && c.Customer.AccountId == userId) ||
+												(userRole == "Shop" && c.Shop.AccountId == userId)
+												)
+												.OrderByDescending(c => c.Messages.Any() ? c.Messages.Max(m => m.SentAt) : DateTime.MinValue)
+												.FirstOrDefault();
+
+												if (userRole == "User")
+												{
+													partnerId = convo?.ShopId ?? 1;
+													chatAction = "WithShop";
+												}
+												else if (userRole == "Shop")
+												{
+													partnerId = convo?.CustomerId ?? 1;
+													chatAction = "WithCustomer";
+												}
+
+												// Tính số tin nhắn chưa đọc gửi đến người dùng hiện tại
+												unreadCount = _context.Messages
+												.Where(m =>
+												m.ConversationId == convo.Id &&
+												!m.IsRead &&
+												m.SenderRole != userRole &&
+												m.SenderId != userId)
+												.Count();
+											}
+										}
+
+
+										@if (User.IsInRole("User") || User.IsInRole("Shop"))
+										{
+											<li class="position-relative">
+												<a asp-controller="@controller"
+												   asp-action="@chatAction"
+												   asp-route-customerId="@(User.IsInRole("Shop") ? partnerId : null)"
+												   asp-route-shopId="@(User.IsInRole("User") ? partnerId : null)">
+													<i class="fa fa-comments"></i> Trò chuyện
+													@if (unreadCount > 0)
+													{
+														<span class="badge badge-danger" style="position: absolute; top: -8px; right: -10px;">
+															@unreadCount
+														</span>
+													}
+												</a>
+											</li>
+
+										}
+
 									@if (User.Identity.IsAuthenticated && User.IsInRole("User")) // Chỉ khách hàng
 									{
 										@* <li><a asp-controller="ACcounts" asp-action="Index"><i class="fa fa-user"></i> Tài Khoản</a></li> *@
@@ -74,6 +145,7 @@
 											</a>
 										</li>
 									}
+									
 
 										<li class="dropdown">
 												<div style="margin-top:4px;">

@@ -81,6 +81,14 @@
 									<i class="fa fa-shopping-cart"></i> Thêm vào giỏ hàng
 								</button>
 							}
+							@if (User.Identity.IsAuthenticated && User.IsInRole("User"))
+							{
+								<button class="btn btn-default add-to-cart" data-product-id="@Model.Id" data-quantity="1">
+									<i class="fa fa-shopping-cart"></i> Thêm vào giỏ hàng
+								</button>
+
+							}
+
 							<a href=""><img src="~/images/product-details/share.png" class="share img-responsive" alt="" /></a>
 						</div>
 					</div>
@@ -109,6 +117,13 @@
 						<div class="tab-pane fade" id="companyprofile">
 							<p><b>Tên Shop :</b><a asp-controller="Accounts" asp-action="Index" asp-route-id="@shop.AccountId"> @shop.Name</a></p>
 							<p><b>Chi tiết :</b> @shop.Description</p>
+							@if (User.Identity.IsAuthenticated && User.IsInRole("User"))
+							{
+								
+								<a href="/Chat/WithShop?shopId=@Model.Shop.Id" class="btn btn-info ml-2">
+									<i class="fa fa-comments"></i> Chat với Shop
+								</a>
+							}
 							<h2 class="title text-center">Sản phẩm khác của Shop</h2>
 							<!-- Hiển thị shopProducts tại đây -->
 							<div class="row">

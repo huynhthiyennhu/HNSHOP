@@ -240,7 +240,8 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
         new Claim(ClaimTypes.Role, role), 
         new Claim(ConstConfig.UserIdClaimType, account.Id.ToString()),
         new Claim(ClaimTypes.Name, account.Customer?.Name ?? account.Shop?.Name ?? "Admin"),
-        new Claim("Avatar", account.Avatar ?? "default.png") 
+        new Claim("Avatar", account.Avatar ?? "default.png"),
+
     };
 
         if (account.Shop != null)

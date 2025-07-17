@@ -1,0 +1,215 @@
+﻿@{
+    ViewBag.Title = "Trò chuyện";
+    var conversations = ViewBag.Conversations as List<HNSHOP.Models.Conversation>;
+    int? selectedConversationId = ViewBag.ConversationId as int?;
+    var senderRole = ViewBag.SenderRole as string;
+    int? senderId = ViewBag.SenderId as int?;
+    var messages = ViewBag.Messages as List<HNSHOP.Models.Message>;
+    var selectedConvo = conversations?.FirstOrDefault(c => c.Id == selectedConversationId);
+
+    string receiverName = senderRole == "Customer"
+        ? selectedConvo?.Shop?.Name ?? "Shop"
+        : selectedConvo?.Customer?.Name ?? "Khách";
+
+    string receiverAvatar = senderRole == "Customer"
+        ? selectedConvo?.Shop?.Account?.Avatar ?? "default.png"
+        : selectedConvo?.Customer?.Account?.Avatar ?? "default.png";
+}
+
+<style>
+    .chat-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .message-bubble {
+        display: inline-block;
+        max-width: 70%;
+        padding: 8px 12px;
+        border-radius: 18px;
+        word-break: break-word;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+        .message-bubble.sender {
+            background-color: #dae4f2;
+            color: #00000;
+            align-self: flex-end;
+        }
+
+        .message-bubble.receiver {
+            background-color: #b5d2fb;
+            color: #000;
+            border: 1px solid #e0e0e0;
+        }
+
+
+    .chat-messages {
+        background-color: #f5f6f8;
+        overflow-y: auto;
+        flex-grow: 1;
+        padding: 1rem;
+        height: 100%;
+    }
+
+
+    .chat-footer input {
+        flex: 1;
+        border-radius: 20px;
+    }
+
+    .chat-footer button {
+        border-radius: 20px;
+        white-space: nowrap;
+    }
+</style>
+
+<div class="row" style="height: 500px;">
+<div class="col-md-4 border-right overflow-auto" style="background-color:#fefaef">
+        <h4 class="mt-2">Trò Chuyện Gần Đây</h4>
+        <br />
+
+        <ul class="list-group" >
+            @foreach (var convo in conversations)
+            {
+                string name = senderRole == "Customer" ? convo.Shop?.Name ?? "Shop" : convo.Customer?.Name ?? "Khách";
+                string avatar = senderRole == "Customer"
+                ? convo.Shop?.Account?.Avatar ?? "default.png"
+                : convo.Customer?.Account?.Avatar ?? "default.png";
+
+                string action = senderRole == "Customer" ? "WithShop" : "WithCustomer";
+                object routeValues = senderRole == "Customer"
+                ? new { shopId = convo.ShopId }
+                : new { customerId = convo.CustomerId };
+
+                <li class=" @(convo.Id == selectedConversationId ? "active" : "") d-flex align-items-center" >
+                    <img src="~/images/hnshop/avatar/@avatar" class="chat-avatar mr-3" />
+                    <a href="@Url.Action(action, "Chat", routeValues)" class="text-dark" style="color:black;">@name</a>
+                </li>
+                <br />
+            }
+        </ul>
+    </div>
+
+    <!-- KHUNG CHAT -->
+<div class="col-md-8 d-flex flex-column border rounded shadow-sm p-0" style="height: 60%;">
+        <!-- Header người nhận -->
+        <div class="d-flex align-items-center border-bottom p-3" style="gap: 12px;">
+            <img src="~/images/hnshop/avatar/@receiverAvatar"
+                 alt="Avatar"
+                 style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" />
+
+            <h4 class="mb-0 font-weight-bold" style="white-space: nowrap; display: inline-block;">@receiverName</h4>
+        </div>
+        <hr />
+
+        <!-- Tin nhắn -->
+    <div id="chatMessages" class="chat-messages">
+            @foreach (var msg in messages)
+            {
+                bool isMine = msg.SenderRole == senderRole && msg.SenderId == senderId;
+                var alignment = isMine ? "text-right" : "text-left";
+                var bubbleClass = isMine ? "sender" : "receiver";
+                var avatar = msg.SenderRole == "Customer"
+                ? msg.Conversation.Customer?.Account?.Avatar
+                : msg.Conversation.Shop?.Account?.Avatar;
+
+                <div class="d-flex @alignment mb-2">
+                    @if (!isMine)
+                    {
+                        <img src="~/images/hnshop/avatar/@(avatar ?? "default.png")" class="chat-avatar mr-2" />
+                    }
+                    <div class="message-bubble @bubbleClass">
+                        <div>@msg.Content</div>
+                        <div class="text-right small mt-1" style="opacity: 0.6;">@msg.SentAt.ToString("HH:mm")</div>
+                    </div>
+                </div>
+                <br />
+            }
+
+        </div>
+        
+        <br />
+        <!-- Ô nhập -->
+        <div class="border-top p-2">
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="text" id="messageInput" class="form-control" placeholder="Nhập tin nhắn..." style="flex: 1;" />
+                <button class="btn btn-warning" onclick="sendMessage()">Gửi</button>
+            </div>
+        </div>
+
+
+
+
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <script>
+        const conversationId = "@selectedConversationId";
+        const senderId = parseInt("@senderId");
+        const senderRole = "@senderRole";
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chathub")
+            .build();
+
+                        connection.on("ReceiveMessage", function (role, id, message, sentAt, avatar, isMine) {
+            const chatBox = document.getElementById("chatMessages");
+            if (!chatBox) return;
+
+            const alignment = isMine ? "text-right" : "text-left";
+            const bubbleClass = isMine ? "sender" : "receiver";
+            const avatarHtml = !isMine
+                ? `<img src='/images/hnshop/avatar/${avatar || "default.png"}' class='chat-avatar mr-2' />`
+                : "";
+
+            const time = sentAt ? new Date(sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
+
+            const html = `
+                <div class="d-flex ${alignment} mb-2">
+                    ${avatarHtml}
+                    <div class="message-bubble ${bubbleClass}">
+                        <div>${message}</div>
+                        <div class="text-right small mt-1" style="opacity: 0.6;">${time}</div>
+                    </div>
+                </div>
+                <br />
+            `;
+
+            chatBox.innerHTML += html;
+            setTimeout(() => {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 100);
+        });
+
+
+
+        connection.start().then(function () {
+            if (conversationId) {
+                connection.invoke("JoinConversation", conversationId)
+                    .catch(err => console.error("❌ JoinConversation lỗi:", err));
+            }
+        }).catch(err => console.error("❌ Lỗi kết nối:", err));
+
+        function sendMessage() {
+            const msg = document.getElementById("messageInput").value.trim();
+            if (!msg) return;
+
+            connection.invoke("SendToConversation", conversationId, senderRole, senderId, msg)
+                .catch(err => console.error("❌ Gửi lỗi:", err));
+
+            document.getElementById("messageInput").value = '';
+        }
+
+        // Auto-scroll cuối khung chat khi load xong
+        setTimeout(() => {
+            const chatBox = document.getElementById("chatMessages");
+            if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+        }, 100);
+    </script>
+}
