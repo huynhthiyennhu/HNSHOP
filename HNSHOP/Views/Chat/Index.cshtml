@@ -1,0 +1,59 @@
+﻿@{
+    ViewBag.Title = "Trò chuyện gần đây";
+    var conversations = ViewBag.Conversations as List<HNSHOP.Models.Conversation>;
+    var senderRole = ViewBag.SenderRole as string;
+    int? senderId = ViewBag.SenderId as int?;
+}
+
+<h3 class="mt-3">Các cuộc trò chuyện gần đây</h3>
+<hr />
+
+@if (conversations == null || !conversations.Any())
+{
+    <div class="alert alert-info">Bạn chưa có cuộc trò chuyện nào.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover table-borderless">
+            <tbody>
+                @foreach (var convo in conversations)
+                {
+                    string name = senderRole == "Customer" ? convo.Shop?.Name ?? "Shop" : convo.Customer?.Name ?? "Khách";
+                    string avatar = senderRole == "Customer"
+                    ? convo.Shop?.Account?.Avatar ?? "default.png"
+                    : convo.Customer?.Account?.Avatar ?? "default.png";
+
+                    string action = senderRole == "Customer" ? "WithShop" : "WithCustomer";
+                    object routeValues = senderRole == "Customer"
+                    ? new { shopId = convo.ShopId }
+                    : new { customerId = convo.CustomerId };
+
+                    <tr>
+                        <td style="width: 50px;">
+                            <img src="~/images/hnshop/avatar/@avatar" class="chat-avatar" />
+                        </td>
+                        <td>
+                            <a href="@Url.Action(action, "Chat", routeValues)" class="text-dark text-decoration-none">
+                                <strong>@name</strong><br />
+                                <small>Nhấn để tiếp tục trò chuyện</small>
+                            </a>
+                        </td>
+                        <td class="text-end">
+                            <form method="post"
+                                  asp-action="DeleteConversation"
+                                  asp-controller="Chat"
+                                  asp-route-conversationId="@convo.Id"
+                                  onsubmit="return confirm('Bạn có chắc muốn xoá không?');"
+                                  style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

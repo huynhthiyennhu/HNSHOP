@@ -1,45 +1,36 @@
-﻿using HNSHOP.Services;
+﻿using HNSHOP.Data;
+using HNSHOP.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
-namespace HNSHOP.Controllers
+[Authorize]
+public class NotificationController : Controller
 {
-    [Authorize]
-    public class NotificationController : Controller
+    private readonly INotificationService _notificationService;
+
+    public NotificationController(INotificationService notificationService)
     {
-        private readonly NotificationService _notificationService;
+        _notificationService = notificationService;
+    }
 
-        public NotificationController(NotificationService notificationService)
-        {
-            _notificationService = notificationService;
-        }
+    private int GetAccountId()
+    {
+        return int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+    }
 
-        /// <summary>
-        /// Lấy danh sách thông báo của khách hàng
-        /// </summary>
-        public async Task<IActionResult> Index()
-        {
-            int customerId = GetCustomerIdFromToken();
-            var notifications = await _notificationService.GetNotificationsAsync(customerId);
-            return View(notifications);
-        }
+    public async Task<IActionResult> Index()
+    {
+        var accountId = GetAccountId();
+        var notifications = await _notificationService.GetNotificationsAsync(accountId);
+        return View(notifications); // Notifications là List<NotificationResDTO>
+    }
 
-        /// <summary>
-        /// Đánh dấu thông báo là đã đọc
-        /// </summary>
-        [HttpPost]
-        public async Task<IActionResult> MarkAsRead(int id)
-        {
-            int customerId = GetCustomerIdFromToken();
-            await _notificationService.MarkAsReadAsync(customerId, id);
-            return RedirectToAction("Index");
-        }
-
-        private int GetCustomerIdFromToken()
-        {
-            return int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int customerId) ? customerId : -1;
-        }
+    [HttpPost]
+    public async Task<IActionResult> MarkAsRead(int notificationId)
+    {
+        var accountId = GetAccountId();
+        await _notificationService.MarkAsReadAsync(accountId, notificationId);
+        return Ok(); // Trả về JSON 200
     }
 }

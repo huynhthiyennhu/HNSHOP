@@ -30,10 +30,19 @@ public class ChatHub : Hub
     public async Task SendToConversation(string conversationId, string senderRole, int senderId, string message)
     {
         if (string.IsNullOrWhiteSpace(message)) return;
-
         if (!int.TryParse(conversationId, out int convId)) return;
 
-        // Lưu tin nhắn vào database
+        // Lấy conversation
+        var convo = await _context.Conversations.FindAsync(convId);
+        if (convo == null) return;
+
+        // 👉 Tự động khôi phục nếu cuộc trò chuyện bị xóa bởi phía người gửi
+        if (senderRole == "Customer" && convo.IsDeletedByCustomer)
+            convo.IsDeletedByCustomer = false;
+        else if (senderRole == "Shop" && convo.IsDeletedByShop)
+            convo.IsDeletedByShop = false;
+
+        // Lưu tin nhắn
         var msg = new Message
         {
             ConversationId = convId,
@@ -44,6 +53,7 @@ public class ChatHub : Hub
         };
 
         _context.Messages.Add(msg);
+        _context.Conversations.Update(convo); // cập nhật lại trạng thái xóa
         await _context.SaveChangesAsync();
 
         // Lấy avatar của người gửi
@@ -67,7 +77,7 @@ public class ChatHub : Hub
                 .FirstOrDefault() ?? "default.png";
         }
 
-        // Truyền thêm sentAt và avatar, client tự xử lý isMine
+        // Gửi tin nhắn tới các client trong nhóm
         await Clients.Group(conversationId)
             .SendAsync("ReceiveMessage", senderRole, senderId, message, msg.SentAt.ToString("o"), avatar, true);
     }

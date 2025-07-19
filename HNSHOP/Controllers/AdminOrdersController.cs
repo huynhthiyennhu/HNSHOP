@@ -1,5 +1,6 @@
 ﻿using HNSHOP.Data;
 using HNSHOP.Models;
+using HNSHOP.Services;
 using HNSHOP.Utils;
 using HNSHOP.Utils.EnumTypes;
 using Microsoft.AspNetCore.Authorization;
@@ -13,11 +14,14 @@ namespace HNSHOP.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly ILogger<AdminOrdersController> _logger;
+        private readonly INotificationService _notificationService;
 
-        public AdminOrdersController(ApplicationDbContext db, ILogger<AdminOrdersController> logger)
+
+        public AdminOrdersController(ApplicationDbContext db, ILogger<AdminOrdersController> logger, INotificationService notificationService)
         {
             _db = db;
             _logger = logger;
+            _notificationService = notificationService;
         }
 
         public async Task<IActionResult> Index()
@@ -101,6 +105,45 @@ namespace HNSHOP.Controllers
             order.Total = orderTotal;
 
             await _db.SaveChangesAsync();
+
+            // Gửi thông báo đến khách hàng
+            var customer = await _db.Customers
+                .Include(c => c.Account)
+                .FirstOrDefaultAsync(c => c.Id == order.CustomerId);
+
+            if (customer != null && customer.Account != null)
+            {
+                await _notificationService.SendNotificationToAccountAsync(
+                    accountId: customer.Account.Id,
+                    title: "Đơn hàng đã được duyệt",
+                    body: $"Đơn hàng #{order.Id} của bạn đã được duyệt và đang được các shop chuẩn bị giao.",
+                    type: "Order"
+                );
+            }
+
+            // Gửi thông báo đến từng shop có SubOrder
+            var shopAccounts = await _db.SubOrders
+                .Where(so => so.OrderId == order.Id)
+                .Include(so => so.Shop)
+                    .ThenInclude(s => s.Account)
+                .Select(so => so.Shop.Account)
+                .Distinct()
+                .ToListAsync();
+
+            foreach (var shopAccount in shopAccounts)
+            {
+                if (shopAccount != null)
+                {
+                    await _notificationService.SendNotificationToAccountAsync(
+                        accountId: shopAccount.Id,
+                        title: "Có đơn hàng mới cần xử lý",
+                        body: $"Bạn có đơn hàng mới #{order.Id} vừa được duyệt. Vui lòng chuẩn bị hàng để giao.",
+                        type: "Order"
+                    );
+                }
+            }
+
+
             TempData["SuccessMessage"] = "Đã duyệt đơn hàng thành công! Các shop có thể tiến hành chuẩn bị giao hàng.";
             return RedirectToAction("Index");
         }
@@ -111,6 +154,8 @@ namespace HNSHOP.Controllers
             var order = await _db.Orders
                 .Include(o => o.SubOrders)
                     .ThenInclude(so => so.DetailOrders)
+                .Include(o => o.Customer)
+                    .ThenInclude(c => c.Account)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
             if (order == null)
@@ -119,6 +164,36 @@ namespace HNSHOP.Controllers
             if (order.Status != OrderStatus.Cancelled)
                 return BadRequest("Chỉ có thể xóa đơn hàng đã bị hủy.");
 
+            // Gửi thông báo cho khách hàng trước khi xóa
+            if (order.Customer != null && order.Customer.Account != null)
+            {
+                await _notificationService.SendNotificationToAccountAsync(
+                    accountId: order.Customer.Account.Id,
+                    title: "Đơn hàng đã bị xóa khỏi hệ thống",
+                    body: $"Đơn hàng #{order.Id} đã bị xóa hoàn toàn do đã bị hủy trước đó.",
+                    type: "Order"
+                );
+            }
+
+            // Gửi thông báo đến các shop nếu cần
+            var shopAccounts = order.SubOrders
+                .Select(so => so.Shop?.Account)
+                .Where(a => a != null)
+                .Distinct()
+                .ToList();
+
+            foreach (var shopAccount in shopAccounts)
+            {
+                await _notificationService.SendNotificationToAccountAsync(
+                    accountId: shopAccount.Id,
+                    title: "Đơn hàng đã bị xóa",
+                    body: $"Đơn hàng #{order.Id} mà shop bạn tham gia đã bị xóa hoàn toàn khỏi hệ thống.",
+                    type: "Order"
+                );
+            }
+
+
+            // Xoá chi tiết
             foreach (var subOrder in order.SubOrders)
             {
                 _db.DetailOrders.RemoveRange(subOrder.DetailOrders);
@@ -131,5 +206,6 @@ namespace HNSHOP.Controllers
             TempData["SuccessMessage"] = "Đã xóa đơn hàng bị hủy.";
             return RedirectToAction("Index");
         }
+
     }
 }

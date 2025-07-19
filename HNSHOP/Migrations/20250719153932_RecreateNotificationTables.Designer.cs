@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HNSHOP.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250628154540_seeddata")]
-    partial class seeddata
+    [Migration("20250719153932_RecreateNotificationTables")]
+    partial class RecreateNotificationTables
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -32,6 +32,9 @@ namespace HNSHOP.Migrations
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
+
+                    b.Property<double>("DiscountPercent")
+                        .HasColumnType("float");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
@@ -105,23 +108,6 @@ namespace HNSHOP.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("Accounts");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Avatar = "avatar1.jpg",
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "admin@example.com",
-                            IsApproved = false,
-                            IsVerified = false,
-                            Password = "$2a$11$lCbKDapgEqqJObRAbjjn5Oujzo1liP.TEj6WcMLxthi63eQbhAIoa",
-                            Phone = "0912345678",
-                            RoleId = 1,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            VerifiedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            VerifyToken = "token123"
-                        });
                 });
 
             modelBuilder.Entity("HNSHOP.Models.Address", b =>
@@ -144,6 +130,38 @@ namespace HNSHOP.Migrations
                     b.HasIndex("CustomerId");
 
                     b.ToTable("Addresses");
+                });
+
+            modelBuilder.Entity("HNSHOP.Models.Conversation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeletedByCustomer")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeletedByShop")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("ShopId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("ShopId");
+
+                    b.ToTable("Conversations");
                 });
 
             modelBuilder.Entity("HNSHOP.Models.Customer", b =>
@@ -181,24 +199,6 @@ namespace HNSHOP.Migrations
                     b.ToTable("Customers");
                 });
 
-            modelBuilder.Entity("HNSHOP.Models.CustomerNotification", b =>
-                {
-                    b.Property<int>("CustomerId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("NotificationId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("bit");
-
-                    b.HasKey("CustomerId", "NotificationId");
-
-                    b.HasIndex("NotificationId");
-
-                    b.ToTable("CustomerNotifications");
-                });
-
             modelBuilder.Entity("HNSHOP.Models.CustomerType", b =>
                 {
                     b.Property<int>("Id")
@@ -218,20 +218,6 @@ namespace HNSHOP.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("CustomerTypes");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Description = "Toàn bộ khách hàng thông thường có mua hàng nhưng ít",
-                            Name = "Khách hàng thông thường"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Description = "Toàn bộ khách hàng thân thiết, thường xuyên mua hàng",
-                            Name = "Khách hàng thân thiết"
-                        });
                 });
 
             modelBuilder.Entity("HNSHOP.Models.CustomerTypeSaleEvent", b =>
@@ -267,6 +253,41 @@ namespace HNSHOP.Migrations
                     b.ToTable("Likes");
                 });
 
+            modelBuilder.Entity("HNSHOP.Models.Message", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ConversationId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("SenderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SenderRole")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationId");
+
+                    b.ToTable("Messages");
+                });
+
             modelBuilder.Entity("HNSHOP.Models.Notification", b =>
                 {
                     b.Property<int>("Id")
@@ -282,16 +303,61 @@ namespace HNSHOP.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("bit");
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Type")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("CustomerId");
+
                     b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("HNSHOP.Models.Order", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AddressId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PaymentStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Total")
+                        .HasColumnType("decimal(9, 1)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AddressId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("HNSHOP.Models.Product", b =>
@@ -375,32 +441,6 @@ namespace HNSHOP.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ProductTypes");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Description = "Mỹ phẩm là các sản phẩm chăm sóc cá nhân được thiết kế để làm đẹp, bảo vệ hoặc cải thiện vẻ ngoài của da, tóc, móng và cơ thể. Chúng bao gồm nhiều loại sản phẩm như kem dưỡng da, son môi, phấn nền, mascara, dầu gội, và nước hoa. Mỹ phẩm có thể chứa các thành phần tự nhiên hoặc tổng hợp, giúp làm sạch, dưỡng ẩm, chống lão hóa, và bảo vệ da khỏi các tác động xấu từ môi trường.",
-                            Name = "Mỹ phẩm"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Description = "Sản phẩm gia dụng là các vật dụng được sử dụng hàng ngày trong gia đình, phục vụ cho các nhu cầu cơ bản như nấu nướng, vệ sinh, giặt giũ và trang trí. Chúng bao gồm nhiều loại như đồ điện gia dụng (máy giặt, tủ lạnh, lò vi sóng), đồ dùng nhà bếp (nồi, chảo, bát đĩa), thiết bị vệ sinh (máy hút bụi, cây lau nhà), và các sản phẩm trang trí nội thất. Sản phẩm gia dụng giúp tối ưu hóa công việc trong nhà, mang lại sự tiện nghi và thoải mái cho người dùng.",
-                            Name = "Gia dụng"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Description = "Sản phẩm điện tử là các thiết bị sử dụng công nghệ điện để hoạt động, đáp ứng nhu cầu giải trí, liên lạc, làm việc và học tập. Chúng bao gồm điện thoại di động, máy tính xách tay, máy tính bảng, tivi, tai nghe và các thiết bị gia dụng thông minh. Sản phẩm điện tử thường được trang bị các tính năng tiên tiến như kết nối internet, màn hình cảm ứng, và công nghệ không dây, giúp người dùng dễ dàng tương tác và cải thiện hiệu suất trong cuộc sống hàng ngày.",
-                            Name = "Điện tử"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Description = "Sản phẩm thời trang bao gồm quần áo, giày dép, phụ kiện như túi xách, mũ, và trang sức, được thiết kế để thể hiện phong cách cá nhân và xu hướng thẩm mỹ. Chúng không chỉ đáp ứng nhu cầu mặc hàng ngày mà còn phản ánh cá tính, văn hóa, và thời đại. Các sản phẩm thời trang đa dạng từ trang phục công sở, dạo phố, đến trang phục dạ tiệc, thường được cập nhật liên tục theo mùa và xu hướng thời trang thế giới.",
-                            Name = "Thời trang"
-                        });
                 });
 
             modelBuilder.Entity("HNSHOP.Models.Rating", b =>
@@ -421,13 +461,13 @@ namespace HNSHOP.Migrations
                     b.Property<int>("CustomerId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("OrderId")
-                        .HasColumnType("int");
-
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
                     b.Property<int>("RatingValue")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SubOrderId")
                         .HasColumnType("int");
 
                     b.Property<string>("UserName")
@@ -439,6 +479,8 @@ namespace HNSHOP.Migrations
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("ProductId");
+
+                    b.HasIndex("SubOrderId");
 
                     b.ToTable("Ratings");
                 });
@@ -458,23 +500,6 @@ namespace HNSHOP.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Roles");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Name = "Admin"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Name = "User"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "Shop"
-                        });
                 });
 
             modelBuilder.Entity("HNSHOP.Models.SaleEvent", b =>
@@ -538,62 +563,7 @@ namespace HNSHOP.Migrations
                     b.ToTable("Shops");
                 });
 
-            modelBuilder.Entity("Order", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AddressId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("CustomerId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("PaymentStatus")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("Total")
-                        .HasColumnType("decimal(9, 1)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AddressId");
-
-                    b.HasIndex("CustomerId");
-
-                    b.ToTable("Orders");
-                });
-
-            modelBuilder.Entity("ProductSaleEvent", b =>
-                {
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SaleEventId")
-                        .HasColumnType("int");
-
-                    b.HasKey("ProductId", "SaleEventId");
-
-                    b.HasIndex("SaleEventId");
-
-                    b.ToTable("ProductSaleEvents");
-                });
-
-            modelBuilder.Entity("SubOrder", b =>
+            modelBuilder.Entity("HNSHOP.Models.SubOrder", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -628,6 +598,44 @@ namespace HNSHOP.Migrations
                     b.ToTable("SubOrders");
                 });
 
+            modelBuilder.Entity("HNSHOP.Models.UserNotification", b =>
+                {
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NotificationId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.HasKey("AccountId", "NotificationId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("NotificationId");
+
+                    b.ToTable("UserNotifications");
+                });
+
+            modelBuilder.Entity("ProductSaleEvent", b =>
+                {
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SaleEventId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ProductId", "SaleEventId");
+
+                    b.HasIndex("SaleEventId");
+
+                    b.ToTable("ProductSaleEvents");
+                });
+
             modelBuilder.Entity("DetailOrder", b =>
                 {
                     b.HasOne("HNSHOP.Models.Product", "Product")
@@ -636,7 +644,7 @@ namespace HNSHOP.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("SubOrder", "SubOrder")
+                    b.HasOne("HNSHOP.Models.SubOrder", "SubOrder")
                         .WithMany("DetailOrders")
                         .HasForeignKey("SubOrderId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -669,6 +677,25 @@ namespace HNSHOP.Migrations
                     b.Navigation("Customer");
                 });
 
+            modelBuilder.Entity("HNSHOP.Models.Conversation", b =>
+                {
+                    b.HasOne("HNSHOP.Models.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("HNSHOP.Models.Shop", "Shop")
+                        .WithMany()
+                        .HasForeignKey("ShopId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Shop");
+                });
+
             modelBuilder.Entity("HNSHOP.Models.Customer", b =>
                 {
                     b.HasOne("HNSHOP.Models.Account", "Account")
@@ -686,25 +713,6 @@ namespace HNSHOP.Migrations
                     b.Navigation("Account");
 
                     b.Navigation("CustomerType");
-                });
-
-            modelBuilder.Entity("HNSHOP.Models.CustomerNotification", b =>
-                {
-                    b.HasOne("HNSHOP.Models.Customer", "Customer")
-                        .WithMany("CustomerNotifications")
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("HNSHOP.Models.Notification", "Notification")
-                        .WithMany("CustomerNotifications")
-                        .HasForeignKey("NotificationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Customer");
-
-                    b.Navigation("Notification");
                 });
 
             modelBuilder.Entity("HNSHOP.Models.CustomerTypeSaleEvent", b =>
@@ -739,6 +747,43 @@ namespace HNSHOP.Migrations
                     b.Navigation("Customer");
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("HNSHOP.Models.Message", b =>
+                {
+                    b.HasOne("HNSHOP.Models.Conversation", "Conversation")
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
+                });
+
+            modelBuilder.Entity("HNSHOP.Models.Notification", b =>
+                {
+                    b.HasOne("HNSHOP.Models.Customer", null)
+                        .WithMany("Notifications")
+                        .HasForeignKey("CustomerId");
+                });
+
+            modelBuilder.Entity("HNSHOP.Models.Order", b =>
+                {
+                    b.HasOne("HNSHOP.Models.Address", "Address")
+                        .WithMany("Orders")
+                        .HasForeignKey("AddressId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HNSHOP.Models.Customer", "Customer")
+                        .WithMany("Orders")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Address");
+
+                    b.Navigation("Customer");
                 });
 
             modelBuilder.Entity("HNSHOP.Models.Product", b =>
@@ -776,7 +821,7 @@ namespace HNSHOP.Migrations
                     b.HasOne("HNSHOP.Models.Customer", "Customer")
                         .WithMany("Ratings")
                         .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("HNSHOP.Models.Product", "Product")
@@ -785,9 +830,17 @@ namespace HNSHOP.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("HNSHOP.Models.SubOrder", "SubOrder")
+                        .WithMany()
+                        .HasForeignKey("SubOrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Customer");
 
                     b.Navigation("Product");
+
+                    b.Navigation("SubOrder");
                 });
 
             modelBuilder.Entity("HNSHOP.Models.Shop", b =>
@@ -801,23 +854,46 @@ namespace HNSHOP.Migrations
                     b.Navigation("Account");
                 });
 
-            modelBuilder.Entity("Order", b =>
+            modelBuilder.Entity("HNSHOP.Models.SubOrder", b =>
                 {
-                    b.HasOne("HNSHOP.Models.Address", "Address")
-                        .WithMany("Orders")
-                        .HasForeignKey("AddressId")
+                    b.HasOne("HNSHOP.Models.Order", "Order")
+                        .WithMany("SubOrders")
+                        .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("HNSHOP.Models.Customer", "Customer")
-                        .WithMany("Orders")
-                        .HasForeignKey("CustomerId")
+                    b.HasOne("HNSHOP.Models.Shop", "Shop")
+                        .WithMany("SubOrders")
+                        .HasForeignKey("ShopId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Address");
+                    b.Navigation("Order");
 
-                    b.Navigation("Customer");
+                    b.Navigation("Shop");
+                });
+
+            modelBuilder.Entity("HNSHOP.Models.UserNotification", b =>
+                {
+                    b.HasOne("HNSHOP.Models.Account", "Account")
+                        .WithMany("UserNotifications")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HNSHOP.Models.Customer", null)
+                        .WithMany("CustomerNotifications")
+                        .HasForeignKey("CustomerId");
+
+                    b.HasOne("HNSHOP.Models.Notification", "Notification")
+                        .WithMany("UserNotifications")
+                        .HasForeignKey("NotificationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+
+                    b.Navigation("Notification");
                 });
 
             modelBuilder.Entity("ProductSaleEvent", b =>
@@ -839,35 +915,23 @@ namespace HNSHOP.Migrations
                     b.Navigation("SaleEvent");
                 });
 
-            modelBuilder.Entity("SubOrder", b =>
-                {
-                    b.HasOne("Order", "Order")
-                        .WithMany("SubOrders")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("HNSHOP.Models.Shop", "Shop")
-                        .WithMany("SubOrders")
-                        .HasForeignKey("ShopId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Order");
-
-                    b.Navigation("Shop");
-                });
-
             modelBuilder.Entity("HNSHOP.Models.Account", b =>
                 {
                     b.Navigation("Customer");
 
                     b.Navigation("Shop");
+
+                    b.Navigation("UserNotifications");
                 });
 
             modelBuilder.Entity("HNSHOP.Models.Address", b =>
                 {
                     b.Navigation("Orders");
+                });
+
+            modelBuilder.Entity("HNSHOP.Models.Conversation", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("HNSHOP.Models.Customer", b =>
@@ -877,6 +941,8 @@ namespace HNSHOP.Migrations
                     b.Navigation("CustomerNotifications");
 
                     b.Navigation("Likes");
+
+                    b.Navigation("Notifications");
 
                     b.Navigation("Orders");
 
@@ -892,7 +958,12 @@ namespace HNSHOP.Migrations
 
             modelBuilder.Entity("HNSHOP.Models.Notification", b =>
                 {
-                    b.Navigation("CustomerNotifications");
+                    b.Navigation("UserNotifications");
+                });
+
+            modelBuilder.Entity("HNSHOP.Models.Order", b =>
+                {
+                    b.Navigation("SubOrders");
                 });
 
             modelBuilder.Entity("HNSHOP.Models.Product", b =>
@@ -932,12 +1003,7 @@ namespace HNSHOP.Migrations
                     b.Navigation("SubOrders");
                 });
 
-            modelBuilder.Entity("Order", b =>
-                {
-                    b.Navigation("SubOrders");
-                });
-
-            modelBuilder.Entity("SubOrder", b =>
+            modelBuilder.Entity("HNSHOP.Models.SubOrder", b =>
                 {
                     b.Navigation("DetailOrders");
                 });

@@ -14,12 +14,15 @@ namespace HNSHOP.Controllers
     public class RatingsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public RatingsController(ApplicationDbContext context, IMapper mapper,  IWebHostEnvironment env)
+
+        public RatingsController(ApplicationDbContext context, IMapper mapper,  IWebHostEnvironment env, INotificationService notificationService)
         {
             _context = context;
             IMapper _mapper = mapper;
             IWebHostEnvironment _env = env;
+            _notificationService = notificationService;
         }
         private int GetUserIdFromToken()
         {
@@ -90,7 +93,37 @@ namespace HNSHOP.Controllers
                 rating.CreatedAt = DateTime.Now;
 
                 _context.Ratings.Add(rating);
+                // Gửi thông báo cho Shop có sản phẩm được đánh giá
+                var product = await _context.Products
+                    .Include(p => p.Shop)
+                        .ThenInclude(s => s.Account)
+                    .FirstOrDefaultAsync(p => p.Id == rating.ProductId);
+
+                if (product?.Shop?.Account != null)
+                {
+                    await _notificationService.SendNotificationToAccountAsync(
+                        accountId: product.Shop.Account.Id,
+                        title: "Sản phẩm của bạn vừa được đánh giá",
+                        body: $"Khách hàng vừa đánh giá sản phẩm \"{product.Name}\". Hãy xem chi tiết trong trang quản lý đánh giá.",
+                        type: "Rating"
+                    );
+                }
+
+                var adminAccounts = await _context.Accounts.Where(a => a.RoleId == 1).ToListAsync();
+                foreach (var admin in adminAccounts)
+                {
+                    await _notificationService.SendNotificationToAccountAsync(
+                        accountId: admin.Id,
+                        title: "Sản phẩm vừa được đánh giá",
+                        body: $"Sản phẩm \"{product.Name}\" đã được khách hàng đánh giá.",
+                        type: "Rating"
+                    );
+                }
+
             }
+
+
+
 
             await _context.SaveChangesAsync();
 

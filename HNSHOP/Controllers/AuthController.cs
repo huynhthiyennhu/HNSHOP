@@ -17,13 +17,16 @@ using HNSHOP.Utils;
 public class AuthController(ApplicationDbContext db, IEmailService emailService,
     IValidator<RegisterReqDto> registerValidator,
     IValidator<RegisterShopReqDto> registerShopValidator,
-    IValidator<LoginReqDto> loginValidator) : Controller
+    IValidator<LoginReqDto> loginValidator,
+    INotificationService notificationService) : Controller
 {
     private readonly ApplicationDbContext _db = db;
+
     private readonly IEmailService _emailService = emailService;
     private readonly IValidator<RegisterReqDto> _registerValidator = registerValidator;
     private readonly IValidator<RegisterShopReqDto> _registerShopValidator = registerShopValidator;
     private readonly IValidator<LoginReqDto> _loginValidator = loginValidator;
+    private readonly INotificationService _notificationService = notificationService;
 
 
     [HttpGet]
@@ -84,6 +87,22 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
 
         await _emailService.SendVerificationEmail(request.Email, verifyToken);
 
+        //  Gửi thông báo cho Admin khi có khách hàng đăng ký
+        var adminAccounts = await _db.Accounts
+            .Where(a => a.RoleId == 1 && a.IsVerified)
+            .ToListAsync();
+
+        foreach (var admin in adminAccounts)
+        {
+            await _notificationService.SendNotificationToAccountAsync(
+                accountId: admin.Id,
+                title: "Khách hàng mới đăng ký",
+                body: $"Người dùng \"{customer.Name}\" vừa đăng ký tài khoản.",
+                type: "Customer"
+            );
+        }
+
+
         TempData["Message"] = "Đăng ký thành công! Vui lòng kiểm tra email để xác thực.";
         return RedirectToAction("VerifyEmail");
     }
@@ -134,7 +153,12 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
         _db.Shops.Add(shop);
         await _db.SaveChangesAsync();
 
-       
+        await _notificationService.SendNotificationToAdminsAsync(
+         title: "Shop mới đăng ký",
+         body: $"Shop \"{shop.Name}\" vừa đăng ký và đang chờ duyệt.",
+         type: "Shop"
+     );
+
 
         TempData["Message"] = "Đăng ký shop thành công! Tài khoản đang chờ quản trị viên duyệt.";
         return RedirectToAction("Login");
@@ -195,6 +219,7 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
     {
         return View();
     }
+    
     [HttpPost]
     public async Task<IActionResult> Login(LoginReqDto request)
     {

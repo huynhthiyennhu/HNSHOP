@@ -10,6 +10,8 @@
         public Customer Customer { get; set; }
         public Shop Shop { get; set; }
         public ICollection<Message> Messages { get; set; }
+        public bool IsDeletedByCustomer { get; set; } = false;
+        public bool IsDeletedByShop { get; set; } = false;
     }
 
 }

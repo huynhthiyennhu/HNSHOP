@@ -1,72 +1,105 @@
 ﻿using HNSHOP.Data;
+using HNSHOP.Dtos.Response;
 using HNSHOP.Models;
+using HNSHOP.Services;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace HNSHOP.Services
 {
-    public class NotificationService
+    public class NotificationService : INotificationService
     {
-        private readonly ApplicationDbContext _db;
+        private readonly ApplicationDbContext _context;
 
-        public NotificationService(ApplicationDbContext db)
+        public NotificationService(ApplicationDbContext context)
         {
-            _db = db;
+            _context = context;
         }
 
-        /// <summary>
-        /// Lấy danh sách thông báo của khách hàng
-        /// </summary>
-        public async Task<List<Notification>> GetNotificationsAsync(int customerId)
-        {
-            return await _db.Notifications
-                .Where(n => n.CustomerNotifications.Any(cn => cn.CustomerId == customerId))
-                .OrderByDescending(n => n.CreatedAt)
-                .ToListAsync();
-        }
-
-        /// <summary>
-        /// Thêm thông báo mới cho khách hàng
-        /// </summary>
-        public async Task AddNotificationAsync(int customerId, string title, string body)
+        public async Task SendNotificationToAccountAsync(int accountId, string title, string body, string? type = null)
         {
             var notification = new Notification
             {
                 Title = title,
                 Body = body,
                 CreatedAt = DateTime.Now,
+                Type = type
             };
 
-            _db.Notifications.Add(notification);
-            await _db.SaveChangesAsync();
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
 
-            // Thêm vào bảng trung gian
-            var customerNotification = new CustomerNotification
+            var userNotification = new UserNotification
             {
-                CustomerId = customerId,
+                AccountId = accountId,
                 NotificationId = notification.Id,
                 IsRead = false
             };
 
-            _db.CustomerNotifications.Add(customerNotification);
-            await _db.SaveChangesAsync();
+            _context.UserNotifications.Add(userNotification);
+            await _context.SaveChangesAsync();
         }
 
-        /// <summary>
-        /// Đánh dấu thông báo là đã đọc
-        /// </summary>
-        public async Task MarkAsReadAsync(int customerId, int notificationId)
+        public async Task<List<NotificationDTO>> GetNotificationsAsync(int accountId)
         {
-            var customerNotification = await _db.CustomerNotifications
-                .FirstOrDefaultAsync(cn => cn.CustomerId == customerId && cn.NotificationId == notificationId);
+            return await _context.UserNotifications
+                .Include(un => un.Notification)
+                .Where(un => un.AccountId == accountId)
+                .OrderByDescending(un => un.Notification.CreatedAt)
+                .Select(un => new NotificationDTO
+                {
+                    Id = un.Notification.Id,
+                    Title = un.Notification.Title,
+                    Body = un.Notification.Body,
+                    CreatedAt = un.Notification.CreatedAt,
+                    IsRead = un.IsRead
+                })
+                .ToListAsync();
+        }
 
-            if (customerNotification != null)
+
+        public async Task MarkAsReadAsync(int accountId, int notificationId)
+        {
+            var un = await _context.UserNotifications
+                .FirstOrDefaultAsync(u => u.AccountId == accountId && u.NotificationId == notificationId);
+
+            if (un != null && !un.IsRead)
             {
-                customerNotification.IsRead = true;
-                await _db.SaveChangesAsync();
+                un.IsRead = true;
+                await _context.SaveChangesAsync();
             }
         }
+
+        public async Task SendNotificationToAdminsAsync(string title, string body, string type)
+        {
+            // Tạo 1 notification chung
+            var notification = new Notification
+            {
+                Title = title,
+                Body = body,
+                Type = type,
+                CreatedAt = DateTime.Now
+            };
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync(); // Lưu để có Id
+
+            // Gán notification đó cho tất cả admin
+            var adminAccounts = await _context.Accounts
+                .Where(a => a.RoleId == 1 && a.IsVerified)
+                .ToListAsync();
+
+            foreach (var admin in adminAccounts)
+            {
+                var userNotification = new UserNotification
+                {
+                    AccountId = admin.Id,
+                    NotificationId = notification.Id,
+                    IsRead = false
+                };
+                _context.Set<UserNotification>().Add(userNotification);
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
     }
 }

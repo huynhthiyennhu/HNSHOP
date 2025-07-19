@@ -1,5 +1,6 @@
 ﻿using HNSHOP.Data;
 using HNSHOP.Models;
+using HNSHOP.Services;
 using HNSHOP.Utils.EnumTypes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,10 +13,14 @@ namespace HNSHOP.Controllers
     public class ShopOrdersController : Controller
     {
         private readonly ApplicationDbContext _db;
+        private readonly INotificationService _notificationService;
 
-        public ShopOrdersController(ApplicationDbContext db)
+
+        public ShopOrdersController(ApplicationDbContext db, INotificationService notificationService)
         {
             _db = db;
+            _notificationService = notificationService;
+
         }
 
         // GET: /ShopOrders
@@ -65,6 +70,21 @@ namespace HNSHOP.Controllers
             {
                 order.Status = OrderStatus.Shipping;
                 order.UpdatedAt = now;
+
+                // Gửi thông báo đến khách hàng
+                var customer = await _db.Customers
+                    .Include(c => c.Account)
+                    .FirstOrDefaultAsync(c => c.Id == order.CustomerId);
+
+                if (customer != null && customer.Account != null)
+                {
+                    await _notificationService.SendNotificationToAccountAsync(
+                        accountId: customer.Account.Id,
+                        title: "Đơn hàng đang được giao",
+                        body: $"Đơn hàng #{order.Id} đã được các shop xác nhận và đang trên đường giao đến bạn.",
+                        type: "Order"
+                    );
+                }
             }
 
             await _db.SaveChangesAsync();
@@ -89,10 +109,9 @@ namespace HNSHOP.Controllers
                 return BadRequest("Chỉ có thể cập nhật đơn đang giao.");
 
             subOrder.Status = SubOrderStatus.Delivered;
-            // subOrder.UpdatedAt = now;
 
-            // Nếu tất cả SubOrder đã Delivered → cập nhật đơn tổng
             var order = subOrder.Order;
+
             bool allDelivered = await _db.SubOrders
                 .Where(so => so.OrderId == order.Id)
                 .AllAsync(so => so.Status == SubOrderStatus.Delivered);
@@ -101,12 +120,47 @@ namespace HNSHOP.Controllers
             {
                 order.Status = OrderStatus.Delivered;
                 order.UpdatedAt = now;
+
+                // ✅ Gửi thông báo khi đơn hàng đã giao thành công
+                var customer = await _db.Customers
+                    .Include(c => c.Account)
+                    .FirstOrDefaultAsync(c => c.Id == order.CustomerId);
+
+                if (customer != null && customer.Account != null)
+                {
+                    await _notificationService.SendNotificationToAccountAsync(
+                        accountId: customer.Account.Id,
+                        title: "Đơn hàng đã giao thành công",
+                        body: $"Đơn hàng #{order.Id} đã được giao hoàn tất. Cảm ơn bạn đã mua sắm tại HNSHOP!",
+                        type: "Order"
+                    );
+                }
             }
+
+            // Gửi thông báo cho shop (nếu cần log trạng thái)
+            var shopAccount = await _db.Shops
+                .Include(s => s.Account)
+                .Where(s => s.Id == shopId)
+                .Select(s => s.Account)
+                .FirstOrDefaultAsync();
+
+            if (shopAccount != null)
+            {
+                await _notificationService.SendNotificationToAccountAsync(
+                    accountId: shopAccount.Id,
+                    title: "Đã giao hàng thành công",
+                    body: $"Bạn đã xác nhận giao đơn hàng #{order.Id} thành công.",
+                    type: "SubOrder"
+                );
+            }
+
 
             await _db.SaveChangesAsync();
             TempData["SuccessMessage"] = "Đã xác nhận đơn hàng đã giao.";
             return RedirectToAction("Index");
         }
+
+
         [HttpPost]
         public async Task<IActionResult> CancelSubOrder(int id)
         {
@@ -124,7 +178,6 @@ namespace HNSHOP.Controllers
 
             subOrder.Status = SubOrderStatus.Cancelled;
 
-            // Nếu tất cả suborder đều bị huỷ → huỷ luôn đơn tổng
             var order = subOrder.Order;
             var allCancelled = await _db.SubOrders
                 .Where(so => so.OrderId == order.Id)
@@ -136,10 +189,38 @@ namespace HNSHOP.Controllers
                 order.UpdatedAt = DateTime.UtcNow;
             }
 
+            // Gửi thông báo cho khách hàng
+            var customer = await _db.Customers
+                .Include(c => c.Account)
+                .FirstOrDefaultAsync(c => c.Id == order.CustomerId);
+
+            if (customer != null && customer.Account != null)
+            {
+                if (allCancelled)
+                {
+                    await _notificationService.SendNotificationToAccountAsync(
+                        accountId: customer.Account.Id,
+                        title: "Đơn hàng đã bị huỷ",
+                        body: $"Đơn hàng #{order.Id} đã bị huỷ vì tất cả các shop đều từ chối xử lý.",
+                        type: "Order"
+                    );
+                }
+                else
+                {
+                    await _notificationService.SendNotificationToAccountAsync(
+                        accountId: customer.Account.Id,
+                        title: "Một phần đơn hàng bị huỷ",
+                        body: $"Một phần trong đơn hàng #{order.Id} đã bị shop từ chối xử lý. Đơn hàng vẫn đang tiếp tục được xử lý.",
+                        type: "Order"
+                    );
+                }
+            }
+
             await _db.SaveChangesAsync();
             TempData["SuccessMessage"] = "Đã huỷ đơn hàng thành công.";
             return RedirectToAction("Index");
         }
+
 
         private int GetCurrentShopId()
         {

@@ -14,7 +14,7 @@ namespace HNSHOP.Data
         public DbSet<Address> Addresses { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<Like> Likes { get; set; }
-        public DbSet<CustomerNotification> CustomerNotifications { get; set; }
+        public DbSet<UserNotification> UserNotifications { get; set; }
         public DbSet<CustomerType> CustomerTypes { get; set; }
         public DbSet<CustomerTypeSaleEvent> CustomerTypeSaleEvents { get; set; }
         public DbSet<DetailOrder> DetailOrders { get; set; }
@@ -35,87 +35,10 @@ namespace HNSHOP.Data
 
 
 
-        //protected override void OnModelCreating(ModelBuilder modelBuilder)
-        //{
-        //    modelBuilder.Entity<Customer>()
-        //        .HasMany(e => e.Notifications)
-        //        .WithMany(e => e.Customers)
-        //        .UsingEntity<CustomerNotification>();
-
-        //    modelBuilder.Entity<CustomerType>()
-        //        .HasMany(e => e.SaleEvents)
-        //        .WithMany(e => e.CustomerTypes)
-        //        .UsingEntity<CustomerTypeSaleEvent>();
-
-        //    modelBuilder.Entity<Product>()
-        //        .HasMany(e => e.SaleEvents)
-        //        .WithMany(e => e.Products)
-        //        .UsingEntity<ProductSaleEvent>();
-
-        //    modelBuilder.Entity<Order>()
-        //        .Property(o => o.Status)
-        //        .HasConversion<string>();
-
-        //    modelBuilder.Entity<Order>()
-        //        .Property(o => o.PaymentStatus)
-        //        .HasConversion<string>();
-
-        //    modelBuilder.Entity<Order>()
-        //        .HasOne(o => o.Customer)
-        //        .WithMany(c => c.Orders)
-        //        .HasForeignKey(o => o.CustomerId)
-        //        .OnDelete(DeleteBehavior.Restrict);
-
-        //    modelBuilder.Entity<Like>()
-        //        .HasOne(l => l.Product)
-        //        .WithMany(p => p.Likes)
-        //        .HasForeignKey(l => l.ProductId)
-        //        .OnDelete(DeleteBehavior.Restrict);
-
-        //    modelBuilder.Entity<DetailOrder>()
-        //        .HasOne(d => d.Product)
-        //        .WithMany(p => p.DetailOrders)
-        //        .HasForeignKey(d => d.ProductId)
-        //        .OnDelete(DeleteBehavior.Restrict);
-
-
-        //    modelBuilder.Entity<Rating>()
-        //        .HasOne(r => r.Customer)
-        //        .WithMany(c => c.Ratings)
-        //        .HasForeignKey(r => r.CustomerId)
-        //        .OnDelete(DeleteBehavior.Cascade);
-
-        //    modelBuilder.Entity<Rating>()
-        //        .HasOne(r => r.Product)
-        //        .WithMany(p => p.Ratings)
-        //        .HasForeignKey(r => r.ProductId)
-        //        .OnDelete(DeleteBehavior.Restrict);
-
-        //    // Cấu hình bảng trung gian Notification - Customer
-        //    modelBuilder.Entity<CustomerNotification>()
-        //        .HasKey(cn => new { cn.CustomerId, cn.NotificationId });
-
-        //    modelBuilder.Entity<CustomerNotification>()
-        //        .HasOne(cn => cn.Customer)
-        //        .WithMany(c => c.CustomerNotifications)
-        //        .HasForeignKey(cn => cn.CustomerId)
-        //        .OnDelete(DeleteBehavior.Cascade);
-
-        //    modelBuilder.Entity<CustomerNotification>()
-        //        .HasOne(cn => cn.Notification)
-        //        .WithMany(n => n.CustomerNotifications)
-        //        .HasForeignKey(cn => cn.NotificationId)
-        //        .OnDelete(DeleteBehavior.Cascade);
-
-        //    modelBuilder.SeedAllData();
-        //}
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // --- Cấu hình bảng trung gian ---
-            modelBuilder.Entity<Customer>()
-                .HasMany(e => e.Notifications)
-                .WithMany(e => e.Customers)
-                .UsingEntity<CustomerNotification>();
+           
 
             modelBuilder.Entity<CustomerType>()
                 .HasMany(e => e.SaleEvents)
@@ -199,23 +122,23 @@ namespace HNSHOP.Data
 
 
 
+            modelBuilder.Entity<UserNotification>()
+     .HasKey(un => new { un.AccountId, un.NotificationId });
 
-            // --- Cấu hình CustomerNotification ---
-            modelBuilder.Entity<CustomerNotification>()
-                .HasKey(cn => new { cn.CustomerId, cn.NotificationId });
-
-            modelBuilder.Entity<CustomerNotification>()
-                .HasOne(cn => cn.Customer)
-                .WithMany(c => c.CustomerNotifications)
-                .HasForeignKey(cn => cn.CustomerId)
+            modelBuilder.Entity<UserNotification>()
+                .HasOne(un => un.Account)
+                .WithMany(a => a.UserNotifications)
+                .HasForeignKey(un => un.AccountId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<CustomerNotification>()
-                .HasOne(cn => cn.Notification)
-                .WithMany(n => n.CustomerNotifications)
-                .HasForeignKey(cn => cn.NotificationId)
+            modelBuilder.Entity<UserNotification>()
+                .HasOne(un => un.Notification)
+                .WithMany(n => n.UserNotifications)
+                .HasForeignKey(un => un.NotificationId)
                 .OnDelete(DeleteBehavior.Cascade);
-            modelBuilder.SeedAllData();
+
+
+
 
             modelBuilder.Entity<Conversation>()
                 .HasOne(c => c.Customer)

@@ -64,74 +64,45 @@
 						<div class="shop-menu pull-right">
 							@if (User.Identity.IsAuthenticated){
 								<ul class="nav navbar-nav">
-									@using System.Security.Claims
-									@inject HNSHOP.Data.ApplicationDbContext _context
-
 										@{
-											var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+											int unreadNotificationCount = 0;
+
+											var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
 											int userId = userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
 
-											int? partnerId = null;
-											string chatAction = "";
-											string controller = "Chat";
-
-											string userRole = User.IsInRole("User") ? "User" :
-											User.IsInRole("Shop") ? "Shop" : null;
-
-											int unreadCount = 0;
-
-											if (userRole != null)
+											if (userId > 0)
 											{
-												var convo = _context.Conversations
-												.Include(c => c.Messages)
-												.Where(c =>
-												(userRole == "User" && c.Customer.AccountId == userId) ||
-												(userRole == "Shop" && c.Shop.AccountId == userId)
-												)
-												.OrderByDescending(c => c.Messages.Any() ? c.Messages.Max(m => m.SentAt) : DateTime.MinValue)
-												.FirstOrDefault();
-
-												if (userRole == "User")
-												{
-													partnerId = convo?.ShopId ?? 1;
-													chatAction = "WithShop";
-												}
-												else if (userRole == "Shop")
-												{
-													partnerId = convo?.CustomerId ?? 1;
-													chatAction = "WithCustomer";
-												}
-
-												// Tính số tin nhắn chưa đọc gửi đến người dùng hiện tại
-												unreadCount = _context.Messages
-												.Where(m =>
-												m.ConversationId == convo.Id &&
-												!m.IsRead &&
-												m.SenderRole != userRole &&
-												m.SenderId != userId)
-												.Count();
+												unreadNotificationCount = _context.UserNotifications
+												.Include(un => un.Notification)
+												.Count(un => un.AccountId == userId && !un.IsRead);
 											}
 										}
 
+										<li class="position-relative">
+											<a asp-controller="Notification" asp-action="Index">
+												<i class="fa fa-bell"></i> Thông báo
+												@if (unreadNotificationCount > 0)
+												{
+													<span class="badge badge-danger" style="position: absolute; top: -8px; right: -10px;">
+														@unreadNotificationCount
+													</span>
+												}
+											</a>
+										</li>
 
-										@if (User.IsInRole("User") || User.IsInRole("Shop"))
-										{
-											<li class="position-relative">
-												<a asp-controller="@controller"
-												   asp-action="@chatAction"
-												   asp-route-customerId="@(User.IsInRole("Shop") ? partnerId : null)"
-												   asp-route-shopId="@(User.IsInRole("User") ? partnerId : null)">
-													<i class="fa fa-comments"></i> Trò chuyện
-													@if (unreadCount > 0)
-													{
-														<span class="badge badge-danger" style="position: absolute; top: -8px; right: -10px;">
-															@unreadCount
-														</span>
-													}
-												</a>
-											</li>
+									@using System.Security.Claims
+									@inject HNSHOP.Data.ApplicationDbContext _context
 
-										}
+										<li class="position-relative">
+											<a asp-controller="Chat" asp-action="Index">
+												<i class="fa fa-comments"></i> Trò chuyện
+												<span id="chatBadge" class="badge badge-danger" style="position: absolute; top: -8px; right: -10px; display:none;">
+													0
+												</span>
+											</a>
+										</li>
+
+
 
 									@if (User.Identity.IsAuthenticated && User.IsInRole("User")) // Chỉ khách hàng
 									{
@@ -333,6 +304,27 @@
 	<script>
 		var productUrl = "@Url.Action("Index", "Home")";
 	</script>
+
+	<script>
+		function loadUnreadChatCount() {
+			$.get('/Chat/GetUnreadMessageCount', function (data) {
+				if (data.count > 0) {
+					$('#chatBadge').text(data.count).show();
+				} else {
+					$('#chatBadge').hide();
+				}
+			});
+		}
+
+		$(document).ready(function () {
+			loadUnreadChatCount(); // gọi lúc load trang
+
+			// Nếu bạn muốn reload mỗi 60s để realtime nhẹ
+			setInterval(loadUnreadChatCount, 60000);
+		});
+	</script>
+
+
 	<script src="~/js/home.js"></script>
 
 	<script src="~/js/auth.js"></script>

@@ -29,5 +29,7 @@ namespace HNSHOP.Models
 
         public Customer? Customer { get; set; }
         public Shop? Shop { get; set; }
+        public ICollection<UserNotification> UserNotifications { get; set; } = new List<UserNotification>();
+
     }
 }

@@ -17,8 +17,7 @@ namespace HNSHOP.Models
         [ForeignKey(nameof(CustomerTypeId))]
         public CustomerType CustomerType { get; set; } = null!;
 
-        public List<Notification> Notifications { get; set; } = [];
-        public List<CustomerNotification> CustomerNotifications { get; set; } = [];
+        //public List<Notification> Notifications { get; set; } = [];
 
         public List<Order> Orders { get; set; } = [];
 

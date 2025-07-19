@@ -5,10 +5,10 @@
         public int Id { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Body { get; set; } = string.Empty;
-        public bool IsRead { get; set; } = false;
-        public DateTime CreatedAt { get; set; } = new DateTime(2024, 1, 1);
+        public string? Type { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        public List<Customer> Customers { get; set; } = [];
-        public List<CustomerNotification> CustomerNotifications { get; set; } = [];
+        public ICollection<UserNotification> UserNotifications { get; set; } = new List<UserNotification>();
     }
+
 }

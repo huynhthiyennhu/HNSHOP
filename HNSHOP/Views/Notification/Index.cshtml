@@ -1,29 +1,59 @@
-﻿@model List<HNSHOP.Models.Notification>
-
-<h2>Thông Báo</h2>
-
-@if (!Model.Any())
-{
-    <p>Bạn chưa có thông báo nào.</p>
+﻿@model List<HNSHOP.Dtos.Response.NotificationDTO>
+@{
+    ViewData["Title"] = "Thông báo của bạn";
 }
-else
-{
-    <ul class="list-group">
-        @foreach (var notification in Model)
-        {
-            <li class="list-group-item @(notification.IsRead ? "" : "list-group-item-warning")">
-                <strong>@notification.Title</strong>
-                <p>@notification.Body</p>
-                <small>@notification.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
-
-                @if (!notification.IsRead)
+<section id="cart_items">
+    <div class="container p-5">
+        <div class="breadcrumbs">
+            <ol class="breadcrumb">
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li class="active">Thông Báo</li>
+            </ol>
+        </div>
+        <div class="row">
+            <h2 class="title text-center">🔔 Thông báo của bạn</h2>
+            <div class="list-group">
+                @foreach (var item in Model)
                 {
-                    <form asp-action="MarkAsRead" method="post">
-                        <input type="hidden" name="id" value="@notification.Id" />
-                        <button type="submit" class="btn btn-sm btn-primary">Đánh dấu đã đọc</button>
-                    </form>
+                    <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap @(item.IsRead ? "" : "bg-light border-left border-info")" id="notification-@item.Id">
+                        <div class="mr-auto">
+                            <h4 class="mb-1" style="color:coral">@item.Title</h4>
+                            <h5 class="mb-1">@item.Body</h5>
+                        </div>
+                        <div class="text-right ml-3 d-flex flex-column align-items-end justify-content-between" style="min-width: 150px;">
+                            <small class="text-muted mb-2">@item.CreatedAt.ToString("HH:mm dd/MM/yyyy")</small>
+
+                            @if (!item.IsRead)
+                            {
+                                <button class="btn btn-sm btn-outline-primary mark-read-btn" data-id="@item.Id">
+                                    <i class="fa fa-check-circle"></i> Đánh dấu đã đọc
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="badge badge-pill badge-secondary" style="font-size: 0.85rem;">
+                                    <i class="fa fa-check"></i> Đã đọc
+                                </span>
+                            }
+                        </div>
+                    </div>
                 }
-            </li>
-        }
-    </ul>
+            </div>
+</div>
+</div>
+</section>
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('.mark-read-btn').click(function () {
+                const btn = $(this);
+                const id = btn.data('id');
+
+                $.post('/Notification/MarkAsRead', { notificationId: id }, function () {
+                    btn.replaceWith('<span class="badge badge-pill badge-secondary" style="font-size: 0.85rem;"><i class="fa fa-check"></i> Đã đọc</span>');
+                    $('#notification-' + id).removeClass('bg-light border-left border-info');
+                });
+            });
+        });
+    </script>
 }

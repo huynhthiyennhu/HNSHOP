@@ -24,8 +24,10 @@ namespace HNSHOP.Controllers
         private readonly ILogger<OrdersController> _logger;
         private readonly IOrderService _orderService;
         private readonly IEmailService _emailService;
+        private readonly INotificationService _notificationService;
 
-        public OrdersController(ApplicationDbContext db, CartService cartService, ILogger<OrdersController> logger, PayPalService payPalService, IOrderService orderService, IEmailService emailService)
+
+        public OrdersController(ApplicationDbContext db, CartService cartService, ILogger<OrdersController> logger, PayPalService payPalService, IOrderService orderService, IEmailService emailService, INotificationService notificationService)
         {
             _db = db;
             _cartService = cartService;
@@ -33,46 +35,10 @@ namespace HNSHOP.Controllers
             _paypalService = payPalService;
             _orderService = orderService;
             _emailService = emailService;
+            _notificationService = notificationService;
         }
 
-        //public async Task<IActionResult> Index()
-        //{
-        //    int userId = GetUserIdFromToken();
-        //    var customer = await _db.Customers
-        //        .Include(c => c.Orders)
-        //            .ThenInclude(o => o.DetailOrders)
-        //                .ThenInclude(d => d.Product)
-        //        .Include(c => c.Orders)
-        //            .ThenInclude(o => o.Address)
-        //        .FirstOrDefaultAsync(c => c.AccountId == userId);
-
-        //    if (customer == null) return NotFound("Không tìm thấy thông tin khách hàng.");
-
-        //    var orderDtos = customer.Orders.Select(o => new OrderResDto
-        //    {
-        //        Id = o.Id,
-        //        Status = o.Status,
-        //        PaymentStatus = o.PaymentStatus,
-        //        Total = o.Total,
-        //        CreatedAt = o.CreatedAt,
-        //        UpdatedAt = o.UpdatedAt,
-        //        Address = new AddressResDto { Id = o.Address.Id, AddressDetail = o.Address.AddressDetail },
-        //        DetailOrders = o.DetailOrders.Select(d => new DetailOrderResDto
-        //        {
-        //            Product = new CompactProductResDto
-        //            {
-        //                Id = d.Product.Id,
-        //                Name = d.Product.Name,
-        //                Price = d.UnitPrice,
-        //                Images = d.Product.ProductImages.Select(img => new ProductImageResDto { Id = img.Id, Path = img.Path }).ToList()
-        //            },
-        //            Quantity = d.Quantity,
-        //            UnitPrice = d.UnitPrice
-        //        }).ToList()
-        //    }).ToList();
-
-        //    return View(orderDtos);
-        //}
+       
         public async Task<IActionResult> Index()
         {
             int userId = GetUserIdFromToken();
@@ -381,6 +347,14 @@ namespace HNSHOP.Controllers
                 _db.Orders.Add(order);
                 await _db.SaveChangesAsync();
 
+                // Gửi thông báo cho khách hàng
+                await _notificationService.SendNotificationToAccountAsync(
+                    accountId: customer.Account.Id,
+                    title: "Đặt hàng thành công",
+                    body: $"Đơn hàng #{order.Id} của bạn đã được đặt thành công và đang chờ duyệt.",
+                    type: "Order"
+                );
+
                 _cartService.ClearCart();
 
                 TempData["SuccessMessage"] = "Đơn hàng đã được đặt thành công!";
@@ -402,17 +376,60 @@ namespace HNSHOP.Controllers
             int userId = GetUserIdFromToken();
             var order = await _db.Orders
                 .Include(o => o.Customer)
+                .Include(o => o.SubOrders)
+                    .ThenInclude(so => so.Shop)
+                        .ThenInclude(s => s.Account)
                 .FirstOrDefaultAsync(o => o.Id == id && o.Customer.AccountId == userId);
 
-            if (order == null) return NotFound("Không tìm thấy đơn hàng.");
-            if (order.Status != OrderStatus.Processing) return BadRequest("Chỉ có thể hủy đơn hàng khi đang xử lý.");
+            if (order == null)
+                return NotFound("Không tìm thấy đơn hàng.");
+            if (order.Status != OrderStatus.Processing)
+                return BadRequest("Chỉ có thể hủy đơn hàng khi đang xử lý.");
 
             order.Status = OrderStatus.Cancelled;
             order.UpdatedAt = DateTime.UtcNow;
-            await _db.SaveChangesAsync();
 
+            // 🔔 Thông báo khách hàng
+            await _notificationService.SendNotificationToAccountAsync(
+                accountId: order.Customer.AccountId,
+                title: "Bạn đã huỷ đơn hàng",
+                body: $"Đơn hàng #{order.Id} đã được bạn huỷ thành công.",
+                type: "Order"
+            );
+
+            // 🔔 Thông báo các Shop
+            foreach (var subOrder in order.SubOrders)
+            {
+                if (subOrder.Shop?.Account != null)
+                {
+                    await _notificationService.SendNotificationToAccountAsync(
+                        accountId: subOrder.Shop.Account.Id,
+                        title: "Đơn hàng bị huỷ",
+                        body: $"Đơn hàng #{order.Id} đã bị khách huỷ. Vui lòng kiểm tra lại.",
+                        type: "Order"
+                    );
+                }
+            }
+
+            // 🔔 Thông báo Admin
+            var adminAccounts = await _db.Accounts
+                .Where(a => a.Role.Id == 1) // hoặc dùng RoleId nếu dùng bảng phân quyền riêng
+                .ToListAsync();
+
+            foreach (var admin in adminAccounts)
+            {
+                await _notificationService.SendNotificationToAccountAsync(
+                    accountId: admin.Id,
+                    title: "Đơn hàng bị huỷ bởi khách",
+                    body: $"Khách hàng đã huỷ đơn hàng #{order.Id}.",
+                    type: "Order"
+                );
+            }
+
+            await _db.SaveChangesAsync();
             return RedirectToAction("Index");
         }
+
 
         [HttpPost]
         public async Task<IActionResult> UpdateAddress(int id, UpdateOrderCustomerReqDto req)
@@ -440,79 +457,7 @@ namespace HNSHOP.Controllers
             return int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int userId) ? userId : -1;
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> Details(int id)
-        //{
-        //    try
-        //    {
-        //        int userId = GetUserIdFromToken();
-
-        //        var order = await _db.Orders
-        //            .Include(o => o.DetailOrders)
-        //                .ThenInclude(d => d.Product)
-        //                    .ThenInclude(p => p.ProductImages)
-        //            .Include(o => o.DetailOrders)
-        //                .ThenInclude(d => d.Product)
-        //                    .ThenInclude(p => p.Shop)
-        //            .Include(o => o.Address)
-        //            .Include(o => o.Customer)
-        //            .FirstOrDefaultAsync(o => o.Id == id && o.Customer.AccountId == userId);
-
-        //        if (order == null) return NotFound("Không tìm thấy đơn hàng.");
-
-        //        var orderDto = new OrderResDto
-        //        {
-        //            Id = order.Id,
-        //            Status = order.Status,
-        //            PaymentStatus = order.PaymentStatus,
-        //            Total = order.Total,
-        //            CreatedAt = order.CreatedAt,
-        //            UpdatedAt = order.UpdatedAt,
-        //            Address = new AddressResDto
-        //            {
-        //                Id = order.Address.Id,
-        //                AddressDetail = order.Address.AddressDetail
-        //            },
-        //            Customer = order.Customer,
-        //            DetailOrders = order.DetailOrders.Select(d => new DetailOrderResDto
-        //            {
-        //                Product = new CompactProductResDto
-        //                {
-        //                    Id = d.Product.Id,
-        //                    Name = d.Product.Name,
-        //                    Price = d.Product.Price,
-        //                    Shop = new ShopResDto
-        //                    {
-        //                        Id = d.Product.Shop.Id,
-        //                        Name = d.Product.Shop.Name
-        //                    },
-        //                    DiscountPercent = _db.SaleEvents
-        //                        .Where(se => d.Product.ProductSaleEvents.Select(pse => pse.SaleEventId).Contains(se.Id) &&
-        //                                     se.StartDate <= DateTime.UtcNow && se.EndDate >= DateTime.UtcNow)
-        //                        .Select(se => se.Discount)
-        //                        .FirstOrDefault(), // ✅ Sửa lỗi truy vấn DiscountPercent
-
-        //                    Images = d.Product.ProductImages.Select(img => new ProductImageResDto
-        //                    {
-        //                        Id = img.Id,
-        //                        Path = img.Path
-        //                    }).ToList()
-        //                },
-        //                Quantity = d.Quantity,
-        //                UnitPrice = d.UnitPrice
-        //            }).ToList()
-        //        };
-
-        //        return View(orderDto);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError($"Lỗi khi tải chi tiết đơn hàng #{id}: {ex.Message}");
-        //        TempData["ErrorMessage"] = "Có lỗi xảy ra khi tải chi tiết đơn hàng. Vui lòng thử lại!";
-        //        return RedirectToAction("Index");
-        //    }
-        //}
-
+       
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
@@ -711,6 +656,44 @@ namespace HNSHOP.Controllers
                 order.Status = OrderStatus.Completed;
                 order.UpdatedAt = DateTime.UtcNow;
             }
+
+            var account = await _db.Accounts.FindAsync(userId);
+            if (account != null)
+            {
+                await _notificationService.SendNotificationToAccountAsync(
+                    accountId: userId,
+                    title: "Xác nhận nhận hàng thành công",
+                    body: $"Bạn đã xác nhận đơn hàng #{order.Id} đã được nhận thành công. Cảm ơn bạn!",
+                    type: "Order"
+                );
+            }
+
+            // ✅ Gửi thông báo cho Shop khi khách đã xác nhận nhận hàng
+            var shop = await _db.Shops
+                .Include(s => s.Account)
+                .FirstOrDefaultAsync(s => s.Id == subOrder.ShopId);
+
+            if (shop?.Account != null)
+            {
+                await _notificationService.SendNotificationToAccountAsync(
+                    accountId: shop.Account.Id,
+                    title: "Khách hàng đã xác nhận nhận hàng",
+                    body: $"Khách hàng đã xác nhận đơn hàng #{order.Id} của bạn đã được nhận thành công.",
+                    type: "SubOrder"
+                );
+            }
+
+            var admins = await _db.Accounts.Where(a => a.RoleId == 1).ToListAsync();
+            foreach (var admin in admins)
+            {
+                await _notificationService.SendNotificationToAccountAsync(
+                    accountId: admin.Id,
+                    title: "Đơn hàng đã hoàn tất",
+                    body: $"Đơn hàng #{order.Id} đã được khách xác nhận hoàn tất.",
+                    type: "Order"
+                );
+            }
+
 
             await _db.SaveChangesAsync();
             TempData["SuccessMessage"] = "Bạn đã xác nhận đã nhận hàng thành công.";
