@@ -1,25 +1,34 @@
-﻿@model List<HNSHOP.Dtos.Response.ProductResDto>
+﻿@using System.Globalization
+@model List<HNSHOP.Dtos.Response.ProductResDto>
+@{
+    string sortBy = ViewBag.SortBy as string ?? "";
+    string sortType = ViewBag.SortType as string ?? "desc";
+    string search = ViewBag.Search as string ?? "";
+    int? productTypeId = ViewBag.ProductTypeId as int?;
+}
 
-<br />
+
 <section id="slider" style="margin-bottom:40px">
-    <div class="container" >
+    <div class="container">
         <div class="row">
             <div class="col-sm-12">
                 <div id="slider-carousel" class="carousel slide" data-ride="carousel">
                     <ol class="carousel-indicators">
-                        @for (int i = 0; i < ViewBag.SaleEvents.Count; i++)
+                        @if (ViewBag.SaleEvents != null)
                         {
-                            <li data-target="#slider-carousel" data-slide-to="@i" class="@(i == 0 ? "active" : "")"></li>
+                            for (int i = 0; i < ViewBag.SaleEvents.Count; i++)
+                            {
+                                <li data-target="#slider-carousel" data-slide-to="@i" class="@(i == 0 ? "active" : "")"></li>
+                            }
                         }
                     </ol>
-
                     <div class="carousel-inner">
                         @if (ViewBag.SaleEvents != null && ViewBag.SaleEvents.Count > 0)
                         {
                             int index = 0;
-                            @foreach (var eventItem in ViewBag.SaleEvents)
+                            foreach (var eventItem in ViewBag.SaleEvents)
                             {
-                                <div class="item @(index == 0 ? "active" : "")" >
+                                <div class="item @(index == 0 ? "active" : "")">
                                     <div class="col-sm-6" style="margin-top:-40px">
                                         <h1>@eventItem.Name</h1>
                                         <h2>Giảm giá lên đến @eventItem.Discount%</h2>
@@ -27,7 +36,7 @@
                                         <a href="/SaleEvent/Details/@eventItem.Id" class="btn btn-default get">Xem chi tiết</a>
                                     </div>
                                     <div class="col-sm-6">
-                                        <img src="~/images/hnshop/@eventItem.Illustration" class="img-responsive w-100" alt="Chương trình giảm giá">
+                                        <img src="~/images/hnshop/@eventItem.Illustration" class="img-responsive w-100" alt="Chương trình giảm giá" />
                                     </div>
                                 </div>
                                 index++;
@@ -42,7 +51,6 @@
                             </div>
                         }
                     </div>
-
                     <a href="#slider-carousel" class="left control-carousel hidden-xs" data-slide="prev">
                         <i class="fa fa-angle-left"></i>
                     </a>
@@ -54,214 +62,263 @@
         </div>
     </div>
 </section>
+
 <br />
 <section>
-	<div class="container">
-		<div class="row">
-			<div class="col-sm-3">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-3">
+                <div class="left-sidebar">
+                    <h2>Bộ lọc sản phẩm</h2>
+                    <form id="filterForm" autocomplete="off">
+                        <!-- 1. Hidden loại sản phẩm -->
+                        <input type="hidden" id="hiddenProductTypeId" name="productTypeId" value="@(ViewBag.ProductTypeId ?? "")" />
+                        <!-- 2. Hidden search -->
+                        <input type="hidden" id="hiddenSearchInput" name="search" value="@ViewBag.Search" />
 
-				<div class="left-sidebar">
-					<h2>Bộ lọc sản phẩm</h2>
+                        <!-- 4. Lọc theo loại sản phẩm (panel group trong form) -->
+                        <h2>Loại sản phẩm</h2>
+                        <div class="panel-group category-products" id="accordian">
+                            <div class="panel panel-default">
+                                @foreach (var type in ViewBag.ProductTypes)
+                                {
+                                    <div class="panel-heading">
+                                        <h4 class="panel-title @(ViewBag.ProductTypeId == type.Id ? "active" : "")">
+                                            <a href="#" class="filter-category" data-product-type="@type.Id">@type.Name</a>
+                                        </h4>
+                                    </div>
+                                }
+                                <div class="panel-heading">
+                                    <h4 class="panel-title @(ViewBag.ProductTypeId == null ? "active" : "")">
+                                        <a href="#" id="resetAllFilter">Tất cả sản phẩm</a>
+                                    </h4>
+                                </div>
+                            </div>
+                        </div>
 
-					<form id="filterForm">
+                        <!-- 3. Sắp xếp -->
+                        <div class="filter-section">
+                            <h2>Sắp xếp theo</h2>
+                            <div class="sort-wrapper">
+                                <select id="sortBy" name="sortBy" class="form-control sort-select">
+                                    <option value="price">Giá</option>
+                                    <option value="name">Tên</option>
+                                    <option value="likes">Lượt thích</option>
+                                    <option value="rating">Đánh giá</option>
+                                </select>
+                                <button id="toggleSortType" type="button" class="sort-toggle" data-sort-type="@ViewBag.SortType ?? " desc"">
+                                    <i class="fa @(ViewBag.SortType == "asc" ? "fa-sort-amount-asc" : "fa-sort-amount-desc")"></i>
+                                </button>
+                                <input type="hidden" id="sortType" name="sortType" value="@ViewBag.SortType ?? " desc"" />
+                            </div>
+                        </div>
 
-
-						<!-- Lọc theo loại sản phẩm -->
-						<h2>Loại sản phẩm</h2>
-						<div class="panel-group category-products" id="accordian">
-							<div class="panel panel-default">
-								@foreach (var type in ViewBag.ProductTypes)
-								{
-									<div class="panel-heading">
-										<h4 class="panel-title @(ViewBag.ProductTypeId == type.Id ? "active" : "")">
-											<a href="#" class="filter-category" data-product-type="@type.Id">@type.Name</a>
-										</h4>
-									</div>
-								}
-								<div class="panel-heading">
-									<h4 class="panel-title @(ViewBag.ProductTypeId == null ? "active" : "")">
-										<a href="#" class="filter-category" data-product-type="">Tất cả sản phẩm</a>
-									</h4>
-								</div>
-							</div>
-						</div>
-
-
-						<!-- Sắp xếp theo -->
-						<div class="filter-section">
-							<h2>Sắp xếp theo</h2>
-							<div class="sort-wrapper">
-								<select id="sortBy" name="sortBy" class="form-control sort-select">
-									<option value="price">Giá</option>
-									<option value="name">Tên</option>
-									<option value="likes">Lượt thích</option>
-									<option value="rating">Đánh giá</option>
-								</select>
-
-								<button id="toggleSortType" type="button" class="sort-toggle" data-sort-type="desc">
-									<i class="fa fa-sort-amount-desc"></i>
-								</button>
-
-								<input type="hidden" id="sortType" name="sortType" value="desc">
-							</div>
-						</div>
-
-
-
-						<!-- Lọc theo số lượt thích và đánh giá -->
-
-					</form>
-					<div class="shipping text-center">
-						<!--shipping-->
-						<img src="~/images/home/shipping.jpg" alt="" />
-					</div><!--/shipping-->
-				</div>
-
-			</div>
-
-			<div class="col-sm-9 padding-right">
-				<div class="features_items">
-					<!--features_items-->
-					<h2 class="title text-center">Danh sách sản phẩm</h2>
+                       
+                        <!-- Add more filters here if needed -->
+                    </form>
+                    <div class="shipping text-center">
+                        <img src="~/images/home/shipping.jpg" alt="" />
+                    </div>
+                </div>
+            </div>
 
 
-					<!-- Hiển thị danh sách sản phẩm -->
-					<div id="productContainer">
-						@{
-							@await Html.PartialAsync("_ProductListPartial", Model)
-						}
-					</div>
-				</div><!--features_items-->
-				<nav>
-					<ul class="pagination">
-						@for (int i = 1; i <= ViewBag.TotalPages; i++)
-						{
-							<li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
-								<a href="#" class="page-link pagination-link"
-								   data-page="@i">@i</a>
-							</li>
-						}
-					</ul>
-				</nav>
+            <div class="col-sm-9 padding-right">
+                <div class="features_items">
+                    <h2 class="title text-center">Danh sách sản phẩm</h2>
+                    <div id="productContainer">
+                        @await Html.PartialAsync("_ProductListPartial", Model)
+                    </div>
+                </div>
+               
+                <br />
+            </div>
+        </div>
+        <hr />
+        @if (ViewBag.SuggestedProducts != null && ((List<HNSHOP.Dtos.Response.ProductResDto>)ViewBag.SuggestedProducts).Count > 0)
+        {
+            <div class="card my-4">
+                <div class="card-header">
+                    <h2 class="title text-center">Sản phẩm bạn có thể quan tâm</h2>
+                </div>
+                <div class="card-body">
+                    <div class="suggested-list-scroll" style="display: flex; flex-direction: row; overflow-x: auto; gap: 20px; padding-bottom: 8px;">
+                        @foreach (var p in (List<HNSHOP.Dtos.Response.ProductResDto>)ViewBag.SuggestedProducts)
+                        {
+                            <div class="suggested-product-item" style="flex: 0 0 260px; max-width: 260px; min-width: 260px;">
+                                <div class="product-image-wrapper">
+                                    <div class="single-products">
+                                        <div class="productinfo text-center">
+                                            <img src="~/images/hnshop/@(p.Images.FirstOrDefault()?.Path ?? "default.jpg")"
+                                                 alt="@p.Name" style="height: 220px; width:220px; object-fit:cover;" />
+                                            <h2>@p.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</h2>
+                                            <p class="fixed-height-name">@p.Name</p>
+                                            @if (User.Identity.IsAuthenticated && User.IsInRole("User"))
+                                            {
+                                                <button class="btn btn-default add-to-cart" data-product-id="@p.Id"
+                                                        data-quantity="1">
+                                                    <i class="fa fa-shopping-cart"></i> Thêm vào giỏ hàng
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="choose">
+                                        <ul class="nav nav-pills nav-justified">
+                                            @if (User.Identity.IsAuthenticated && User.IsInRole("User"))
+                                            {
+                                                <li>
+                                                    <a href="javascript:void(0);" class="like-btn" data-product-id="@p.Id">
+                                                        <i class="fa fa-heart @(p.IsLiked ? "text-danger" : "")"></i>
+                                                        <span class="like-text">@(p.IsLiked ? "Bỏ yêu thích" : "Thêm yêu thích")</span>
+                                                    </a>
+                                                </li>
+                                            }
+                                            <li>
+                                                <a asp-controller="Products" asp-action="Details" asp-route-id="@p.Id">
+                                                    <i class="fa fa-plus-square"></i> Chi tiết sản phẩm
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        <style>
+            .suggested-list-scroll::-webkit-scrollbar {
+                height: 8px;
+                background: #eee;
+            }
 
+            .suggested-list-scroll::-webkit-scrollbar-thumb {
+                background: #ffa726;
+                border-radius: 4px;
+            }
+        </style>
 
-
-			</div>
-		</div>
-	</div>
-	<br />
+        <hr />
+    </div>
+    <br />
 </section>
-
-<script>
-
-	$(document).ready(function () {
-		// Cập nhật danh sách sản phẩm
-		function updateProductList(formData) {
-			$.ajax({
-				url: "@Url.Action("Index", "Home")",
-				type: "GET",
-				data: formData,
-				success: function (data) {
-					$("#productContainer").html($(data).find("#productContainer").html());
-					$(".pagination").html($(data).find(".pagination").html());
-				},
-				error: function () {
-					alert("Lỗi khi tải dữ liệu sản phẩm.");
-				}
-			});
-		}
-
-		// Lấy dữ liệu lọc hiện tại từ form
-		function getFilterData(additionalData = {}) {
-			var formData = $("#filterForm").serializeArray();
-			$.each(additionalData, function (key, value) {
-				formData.push({ name: key, value: value });
-			});
-			return formData;
-		}
-
-		// Xử lý chọn loại sản phẩm
-		$(document).on("click", ".filter-category", function (e) {
-			e.preventDefault();
-			var formData = getFilterData({
-				productTypeId: $(this).data("product-type"),
-				page: 1
-			});
-			updateProductList(formData);
-		});
-
-		// Xử lý khi chọn thuộc tính sắp xếp
-		$("#sortBy").on("change", function () {
-			var formData = getFilterData({ page: 1 });
-			updateProductList(formData);
-		});
-
-		// Xử lý đổi chiều sắp xếp khi nhấn vào icon
-		$("#toggleSortType").on("click", function () {
-			let currentType = $(this).attr("data-sort-type");
-
-			if (currentType === "desc") {
-				$(this).attr("data-sort-type", "asc");
-				$("#sortType").val("asc");
-				$(this).find('i').removeClass("fa-sort-amount-desc").addClass("fa-sort-amount-asc");
-			} else {
-				$(this).attr("data-sort-type", "desc");
-				$("#sortType").val("desc");
-				$(this).find('i').removeClass("fa-sort-amount-asc").addClass("fa-sort-amount-desc");
-			}
-
-			var formData = getFilterData({ page: 1 });
-			updateProductList(formData);
-		});
-
-		// Xử lý phân trang
-		$(document).on("click", ".pagination-link", function (e) {
-			e.preventDefault();
-			var formData = getFilterData({
-				page: $(this).data("page")
-			});
-			updateProductList(formData);
-		});
-
-
-	});
-</script>
 @section Scripts {
-	<script>
-						$(document).ready(function () {
-			$(".like-btn").click(function (e) {
-				e.preventDefault();
+    <script>
+        $(document).ready(function () {
+            // 1. Giữ trạng thái sort
+            $("#sortBy").val("@sortBy");
+            var type = "@sortType";
+            if (type === "asc") {
+                $("#toggleSortType").attr("data-sort-type", "asc");
+                $("#sortType").val("asc");
+                $("#toggleSortType i").removeClass("fa-sort-amount-desc").addClass("fa-sort-amount-asc");
+            } else {
+                $("#toggleSortType").attr("data-sort-type", "desc");
+                $("#sortType").val("desc");
+                $("#toggleSortType i").removeClass("fa-sort-amount-asc").addClass("fa-sort-amount-desc");
+            }
 
-				let button = $(this);
-				let productId = button.data("product-id");
+            function updateProductList(formData) {
+                $("#productContainer").html('<div class="text-center"><img src="/images/hnshop/loading.gif" style="height:500px" /></div>');
+                $.ajax({
+                    url: "@Url.Action("Index", "Home")",
+                    type: "GET",
+                    data: formData,
+                    success: function (data) {
+                        $("#productContainer").html(data);
+                    },
+                    error: function (xhr, status, error) {
+                        $("#productContainer").html('<div class="alert alert-danger">Lỗi khi tải dữ liệu: ' + xhr.status + ' ' + xhr.statusText + '</div>');
+                    }
+                });
+            }
 
-				$.ajax({
-					url: "/Products/ToggleLike",
-					type: "POST",
-					data: { productId: productId },
-					success: function (res) {
-						if (res.success) {
-							if (res.liked) {
-								button.find("i").addClass("text-danger");
-								button.find(".like-text").text("Bỏ yêu thích");
-							} else {
-								button.find("i").removeClass("text-danger");
-								button.find(".like-text").text("Thêm yêu thích");
-							}
-						}
-					},
-					error: function () {
-						alert("Lỗi khi thực hiện thao tác.");
-					}
-				});
-			});
-		});
+            function getFilterData(additionalData = {}) {
+                var formData = $("#filterForm").serializeArray();
+                $.each(additionalData, function (key, value) {
+                    formData.push({ name: key, value: value });
+                });
+                return formData;
+            }
 
+            // Lọc loại sản phẩm
+            $(document).on("click", ".filter-category", function (e) {
+                e.preventDefault();
+                $("#hiddenProductTypeId").val($(this).data("product-type"));
+                var formData = getFilterData({ page: 1 });
+                updateProductList(formData);
+            });
 
-	</script>
+            // Search (submit ở Home mới AJAX, trang khác thì mặc định submit về Home/Index)
+            $("#searchForm").on("submit", function (e) {
+                if ($("#filterForm").length > 0) {
+                    e.preventDefault();
+                    var searchValue = $(this).find("input[name='search']").val();
+                    $("#hiddenSearchInput").val(searchValue);
+                    var formData = getFilterData({ page: 1 });
+                    updateProductList(formData);
+                }
+            });
+
+            // Sắp xếp
+            $("#sortBy").on("change", function () {
+                var formData = getFilterData({ page: 1 });
+                updateProductList(formData);
+            });
+
+            $("#toggleSortType").on("click", function () {
+                let currentType = $(this).attr("data-sort-type");
+                if (currentType === "desc") {
+                    $(this).attr("data-sort-type", "asc");
+                    $("#sortType").val("asc");
+                    $(this).find('i').removeClass("fa-sort-amount-desc").addClass("fa-sort-amount-asc");
+                } else {
+                    $(this).attr("data-sort-type", "desc");
+                    $("#sortType").val("desc");
+                    $(this).find('i').removeClass("fa-sort-amount-asc").addClass("fa-sort-amount-desc");
+                }
+                var formData = getFilterData({ page: 1 });
+                updateProductList(formData);
+            });
+
+            // Phân trang
+            $(document).on("click", ".pagination-link", function (e) {
+                e.preventDefault();
+                var formData = getFilterData({ page: $(this).data("page") });
+                updateProductList(formData);
+            });
+
+            // Like
+            $(document).on("click", ".like-btn", function (e) {
+                e.preventDefault();
+                let button = $(this);
+                let productId = button.data("product-id");
+                $.ajax({
+                    url: "/Products/ToggleLike",
+                    type: "POST",
+                    data: { productId: productId },
+                    success: function (res) {
+                        if (res.success) {
+                            if (res.liked) {
+                                button.find("i").addClass("text-danger");
+                                button.find(".like-text").text("Bỏ yêu thích");
+                            } else {
+                                button.find("i").removeClass("text-danger");
+                                button.find(".like-text").text("Thêm yêu thích");
+                            }
+                        }
+                    },
+                    error: function () {
+                        alert("Lỗi khi thực hiện thao tác.");
+                    }
+                });
+            });
+            $(document).on('click', '#resetAllFilter', function(e) {
+                e.preventDefault();
+                window.location.href = '/Home/Index';
+             });
+
+        });
+    </script>
 }
-
-
-
-
-

@@ -56,7 +56,7 @@
 				<div class="row" >
 					<div class="col-sm-4">
 						<div class="logo pull-left">
-							<a href="index.html"><img src="~/images/home/logo.png" alt="" /></a>
+								<a asp-controller="Home" asp-action="Index"><img src="~/images/home/logo.png" alt="" /></a>
 						</div>
 
 					</div>
@@ -223,18 +223,19 @@
 						</div>
 					</div>
 
-					
 
-					<div class="col-sm-3">
-						<div class="pull-right">
-							<form id="searchForm" method="get" asp-controller="Home" asp-action="Index" class="search-container">
-								<input type="text" name="search" placeholder="Tìm kiếm sản phẩm..." value="@ViewBag.Search" class="search-input" />
-								<button type="submit" class="search-button">
-									<i class="fa fa-search"></i>
-								</button>
-							</form>
+
+						<div class="col-sm-3">
+							<div class="pull-right">
+								<form id="searchForm" method="get" asp-controller="Home" asp-action="Index" class="search-container">
+									<input type="text" name="search" placeholder="Tìm kiếm sản phẩm..." value="@ViewBag.Search" class="search-input" />
+									<button type="submit" class="search-button">
+										<i class="fa fa-search"></i>
+									</button>
+								</form>
+							</div>
 						</div>
-					</div>
+
 
 
 				</div>
@@ -317,15 +318,14 @@
 		}
 
 		$(document).ready(function () {
-			loadUnreadChatCount(); // gọi lúc load trang
+			loadUnreadChatCount();
 
-			// Nếu bạn muốn reload mỗi 60s để realtime nhẹ
 			setInterval(loadUnreadChatCount, 60000);
 		});
 	</script>
 
 
-	<script src="~/js/home.js"></script>
+	@* <script src="~/js/home.js"></script> *@
 
 	<script src="~/js/auth.js"></script>
 	<script src="~/js/cart.js"></script>

@@ -2,6 +2,9 @@
 @model List<HNSHOP.Dtos.Response.ProductResDto>
 @if (Model != null && Model.Any())
 {
+	<div class="row">
+
+	
 	@foreach (var product in Model)
 	{
 		<div class="col-sm-4">
@@ -33,10 +36,11 @@
 							<!-- Chỉ user mới có thêm yêu thích -->
 							<li>
 								<a href="javascript:void(0);" class="like-btn" data-product-id="@product.Id">
-									<i class="fa fa-heart"></i>
+									<i class="fa fa-heart @(product.IsLiked ? "text-danger" : "")"></i>
 									<span class="like-text">@(product.IsLiked ? "Bỏ yêu thích" : "Thêm yêu thích")</span>
 								</a>
 							</li>
+
 						}
 
 						<li>
@@ -49,17 +53,32 @@
 			</div>
 		</div>
 
+
 	}
+	</div>
+	<br />
+	<div class="text-center">
+		<nav>
+			<ul class="pagination justify-content-center">
+				@for (int i = 1; i <= ViewBag.TotalPages; i++)
+				{
+					<li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+						<a href="#" class="page-link pagination-link" data-page="@i">@i</a>
+					</li>
+				}
+			</ul>
+		</nav>
+	</div>
 }
 else
 {
 	<p class="text-center">Không có sản phẩm nào phù hợp.</p>
 }
-
 @section Scripts {
 	<script>
-						$(document).ready(function () {
-			$(".like-btn").click(function (e) {
+		$(document).ready(function () {
+			// Sử dụng delegation để lắng nghe sự kiện trên các nút .like-btn kể cả sau AJAX load
+			$(document).on("click", ".like-btn", function (e) {
 				e.preventDefault();
 
 				let button = $(this);
@@ -86,7 +105,5 @@ else
 				});
 			});
 		});
-
-
 	</script>
 }
