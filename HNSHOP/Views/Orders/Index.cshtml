@@ -1,7 +1,18 @@
 ﻿@model List<HNSHOP.Dtos.Response.OrderResDto>
 @using HNSHOP.Utils.EnumTypes
 @using System.Net
+@{
+    ViewData["Title"] = "Danh Sách Đơn Hàng";
 
+}
+<section id="cart_items">
+    <div class="container p-5">
+        <div class="breadcrumbs">
+            <ol class="breadcrumb">
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li class="active">Danh Sách Đơn Hàng</li>
+            </ol>
+        </div>
 <section class="category-tab shop-details-tab">
     <div class="container">
         <div class="col-sm-12">
@@ -38,7 +49,8 @@
         }
     </div>
 </section>
-
+</div>
+</section>
 @section Scripts {
     <script>
         function toggleProducts(id, link) {

@@ -1,0 +1,163 @@
+﻿@model HNSHOP.Dtos.Response.SubOrderDetailsVM
+
+@{
+    ViewData["Title"] = $"Chi tiết đơn hàng #{Model.Order.Id} - Shop {Model.SubOrder.ShopName}";
+}
+
+<style>
+    .text-danger {
+        color: #dc3545;
+    }
+
+    .text-truncate {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+</style>
+
+<section id="suborder_details">
+    <div class="container">
+        <div class="breadcrumbs">
+            <ol class="breadcrumb">
+                <li><a asp-controller="ShopOrders" asp-action="Index">Quản lý đơn hàng</a></li>
+                <li class="active">Chi tiết đơn shop</li>
+            </ol>
+        </div>
+
+        <h2 class="title text-center">
+            Đơn hàng #@Model.Order.Id - <span class="text-primary">@Model.SubOrder.ShopName</span>
+        </h2>
+
+        <div class="row">
+            <!-- Thông tin khách hàng -->
+            <div class="col-md-6">
+                <h3 class="title" style="background-color:#ffe6b3; padding:10px 100px 10px 10px; margin-top:-2px;">Thông Tin Đơn Hàng</h3>
+                <table class="table-borderless">
+                    <tr>
+                        <th>Tên: </th>
+
+                        <td>@Model.Order.Customer.Name</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th>Ngày đặt: </th>
+                        <td>@Model.Order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr class="mt-3">
+                        <th style="width:100px;">Trạng thái: </th>
+                        <td>
+                            @if (Model.SubOrder.Status == HNSHOP.Utils.EnumTypes.SubOrderStatus.Pending)
+                            {
+                                <span class="badge badge-secondary">Chờ xử lý</span>
+                            }
+                            else if (Model.SubOrder.Status == HNSHOP.Utils.EnumTypes.SubOrderStatus.Shipping)
+                            {
+                                <span class="badge badge-info">Đang giao</span>
+                            }
+                            else if (Model.SubOrder.Status == HNSHOP.Utils.EnumTypes.SubOrderStatus.Delivered)
+                            {
+                                <span class="badge badge-success">Đã giao</span>
+                            }
+                            else if (Model.SubOrder.Status == HNSHOP.Utils.EnumTypes.SubOrderStatus.Cancelled)
+                            {
+                                <span class="badge badge-danger">Đã hủy</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr style="margin-top:20px">
+                        <th>Địa chỉ: </th>
+                        <td >@Model.Order.Address.AddressDetail</td>
+                    </tr>
+                   
+                   
+                </table>
+            </div>
+            <!-- Trạng thái & tổng kết -->
+            <div class="col-md-6">
+                <img src="~/images/home/donhang.png" height="200px" width="550px"/>
+
+            </div>
+        </div>
+        <br />
+        <!-- DANH SÁCH SẢN PHẨM SHOP XỬ LÝ -->
+        <div class="table-responsive cart_info">
+            <table id="productTable" class="table table-condensed">
+                <thead>
+                    <tr class="cart_menu" style="background-color:#f3f1ed">
+                            <th>Ảnh</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Đơn giá</th>
+                            <th>Giảm giá</th>
+                            <th>Số lượng</th>
+                            <th>Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.SubOrder.DetailOrders)
+                        {
+                            <tr class="align-middle">
+                                <td style="width: 100px;">
+                                    <img src="~/images/hnshop/@(item.Product.Images.FirstOrDefault()?.Path ?? "no-image.png")"
+                                         class="img-fluid rounded border"
+                                         style="width: 80px; height: 80px; object-fit: cover;" />
+                                </td>
+                                <td><b>@item.Product.Name</b></td>
+                                <td>@item.Product.Price.ToString("N0") VNĐ</td>
+                                <td>
+                                    @if (item.Product.DiscountPercent > 0)
+                                    {
+                                        <span class="badge badge-danger">-@item.Product.DiscountPercent.ToString("0.#")%</span>
+                                    }
+                                    else
+                                    {
+                                        <span>0</span>
+                                    }
+                                </td>
+                                <td>@item.Quantity</td>
+                                <td><b>@((item.UnitPrice * item.Quantity).ToString("N0")) VNĐ</b></td>
+                            </tr>
+                        }
+                    </tbody>
+
+                </table>
+            </div>
+            <div class="text-right font-weight-bold mt-2">
+                Tổng tiền shop:
+                <span class="text-danger">
+                    @Model.SubOrder.Total.ToString("N0") VNĐ
+                </span>
+            </div>
+        </div>
+        <br />
+
+        <!-- Nút điều hướng -->
+        <div class="text-center mt-4">
+            <a asp-controller="ShopOrders" asp-action="Index" class="btn btn-secondary">
+            <i class="fa fa-arrow-left"> <b>Quay lại quản lý đơn hàng</b></i>
+        </a>
+        <a asp-controller="Chat"
+           asp-action="WithCustomer"
+           asp-route-customerId="@Model.Order.Customer.Id"
+           class="btn btn-info ml-2">
+            <i class="fa fa-comments"></i> Chat với khách hàng
+        </a>
+        </div>
+        <br />
+    </div>
+</section>

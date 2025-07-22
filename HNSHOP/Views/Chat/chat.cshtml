@@ -1,5 +1,5 @@
 ﻿@{
-    ViewBag.Title = "Trò chuyện";
+    ViewBag.Title = "Trò Chuyện";
     var conversations = ViewBag.Conversations as List<HNSHOP.Models.Conversation>;
     int? selectedConversationId = ViewBag.ConversationId as int?;
     var senderRole = ViewBag.SenderRole as string;
@@ -91,8 +91,14 @@
         white-space: nowrap;
     }
 </style>
-<section>
-    <div class="container">
+<section id="cart_items">
+    <div class="container p-5">
+        <div class="breadcrumbs">
+            <ol class="breadcrumb">
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li class="active">Trò Chuyện</li>
+            </ol>
+        </div>
         <div class="row">
             <div class="row flex-grow-1 w-100 m-0">
                 <div class="col-md-4 border-right overflow-auto" style="background-color:#fefaef">

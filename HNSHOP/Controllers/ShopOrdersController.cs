@@ -1,4 +1,5 @@
 ﻿using HNSHOP.Data;
+using HNSHOP.Dtos.Response;
 using HNSHOP.Models;
 using HNSHOP.Services;
 using HNSHOP.Utils.EnumTypes;
@@ -14,13 +15,15 @@ namespace HNSHOP.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly INotificationService _notificationService;
+        private readonly IOrderService _orderService;
 
 
-        public ShopOrdersController(ApplicationDbContext db, INotificationService notificationService)
+
+        public ShopOrdersController(ApplicationDbContext db, INotificationService notificationService, IOrderService orderService)
         {
             _db = db;
             _notificationService = notificationService;
-
+            _orderService = orderService;
         }
 
         // GET: /ShopOrders
@@ -238,5 +241,98 @@ namespace HNSHOP.Controllers
 
             return shopId;
         }
+
+        public async Task<IActionResult> SubOrderDetails(int id)
+        {
+            var shopId = GetCurrentShopId();
+
+            // Lấy subOrder theo SubOrder.Id và ShopId, include đầy đủ
+            var subOrder = await _db.SubOrders
+            .Include(so => so.Order)
+                .ThenInclude(o => o.Customer)
+            .Include(so => so.Order)
+                .ThenInclude(o => o.Address)
+            .Include(so => so.Shop)
+            .Include(so => so.DetailOrders)
+                .ThenInclude(d => d.Product)
+                    .ThenInclude(p => p.ProductImages)
+            .FirstOrDefaultAsync(so => so.Id == id && so.ShopId == shopId);
+
+
+            if (subOrder == null)
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy đơn của shop này.";
+                return RedirectToAction("Index");
+            }
+
+            // Map sang DTO
+            var order = subOrder.Order;
+
+            var orderDto = new OrderResDto
+            {
+                Id = order.Id,
+                Status = order.Status,
+                PaymentStatus = order.PaymentStatus,
+                Total = order.Total,
+                CreatedAt = order.CreatedAt,
+                UpdatedAt = order.UpdatedAt,
+                Address = new AddressResDto
+                {
+                    Id = order.Address.Id,
+                    AddressDetail = order.Address.AddressDetail
+                },
+                Customer = new Customer
+                {
+                    Id = order.Customer.Id,
+                    Name = order.Customer.Name
+                },
+                SubOrders = new List<SubOrderResDto>() 
+            };
+
+            var subOrderDto = new SubOrderResDto
+            {
+                Id = subOrder.Id,
+                OrderId = subOrder.OrderId,
+                ShopId = subOrder.ShopId,
+                ShopName = subOrder.Shop?.Name ?? "Không xác định",
+                Status = subOrder.Status,
+                Total = subOrder.Total,
+                CreatedAt = subOrder.CreatedAt,
+                DetailOrders = subOrder.DetailOrders.Select(d => new DetailOrderResDto
+                {
+                    Quantity = d.Quantity,
+                    UnitPrice = d.UnitPrice,
+                    Product = new CompactProductResDto
+                    {
+                        Id = d.Product.Id,
+                        Name = d.Product.Name,
+                        Price = d.UnitPrice, 
+                        Shop = new ShopResDto
+                        {
+                            Id = d.Product.Shop.Id,
+                            Name = d.Product.Shop.Name
+                        },
+                        Images = d.Product.ProductImages
+                            .Take(1)
+                            .Select(img => new ProductImageResDto
+                            {
+                                Id = img.Id,
+                                Path = img.Path
+                            }).ToList(),
+                        IsRated = false 
+                    }
+                }).ToList()
+            };
+
+            var vm = new SubOrderDetailsVM
+            {
+                Order = orderDto,
+                SubOrder = subOrderDto
+            };
+
+            return View(vm);
+        }
+
+
     }
 }

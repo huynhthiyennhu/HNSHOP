@@ -27,15 +27,6 @@ namespace HNSHOP.Services
 
         }
 
-        //public async Task<List<OrderResDto>> GetAllCustomerOrdersAsync(int customerId)
-        //{
-        //    var orders = await _db.Orders
-        //        .Include(o => o.DetailOrders)
-        //        .Where(o => o.CustomerId == customerId)
-        //        .ToListAsync();
-
-        //    return _mapper.Map<List<OrderResDto>>(orders);
-        //}
 
         public async Task<List<OrderResDto>> GetAllCustomerOrdersAsync(int customerId)
         {
@@ -54,7 +45,6 @@ namespace HNSHOP.Services
             var order = await _db.Orders
                 .Include(o => o.SubOrders)
                     .ThenInclude(so => so.DetailOrders)
-                        //.ThenInclude(do => do.Product) // nếu cần thông tin sản phẩm trong chi tiết đơn
         .FirstOrDefaultAsync(o => o.Id == orderId);
 
             return _mapper.Map<OrderResDto>(order);

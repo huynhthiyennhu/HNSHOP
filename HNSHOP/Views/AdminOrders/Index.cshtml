@@ -3,10 +3,17 @@
 @using System.Globalization
 
 @{
-    ViewBag.Title = "Quản lý đơn hàng";
+    ViewBag.Title = "Quản Lý Đơn Hàng";
 }
-
-<h2 class="title text-center">📋 Quản lý đơn hàng</h2>
+<section id="cart_items">
+    <div class="container p-5">
+        <div class="breadcrumbs">
+            <ol class="breadcrumb">
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <h2 class="title text-center">📋 Quản lý đơn hàng</h2>
+            </ol>
+        </div>
+        <div class="row">
 
 <table class="table table-bordered table-hover shadow-sm">
     <thead class="thead-light">
@@ -107,6 +114,9 @@
     </tbody>
 </table>
 
+</div>
+</div>
+</section>
 @if (TempData["SuccessMessage"] != null)
 {
     <div class="alert alert-success mt-3">@TempData["SuccessMessage"]</div>

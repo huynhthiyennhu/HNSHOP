@@ -15,10 +15,6 @@ namespace HNSHOP.Dtos.Response
         public AddressResDto Address { get; set; } = null!;
         public Customer Customer { get; set; } = null!;
 
-        // ❌ XÓA DetailOrders (không còn ở Order)
-        // public List<DetailOrderResDto> DetailOrders { get; set; } = [];
-
-        // ✅ Thêm SubOrders (theo shop)
         public List<SubOrderResDto> SubOrders { get; set; } = [];
     }
 }

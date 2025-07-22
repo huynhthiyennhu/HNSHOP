@@ -86,6 +86,7 @@ namespace HNSHOP.Controllers
                 SubOrders = o.SubOrders.Select(so => new SubOrderResDto
                 {
                     Id = so.Id,
+                    OrderId = so.OrderId,
                     ShopId = so.Shop.Id,
                     ShopName = so.Shop.Name,
                     Status = so.Status,
@@ -99,12 +100,14 @@ namespace HNSHOP.Controllers
                             Id = d.Product.Id,
                             Name = d.Product.Name,
                             Price = d.UnitPrice,
-                            Images = d.Product.ProductImages.Select(img => new ProductImageResDto
-                            {
-                                Id = img.Id,
-                                Path = img.Path
-                            }).ToList(),
-                            // Không cần gán IsRated vì đã kiểm tra bằng ViewBag.RatedProductPairs
+                            Images = d.Product.ProductImages
+                                    .Take(1)
+                                    .Select(img => new ProductImageResDto
+                                    {
+                                        Id = img.Id,
+                                        Path = img.Path
+                                    }).ToList(),
+
                             IsRated = false
                         }
                     }).ToList()
@@ -495,6 +498,7 @@ namespace HNSHOP.Controllers
                     SubOrders = order.SubOrders.Select(so => new SubOrderResDto
                     {
                         Id = so.Id,
+                        OrderId = so.OrderId,
                         ShopId = so.Shop.Id,
                         ShopName = so.Shop.Name,
                         Status = so.Status,
@@ -519,11 +523,14 @@ namespace HNSHOP.Controllers
                                     .Select(se => se.Discount)
                                     .FirstOrDefault(),
 
-                                Images = d.Product.ProductImages.Select(img => new ProductImageResDto
-                                {
-                                    Id = img.Id,
-                                    Path = img.Path
-                                }).ToList(),
+                                Images = d.Product.ProductImages
+                                        .Take(1)
+                                        .Select(img => new ProductImageResDto
+                                        {
+                                            Id = img.Id,
+                                            Path = img.Path
+                                        }).ToList(),
+
 
                                 // Gợi ý: thêm IsRated nếu cần
                                 IsRated = _db.Ratings.Any(r => r.ProductId == d.Product.Id && r.CustomerId == order.Customer.Id)

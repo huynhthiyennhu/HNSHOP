@@ -1,7 +1,7 @@
 ﻿@model HNSHOP.Models.SubOrder
 
 @{
-    ViewData["Title"] = "Đánh giá sản phẩm";
+    ViewData["Title"] = "Đánh Giá Sản Phẩm";
 }
 
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
@@ -37,7 +37,14 @@
             background-color: #e64a19;
         }
 </style>
-
+<section id="cart_items">
+    <div class="container p-5">
+        <div class="breadcrumbs">
+            <ol class="breadcrumb">
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li class="active">Thông Tin Tài Khoản</li>
+            </ol>
+        </div>
 <h3 class="text-center">Đánh giá đơn hàng #@Model.OrderId - @Model.Shop.Name</h3>
 
 <form asp-action="Create" method="post">
@@ -88,7 +95,8 @@
         </div>
     </div>
 </form>
-
+</div>
+</section>
 <script>
     document.querySelectorAll(".rating-star").forEach(group => {
         const index = group.dataset.index;

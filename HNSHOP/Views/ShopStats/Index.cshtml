@@ -19,15 +19,18 @@
         </div>
         <h2 class="title text-center">📊 Thống kê sản phẩm - Tổng  @ViewBag.TotalProducts sản phẩm </h2>
         <div class="table-responsive cart_info">
+            <br />
+            <br />
+
         <!-- 1. Sản phẩm theo danh mục -->
         @if (categoryStats != null && categoryStats.Any())
         {
             <div class="row mt-4">
                 <div class="col-md-6">
-                    <h4 class="text-center">Sản phẩm theo danh mục</h4>
+                    <h3 class="text-center">Sản phẩm theo danh mục</h3>
                     <table class="table table-condensed">
                         <thead><tr class="cart_menu"><th>Danh mục</th><th>Số lượng</th></tr></thead>
-                        <tbody>
+                            <tbody style="background-color:#fbf8f5">
                             @foreach (var item in categoryStats)
                             {
                                 <tr><td>@item.CategoryName</td><td>@item.Count</td></tr>
@@ -36,11 +39,15 @@
                     </table>
                 </div>
                 <div class="col-md-6">
-                    <h4 class="text-center">Biểu đồ: Theo danh mục</h4>
+                    <h3 class="text-center">Biểu đồ: Theo danh mục</h3>
                     <canvas id="chartCategory" style="max-height:300px; width:100%;"></canvas>
                 </div>
             </div>
+            <br />
+            <br />
             <hr />
+            <br />
+            <br />
         }
 
         <!-- 2. Top sản phẩm bán chạy -->
@@ -48,11 +55,11 @@
         {
             <div class="row mt-4">
                 <div class="col-md-6">
-                    <h4 class="text-center">Top sản phẩm bán chạy</h4>
+                    <h3 class="text-center">Top sản phẩm bán chạy</h3>
                     <table class="table table-condensed">
                             <thead><tr class="cart_menu"><th>Tên</th><th>SL</th></tr></thead>
-                        <tbody>
-                            @foreach (var item in topStats)
+                            <tbody style="background-color:#fbf8f5">
+                                @foreach (var item in topStats)
                             {
                                 <tr>
                                     <td title="@item.ProductName">
@@ -65,23 +72,27 @@
                     </table>
                 </div>
                 <div class="col-md-6">
-                    <h4 class="text-center">Biểu đồ: Top bán chạy</h4>
+                    <h3 class="text-center">Biểu đồ: Top bán chạy</h3>
                     <canvas id="chartTopSelling" style="max-height:300px; width:100%;"></canvas>
                 </div>
             </div>
-            <hr />
-        }
+                <br />
+                <br />
+                <hr />
+                <br />
+                <br />
+            }
 
         <!-- 3. Tồn kho thấp -->
         @if (lowStockStats != null && lowStockStats.Any())
         {
             <div class="row mt-4">
                 <div class="col-md-6">
-                    <h4 class="text-center">Tồn kho thấp (&lt; 10)</h4>
+                    <h3 class="text-center">Tồn kho thấp (&lt; 10)</h3>
                     <table class="table table-condensed">
                         <thead><tr class="cart_menu"><th>Tên</th><th>SL</th></tr></thead>
-                        <tbody>
-                            @foreach (var item in lowStockStats)
+                            <tbody style="background-color:#fbf8f5">
+                                @foreach (var item in lowStockStats)
                             {
                                 <tr>
                                     <td title="@item.Name">
@@ -94,23 +105,27 @@
                     </table>
                 </div>
                 <div class="col-md-6">
-                    <h4 class="text-center">Biểu đồ: Tồn kho thấp</h4>
+                    <h3 class="text-center">Biểu đồ: Tồn kho thấp</h3>
                     <canvas id="chartLowStock" style="max-height:300px; width:100%;"></canvas>
                 </div>
             </div>
-            <hr />
-        }
+                <br />
+                <br />
+                <hr />
+                <br />
+                <br />
+            }
 
         <!-- 4. Sản phẩm bị ẩn -->
         @if (hiddenStats != null && hiddenStats.Any())
         {
             <div class="row mt-4">
                 <div class="col-md-6">
-                    <h4 class="text-center">Sản phẩm bị ẩn / hết hạn</h4>
+                    <h3 class="text-center">Sản phẩm bị ẩn / hết hạn</h3>
                     <table class="table table-condensed">
                         <thead><tr class="cart_menu"><th>Tên</th><th>Danh mục</th></tr></thead>
-                        <tbody>
-                            @foreach (var item in hiddenStats)
+                            <tbody style="background-color:#fbf8f5">
+                                @foreach (var item in hiddenStats)
                             {
                                 <tr>
                                     <td title="@item.Name">
@@ -123,7 +138,7 @@
                     </table>
                 </div>
                 <div class="col-md-6">
-                    <h4 class="text-center">Biểu đồ: Bị ẩn / hết hạn</h4>
+                    <h3 class="text-center">Biểu đồ: Bị ẩn / hết hạn</h3>
                     <canvas id="chartHidden" style="max-height:300px; width:100%;"></canvas>
                 </div>
             </div>

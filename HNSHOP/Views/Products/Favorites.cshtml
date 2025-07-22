@@ -1,7 +1,17 @@
 ﻿@using System.Globalization
 @model List<HNSHOP.Dtos.Response.ProductResDto>
+@{
+    ViewData["Title"] = "Sản Phẩm Yêu Thích";
 
-<div class="container">
+}
+<section id="cart_items">
+    <div class="container p-5">
+        <div class="breadcrumbs">
+            <ol class="breadcrumb">
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li class="active">Sản Phẩm Yêu Thích</li>
+            </ol>
+        </div>
     <h2 class="title text-center">DANH SÁCH SẢN PHẨM YÊU THÍCH</h2>
     <br />
     <br />
@@ -58,7 +68,7 @@
         </p>
     }
 </div>
-
+</section>
 @section Scripts {
     <script>
         $(document).ready(function () {

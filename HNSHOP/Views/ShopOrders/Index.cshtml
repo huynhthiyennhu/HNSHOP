@@ -8,9 +8,9 @@
 
 <h2 class="title text-center">📦 Quản lý đơn hàng của Shop</h2>
 
-<table class="table table-bordered table-hover shadow-sm">
+<table class="table table-bordered table-hover shadow-sm" style="border:none">
     <thead class="thead-light">
-        <tr>
+        <tr style="background-color:#fbc75e">
             <th>Mã đơn</th>
             <th>Khách hàng</th>
             <th>Trạng thái giao</th>
@@ -18,12 +18,21 @@
             <th>Tổng tiền</th>
             <th>Hành động</th>
         </tr>
+        <tr style="background-color:#ffffff">
+            <td style="border:none;"></td>
+            <td style="border:none;"></td>
+            <td style="border:none;"></td>
+            <td style="border:none;"></td>
+            <td style="border:none;"></td>
+            <td style="border:none;"></td>
+
+        </tr>
     </thead>
     <tbody>
         @foreach (var sub in Model)
         {
-            <tr>
-                <td>@sub.Order.Id</td>
+            <tr style="background-color:#ffe6b3">
+                <td>@sub.OrderId</td>
                 <td>@sub.Order.Customer.Name</td>
                 <td>
                     <span class="badge badge-@(
@@ -68,10 +77,10 @@
                 </td>
             </tr>
 
-            <tr>
+            <tr style="background-color:#fcf6e9">
                 <td colspan="6" class="p-0">
                     <table class="table table-sm mb-0">
-                        <thead class="thead-light">
+                        <thead class="thead-light" style="background-color:#fcf6e9">
                             <tr>
                                 <th>Sản phẩm</th>
                                 <th class="text-center">Số lượng</th>
@@ -82,26 +91,57 @@
                         <tbody>
                             @foreach (var item in sub.DetailOrders)
                             {
-                                <tr>
+                                <tr style="background-color:#f3f1ed">
                                     <td>@item.Product.Name</td>
                                     <td class="text-center">@item.Quantity</td>
                                     <td class="text-right">@item.UnitPrice.ToString("N0", CultureInfo.GetCultureInfo("vi-VN")) đ</td>
                                     <td class="text-right">@((item.UnitPrice * item.Quantity).ToString("N0", CultureInfo.GetCultureInfo("vi-VN"))) đ</td>
-                                </tr>
+                                </tr>                         
+       
                             }
+                            <tr style="background-color:#fcf6e9">
+                                <td colspan="3"></td>
+                                <td class="text-right">
+                                    <a asp-action="SubOrderDetails" asp-route-id="@sub.Id" class="btn btn-info btn-sm">
+                                        <i class="fa fa-eye"></i> Chi tiết 
+                                       
+                                    </a>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </td>
+            </tr>
+            <tr style="background-color:#ffffff">
+                <td style="border:none;"></td>
+                <td style="border:none;"></td>
+                <td style="border:none;"></td>
+                <td style="border:none;"></td>
+                <td style="border:none;"></td>
+                <td style="border:none;"></td>
+
+
+            </tr>
+            <tr style="background-color:#ffffff">
+                <td style="border:none;"></td>
+                <td style="border:none;"></td>
+                <td style="border:none;"></td>
+                <td style="border:none;"></td>
+                <td style="border:none;"></td>
+                <td style="border:none;"></td>
+
+            </tr>
+            <tr style="background-color:#ffffff">
+                <td style="border:none;"></td>
+                <td style="border:none;"></td>
+                <td style="border:none;"></td>
+                <td style="border:none;"></td>
+                <td style="border:none;"></td>
+                <td style="border:none;"></td>
+
             </tr>
         }
     </tbody>
 </table>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success mt-3">@TempData["SuccessMessage"]</div>
-}
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger mt-3">@TempData["ErrorMessage"]</div>
-}
+

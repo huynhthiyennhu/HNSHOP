@@ -1,7 +1,30 @@
 ﻿@model List<HNSHOP.Dtos.Response.NotificationDTO>
 @{
-    ViewData["Title"] = "Thông báo của bạn";
+    ViewData["Title"] = "Thông Báo Của Bạn";
 }
+<style>
+    .notification-background {
+        min-height: 300px;
+        position: relative;
+    }
+
+        .notification-background::before {
+            content: "";
+            background-image: url('/images/home/thongbao.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.1; 
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+</style>
 <section id="cart_items">
     <div class="container p-5">
         <div class="breadcrumbs">
@@ -11,35 +34,46 @@
             </ol>
         </div>
         <div class="row">
-            <h2 class="title text-center">🔔 Thông báo của bạn</h2>
-            <div class="list-group">
-                @foreach (var item in Model)
-                {
-                    <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap @(item.IsRead ? "" : "bg-light border-left border-info")" id="notification-@item.Id">
-                        <div class="mr-auto">
-                            <h4 class="mb-1" style="color:coral">@item.Title</h4>
-                            <h5 class="mb-1">@item.Body</h5>
-                        </div>
-                        <div class="text-right ml-3 d-flex flex-column align-items-end justify-content-between" style="min-width: 150px;">
-                            <small class="text-muted mb-2">@item.CreatedAt.ToString("HH:mm dd/MM/yyyy")</small>
+            <div class="col-12">
+                <h2 class="title text-center mb-4 text-warning">
+                    <i class="fa fa-bell"></i> THÔNG BÁO CỦA BẠN
+                </h2>
 
-                            @if (!item.IsRead)
-                            {
-                                <button class="btn btn-sm btn-outline-primary mark-read-btn" data-id="@item.Id">
-                                    <i class="fa fa-check-circle"></i> Đánh dấu đã đọc
-                                </button>
-                            }
-                            else
-                            {
-                                <span class="badge badge-pill badge-secondary" style="font-size: 0.85rem;">
-                                    <i class="fa fa-check"></i> Đã đọc
-                                </span>
-                            }
-                        </div>
+                <div class="notification-background position-relative rounded overflow-hidden p-4">
+                    <div class="position-relative" style="z-index: 2;">
+                        @foreach (var item in Model)
+                        {
+                            <div class="list-group-item mb-3 shadow-sm bg-white rounded @(item.IsRead ? "" : "border-left border-info")">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                                    <div class="mr-auto">
+                                        <h4 class="mb-1" style="color:coral">@item.Title</h4>
+                                        <h5 class="mb-1">@item.Body</h5>
+                                    </div>
+                                    <div class="text-right ml-3 d-flex flex-column align-items-end" style="min-width: 150px;">
+                                        <small class="text-muted mb-2">@item.CreatedAt.ToString("HH:mm dd/MM/yyyy")</small>
+
+                                        @if (!item.IsRead)
+                                        {
+                                            <button class="btn btn-sm btn-outline-primary mark-read-btn" data-id="@item.Id">
+                                                <i class="fa fa-check-circle"></i> Đánh dấu đã đọc
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-pill badge-secondary" style="font-size: 0.85rem;">
+                                                <i class="fa fa-check"></i> Đã đọc
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
                     </div>
-                }
+                </div>
+
             </div>
-</div>
+        </div>
+        <br />
 </div>
 </section>
 @section Scripts {
