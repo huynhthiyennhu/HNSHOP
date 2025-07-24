@@ -71,6 +71,8 @@ builder.Services.AddScoped<ISaleEventService, SaleEventService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<VnPayService>();
+
 
 builder.Services.Configure<PayPalConfig>(builder.Configuration.GetSection("PayPal"));
 builder.Services.AddScoped<PayPalService>();

@@ -30,29 +30,9 @@
         <div class="row">
             <!-- Thông tin đơn hàng -->
             <div class="col-md-6">
-                <h3>Thông tin đơn hàng</h3>
+                <h3 class="title" style="background-color:#ffe6b3; padding:10px 100px 10px 10px; margin-top:-2px;">Thông Tin Đơn Hàng</h3>
                 <table class="table table-bordered">
-                    <tr>
-                        <th>Trạng thái:</th>
-                        <td>
-                            @if (Model.Status == HNSHOP.Utils.EnumTypes.OrderStatus.Processing)
-                            {
-                                <span class="badge badge-warning">Đang xử lý</span>
-                            }
-                            else if (Model.Status == HNSHOP.Utils.EnumTypes.OrderStatus.Shipping)
-                            {
-                                <span class="badge badge-info">Đang giao</span>
-                            }
-                            else if (Model.Status == HNSHOP.Utils.EnumTypes.OrderStatus.Delivered)
-                            {
-                                <span class="badge badge-success">Đã giao</span>
-                            }
-                            else if (Model.Status == HNSHOP.Utils.EnumTypes.OrderStatus.Cancelled)
-                            {
-                                <span class="badge badge-danger">Đã hủy</span>
-                            }
-                        </td>
-                    </tr>
+                   
                     <tr>
                         <th>Thanh toán:</th>
                         <td>
@@ -74,12 +54,6 @@
                         <th>Địa chỉ giao hàng:</th>
                         <td>@Model.Address.AddressDetail</td>
                     </tr>
-                </table>
-            </div>
-            <!-- Tổng kết đơn hàng -->
-            <div class="col-md-6">
-                <h3>Tổng kết đơn hàng</h3>
-                <table class="table table-bordered">
                     <tr>
                         <th>Tổng tiền hàng:</th>
                         <td>
@@ -119,13 +93,17 @@
                     </tr>
                 </table>
             </div>
+            <div class="col-md-6">
+                <img src="~/images/home/donhang.png" height="350px" width="550px" />
+
+            </div>
 
 
         </div>
 
         <!-- DANH SÁCH SẢN PHẨM TRONG ĐƠN HÀNG THEO SHOP -->
-        <div class="col-md-12">
-            <h3>Sản phẩm trong đơn hàng theo từng cửa hàng</h3>
+        <div class="col-md-12" style="margin:-15px;">
+            <h3 class="title" style="background-color:#f3f1ed; padding:10px 40px ;">Danh Sách Sản Phẩm</h3>
             <br />
 
             @foreach (var subOrder in Model.SubOrders)

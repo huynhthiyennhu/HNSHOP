@@ -25,9 +25,10 @@ namespace HNSHOP.Controllers
         private readonly IOrderService _orderService;
         private readonly IEmailService _emailService;
         private readonly INotificationService _notificationService;
+        private readonly VnPayService _vnPayService;
 
 
-        public OrdersController(ApplicationDbContext db, CartService cartService, ILogger<OrdersController> logger, PayPalService payPalService, IOrderService orderService, IEmailService emailService, INotificationService notificationService)
+        public OrdersController(ApplicationDbContext db, CartService cartService, ILogger<OrdersController> logger, PayPalService payPalService, IOrderService orderService, IEmailService emailService, INotificationService notificationService, VnPayService vnPayService)
         {
             _db = db;
             _cartService = cartService;
@@ -36,9 +37,10 @@ namespace HNSHOP.Controllers
             _orderService = orderService;
             _emailService = emailService;
             _notificationService = notificationService;
+            _vnPayService = vnPayService;
         }
 
-       
+
         public async Task<IActionResult> Index()
         {
             int userId = GetUserIdFromToken();
@@ -205,8 +207,6 @@ namespace HNSHOP.Controllers
         }
 
 
-
-
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateOrderReqDto orderRequest)
         {
@@ -371,8 +371,6 @@ namespace HNSHOP.Controllers
         }
 
 
-
-
         [HttpPost]
         public async Task<IActionResult> Cancel(int id)
         {
@@ -530,9 +528,6 @@ namespace HNSHOP.Controllers
                                             Id = img.Id,
                                             Path = img.Path
                                         }).ToList(),
-
-
-                                // Gợi ý: thêm IsRated nếu cần
                                 IsRated = _db.Ratings.Any(r => r.ProductId == d.Product.Id && r.CustomerId == order.Customer.Id)
                             }
                         }).ToList()
@@ -566,16 +561,15 @@ namespace HNSHOP.Controllers
         [HttpPost]
         public IActionResult PreparePaypal([FromBody] CreateOrderReqDto orderRequest)
         {
-            if (orderRequest == null || !orderRequest.DetailOrderReqDtos.Any())
-            {
+            if (orderRequest == null || orderRequest.DetailOrderReqDtos == null || !orderRequest.DetailOrderReqDtos.Any())
                 return BadRequest("Dữ liệu đơn hàng không hợp lệ.");
-            }
 
             HttpContext.Session.SetString("PendingOrder", JsonConvert.SerializeObject(orderRequest));
 
-            // Giả định đã có ViewBag.FinalTotal = 123.45 trong Razor, bạn truyền giá trị này vào JS
-            return Json(new { redirectUrl = Url.Action("PayWithPaypal", "Orders", new { total = orderRequest.DetailOrderReqDtos.Sum(x => x.Quantity * 1) }) }); // bạn có thể tính lại chính xác ở client
+            var total = orderRequest.DetailOrderReqDtos.Sum(x => x.Quantity * x.UnitPrice);
+            return Json(new { redirectUrl = Url.Action("PayWithPaypal", "Orders", new { total }) });
         }
+
         [HttpGet]
         public async Task<IActionResult> PaypalSuccess(string token)
         {
@@ -622,6 +616,12 @@ namespace HNSHOP.Controllers
 
                 await _emailService.SendGeneralEmailAsync(email, subject, body);
             }
+            await _notificationService.SendNotificationToAccountAsync(
+                    accountId: customer.Account.Id,
+                    title: "Đặt hàng thành công",
+                    body: $"Đơn hàng #{order.Id} của bạn đã được đặt thành công và đang chờ duyệt.",
+                    type: "Order"
+                );
 
             TempData["SuccessMessage"] = "Thanh toán thành công và đơn hàng đã được ghi nhận!";
             return RedirectToAction("Index");
@@ -634,7 +634,7 @@ namespace HNSHOP.Controllers
         [HttpPost]
         public async Task<IActionResult> ConfirmReceived(int id, int subOrderId)
         {
-            var userId = GetUserIdFromToken(); // hoặc từ HttpContext
+            var userId = GetUserIdFromToken(); 
 
             var customer = await _db.Customers
                 .Include(c => c.Orders)
@@ -652,11 +652,8 @@ namespace HNSHOP.Controllers
             if (subOrder == null || subOrder.Status != SubOrderStatus.Delivered)
                 return BadRequest("Đơn hàng không hợp lệ hoặc chưa thể xác nhận.");
 
-            // ✅ Cập nhật trạng thái subOrder
             subOrder.Status = SubOrderStatus.Completed;
-            //subOrder.UpdatedAt = DateTime.UtcNow;
 
-            // ✅ Nếu tất cả subOrder đã hoàn tất → order cũng hoàn tất
             bool allCompleted = order.SubOrders.All(so => so.Status == SubOrderStatus.Completed);
             if (allCompleted)
             {
@@ -706,6 +703,90 @@ namespace HNSHOP.Controllers
             TempData["SuccessMessage"] = "Bạn đã xác nhận đã nhận hàng thành công.";
             return RedirectToAction("Index");
         }
+
+        [HttpGet]
+        public IActionResult PayWithVnPay(decimal total)
+        {
+            var orderId = Guid.NewGuid().ToString("N").Substring(0, 12);
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+            var paymentUrl = _vnPayService.CreatePaymentUrl(total, orderId, ipAddress!);
+
+            return Redirect(paymentUrl);
+        }
+
+
+        [HttpPost]
+        public IActionResult PreparePayment([FromBody] CreateOrderReqDto orderRequest)
+        {
+            if (orderRequest == null || orderRequest.DetailOrderReqDtos == null || !orderRequest.DetailOrderReqDtos.Any())
+                return BadRequest("Dữ liệu đơn hàng không hợp lệ.");
+
+            HttpContext.Session.SetString("PendingOrder", JsonConvert.SerializeObject(orderRequest));
+
+            return Ok();
+        }
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> VnPaySuccess(string vnp_ResponseCode, string vnp_TxnRef)
+        {
+            if (vnp_ResponseCode != "00")
+            {
+                TempData["ErrorMessage"] = "Thanh toán thất bại hoặc bị hủy.";
+                return RedirectToAction("Create");
+            }
+
+            var orderJson = HttpContext.Session.GetString("PendingOrder");
+            if (string.IsNullOrEmpty(orderJson))
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy thông tin đơn hàng.";
+                return RedirectToAction("Create");
+            }
+
+            // Deserialize đơn hàng tạm
+            var orderRequest = JsonConvert.DeserializeObject<CreateOrderReqDto>(orderJson);
+            var userId = GetUserIdFromToken();
+
+            // Tạo đơn hàng chính thức
+            var order = await _orderService.CreateOrderAsync(orderRequest!, userId);
+            order.PaymentStatus = PaymentStatus.Completed;
+            order.UpdatedAt = DateTime.UtcNow;
+
+            await _db.SaveChangesAsync();
+            HttpContext.Session.Remove("PendingOrder");
+
+            // Gửi email xác nhận thanh toán thành công
+            var customer = await _db.Customers
+                .Include(c => c.Account)
+                .FirstOrDefaultAsync(c => c.AccountId == userId);
+
+            if (customer != null && !string.IsNullOrWhiteSpace(customer.Account.Email))
+            {
+                string email = customer.Account.Email;
+                string subject = $"🧾 HNSHOP - Đơn hàng #{order.Id} đã thanh toán thành công!";
+                string body = $@"
+            <h3>Chào {customer.Name},</h3>
+            <p>Chúng tôi xác nhận rằng bạn đã thanh toán thành công đơn hàng <strong>#{order.Id}</strong> qua <b>VNPay</b>.</p>
+            <p><b>Tổng tiền:</b> {order.Total.ToString("N0")} VNĐ</p>
+            <p>Đơn hàng của bạn sẽ được xử lý và giao hàng trong thời gian sớm nhất.</p>
+            <br/>
+            <p>Trân trọng,<br/><strong>HNSHOP Team</strong></p>
+        ";
+
+                await _emailService.SendGeneralEmailAsync(email, subject, body);
+            }
+            await _notificationService.SendNotificationToAccountAsync(
+                    accountId: customer.Account.Id,
+                    title: "Đặt hàng thành công",
+                    body: $"Đơn hàng #{order.Id} của bạn đã được đặt thành công và đang chờ duyệt.",
+                    type: "Order"
+                );
+            TempData["SuccessMessage"] = "Thanh toán thành công qua VNPay. Đơn hàng đã được ghi nhận!";
+            return RedirectToAction("Index");
+        }
+
 
     }
 }

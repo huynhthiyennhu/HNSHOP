@@ -94,7 +94,7 @@
                 <div class="step-one">
                     <h2 class="heading">Bước 2: Chọn phương thức thanh toán</h2>
                     <div class="payment-options">
-                        <span><label><input type="radio" name="paymentMethod" value="bank"> Chuyển khoản ngân hàng</label></span>
+                        @* <span><label><input type="radio" name="paymentMethod" value="bank"> Chuyển khoản ngân hàng</label></span> *@
                         <span><label><input type="radio" name="paymentMethod" value="cod"> Thanh toán khi nhận hàng</label></span>
                         <span><label><input type="radio" name="paymentMethod" value="paypal"> PayPal</label></span>
                         <img src="~/images/hnshop/thanhtoan.png" />
@@ -141,6 +141,8 @@
                                             <div class="text-danger font-weight-bold">@item.Total.ToString("N0") VNĐ</div>
                                         </td>
                                     </tr>
+                                    <tr data-id="@item.ProductId.ToString()" data-quantity="@item.Quantity.ToString()" data-price="@item.Price"></tr>
+
                                 }
                             </tbody>
                         </table>
@@ -319,17 +321,32 @@
                 }
 
                 // Lấy sản phẩm trong giỏ
+                // const cartItems = [];
+                // $("tr[data-id][data-quantity]").each(function () {
+                //     const productId = $(this).data("id");
+                //     const quantity = $(this).data("quantity");
+                //     if (!isNaN(productId) && !isNaN(quantity)) {
+                //         cartItems.push({
+                //             ProductId: parseInt(productId),
+                //             Quantity: parseInt(quantity)
+                //         });
+                //     }
+                // });
                 const cartItems = [];
-                $("tr[data-id][data-quantity]").each(function () {
+                $("tr[data-id][data-quantity][data-price]").each(function () {
                     const productId = $(this).data("id");
                     const quantity = $(this).data("quantity");
-                    if (!isNaN(productId) && !isNaN(quantity)) {
+                    const unitPrice = $(this).data("price");
+
+                    if (!isNaN(productId) && !isNaN(quantity) && !isNaN(unitPrice)) {
                         cartItems.push({
                             ProductId: parseInt(productId),
-                            Quantity: parseInt(quantity)
+                            Quantity: parseInt(quantity),
+                            UnitPrice: parseFloat(unitPrice)
                         });
                     }
                 });
+
 
                 if (!selectedAddressId && !newAddress) {
                     alert("Vui lòng chọn hoặc nhập địa chỉ giao hàng.");
@@ -382,6 +399,34 @@
 
                     return;
                 }
+                 else if (paymentMethod === "bank") {
+                    const total = parseFloat($("#finalTotal").val());
+                    if (total <= 0) {
+                        alert("Tổng tiền phải lớn hơn 0 để thanh toán bằng VNPay.");
+                        return;
+                    }
+
+                    $.ajax({
+                    url: "/Orders/PreparePayment",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(orderData),
+
+                    success: function () {
+                        const total = parseFloat($("#finalTotal").val());
+                        window.location.href = `/Orders/PayWithVnPay?total=${total}`;
+                    },
+                    error: function (xhr) {
+                        alert("Lỗi khi lưu đơn hàng vào session: " + xhr.responseText);
+                        $("#placeOrderBtn").prop("disabled", false).text("Đặt hàng");
+                    }
+                });
+
+
+
+                    return;
+                }
+
 
                 // Đặt hàng thường
                 $.ajax({

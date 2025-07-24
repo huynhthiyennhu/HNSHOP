@@ -13,43 +13,49 @@
                 <li class="active">Danh Sách Đơn Hàng</li>
             </ol>
         </div>
-<section class="category-tab shop-details-tab">
-    <div class="container">
-        <div class="col-sm-12">
-            <ul class="nav nav-tabs">
-                <li class="active"><a href="#processing" data-toggle="tab">Đang xử lý</a></li>
-                <li><a href="#shipping" data-toggle="tab">Đang giao</a></li>
-                <li><a href="#delivered" data-toggle="tab">Đã giao</a></li>
-                <li><a href="#completed" data-toggle="tab">Hoàn tất</a></li>
-                <li><a href="#rating" data-toggle="tab">Chờ đánh giá</a></li>
-            </ul>
-        </div>
+        <section class="category-tab shop-details-tab">
+            <div class="container">
+                <div class="col-sm-12">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a href="#processing" data-toggle="tab">Đang xử lý</a></li>
+                        <li><a href="#shipping" data-toggle="tab">Đang giao</a></li>
+                        <li><a href="#delivered" data-toggle="tab">Đã giao</a></li>
+                        <li><a href="#rating" data-toggle="tab">Chờ đánh giá</a></li>
+                        <li><a href="#completed" data-toggle="tab">Hoàn tất</a></li>
+                        <li><a href="#cancelled" data-toggle="tab">Đã hủy</a></li>
+                    </ul>
+                </div>
+               
 
-        <div class="tab-content">
-            <div class="tab-pane fade active in" id="processing">
-                @Html.Raw(RenderSubOrders(Model, SubOrderStatus.Pending))
-            </div>
-            <div class="tab-pane fade" id="shipping">
-                @Html.Raw(RenderSubOrders(Model, SubOrderStatus.Shipping))
-            </div>
-            <div class="tab-pane fade" id="delivered">
-                @Html.Raw(RenderSubOrders(Model, SubOrderStatus.Delivered))
-            </div>
-            <div class="tab-pane fade" id="completed">
-                @Html.Raw(RenderSubOrders(Model, SubOrderStatus.Completed))
-            </div>
-            <div class="tab-pane fade" id="rating">
-                @Html.Raw(RenderSubOrders(Model, SubOrderStatus.Completed, onlyUnrated: true))
-            </div>
-        </div>
+                <div class="tab-content">
+                    <div class="tab-pane fade active in" id="processing">
+                        @Html.Raw(RenderSubOrders(Model, SubOrderStatus.Pending))
+                    </div>
+                    <div class="tab-pane fade" id="shipping">
+                        @Html.Raw(RenderSubOrders(Model, SubOrderStatus.Shipping))
+                    </div>
+                    <div class="tab-pane fade" id="delivered">
+                        @Html.Raw(RenderSubOrders(Model, SubOrderStatus.Delivered))
+                    </div>
+                   
+                    <div class="tab-pane fade" id="rating">
+                        @Html.Raw(RenderSubOrders(Model, SubOrderStatus.Completed, onlyUnrated: true))
+                    </div> 
+                    <div class="tab-pane fade" id="completed">
+                        @Html.Raw(RenderSubOrders(Model, SubOrderStatus.Completed, onlyUnrated: false, onlyRated: true))
+                    </div>
+                    <div class="tab-pane fade" id="cancelled">
+                        @Html.Raw(RenderSubOrders(Model, SubOrderStatus.Cancelled))
+                    </div>
+                </div>
 
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="alert alert-success mt-3">@TempData["SuccessMessage"]</div>
-        }
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success mt-3">@TempData["SuccessMessage"]</div>
+                }
+            </div>
+        </section>
     </div>
-</section>
-</div>
 </section>
 @section Scripts {
     <script>
@@ -66,154 +72,190 @@
     </script>
 }
 @functions {
-    private string RenderSubOrders(List<HNSHOP.Dtos.Response.OrderResDto> orders, SubOrderStatus filterStatus, bool onlyUnrated = false)
-    {
-        var ratedPairs = ViewBag.RatedProductPairs as List<dynamic>;
-
-        var filteredSubOrders = orders
-            .SelectMany(o => o.SubOrders.Select(so => new { Order = o, SubOrder = so }))
-            .Where(x => x.SubOrder.Status == filterStatus &&
-                        (!onlyUnrated || (ratedPairs != null &&
-                            x.SubOrder.DetailOrders.Any(d =>
-                                d.Product != null &&
-                                !ratedPairs.Any(r => r.ProductId == d.Product.Id && r.SubOrderId == x.SubOrder.Id)))))
-            .ToList();
-
-        if (!filteredSubOrders.Any())
+    @functions {
+        private string RenderSubOrders(
+            List<HNSHOP.Dtos.Response.OrderResDto> orders,
+            SubOrderStatus filterStatus,
+            bool onlyUnrated = false,
+            bool onlyRated = false
+        )
         {
-            return "<p class='text-muted text-center'>Không có đơn hàng nào trong trạng thái này.</p>";
-        }
+            var ratedPairs = ViewBag.RatedProductPairs as IEnumerable<dynamic> ?? new List<dynamic>();
 
-        var html = "";
+            var filteredSubOrders = orders
+                .SelectMany(o => o.SubOrders.Select(so => new { Order = o, SubOrder = so }))
+                .Where(x =>
+                    x.SubOrder.Status == filterStatus
+                    // Nếu onlyUnrated: chỉ hiện subOrder còn sản phẩm chưa đánh giá
+                    && (!onlyUnrated || x.SubOrder.DetailOrders.Any(d =>
+                            d.Product != null &&
+                            !ratedPairs.Any(r =>
+                                Convert.ToInt32(r.ProductId) == Convert.ToInt32(d.Product.Id)
+                                && Convert.ToInt32(r.SubOrderId) == Convert.ToInt32(x.SubOrder.Id)
+                            )
+                        )
+                    )
+                    // Nếu onlyRated: chỉ hiện subOrder đã đánh giá hết sản phẩm
+                    && (!onlyRated || x.SubOrder.DetailOrders.All(d =>
+                            d.Product != null &&
+                            ratedPairs.Any(r =>
+                                Convert.ToInt32(r.ProductId) == Convert.ToInt32(d.Product.Id)
+                                && Convert.ToInt32(r.SubOrderId) == Convert.ToInt32(x.SubOrder.Id)
+                            )
+                        )
+                    )
+                )
+                .ToList();
 
-        foreach (var entry in filteredSubOrders)
-        {
-            var order = entry.Order;
-            var subOrder = entry.SubOrder;
-            var modalId = $"confirmModal-{order.Id}-{subOrder.ShopId}";
-            var blockId = $"products-{subOrder.Id}";
-            string shopName = WebUtility.HtmlEncode(subOrder.ShopName);
-            string statusBadge = GetStatusBadge(subOrder.Status);
-
-            html += "<div class='shop-section mb-4 p-3 border rounded bg-white shadow-sm'>";
-            html += $"<h5 class='shop-title mb-3 text-primary font-weight-bold'>🛍 Shop: {shopName}" +
-                    $"<small class='ml-2'>{statusBadge}</small></h5>";
-
-            // Hiển thị sản phẩm đầu tiên
-            var firstProduct = subOrder.DetailOrders.FirstOrDefault(d => d.Product != null);
-            if (firstProduct != null)
+            if (!filteredSubOrders.Any())
             {
-                var p = firstProduct.Product;
-                var name = WebUtility.HtmlEncode(p.Name);
-                var img = p.Images?.FirstOrDefault()?.Path ?? "no-image.png";
-                var discount = p.DiscountPercent;
-                var price = p.Price;
-                var finalPrice = price * (1 - (decimal)discount / 100);
-
-                html += "<table class='table mb-0'>";
-                html += "<tr class='align - middle border - 0'>";
-                html += $"<td style='width: 70px; boder:none;'><img src='/images/hnshop/{img}' class='img-fluid rounded border' style='width:70px;height:70px;object-fit:cover;' /></td>";
-                html += "<td style='vertical-align: top;'>";
-                html += $"<div class='font-weight-bold'>{name}</div>";
-                html += $"<div class='text-muted small'>Đơn giá: {price:N0} VNĐ";
-                if (discount > 0)
-                    html += $" <span class='text-danger ml-2'>-{discount:0.#}%</span>";
-                html += $"</div><div class='text-muted small'>Số lượng: {firstProduct.Quantity}</div>";
-                html += $"<div class='text-danger font-weight-bold mt-1'>{(finalPrice * firstProduct.Quantity):N0} VNĐ</div>";
-                html += "</td>";
-                html += "</tr>";
-                html += "</table>";
-
+                return "<p class='text-muted text-center'>Không có đơn hàng nào trong trạng thái này.</p>";
             }
 
-            // Nút xem tất cả
-            if (subOrder.DetailOrders.Count > 1)
+            var html = "";
+
+            foreach (var entry in filteredSubOrders)
             {
-                html += $"<div class='mb-2'><a href='javascript:void(0)' onclick='toggleProducts(\"{blockId}\", this)'>Xem tất cả sản phẩm</a></div>";
-            }
+                var order = entry.Order;
+                var subOrder = entry.SubOrder;
+                var modalId = $"confirmModal-{order.Id}-{subOrder.ShopId}";
+                var blockId = $"products-{subOrder.Id}";
+                string shopName = WebUtility.HtmlEncode(subOrder.ShopName);
+                string statusBadge = GetStatusBadge(subOrder.Status);
 
-            // Danh sách sản phẩm còn lại
-            html += $"<div id='{blockId}' style='display:none;'>";
-            foreach (var item in subOrder.DetailOrders.Skip(1))
-            {
-                var p = item.Product;
-                if (p == null) continue;
-                var name = WebUtility.HtmlEncode(p.Name);
-                var img = p.Images?.FirstOrDefault()?.Path ?? "no-image.png";
-                var discount = p.DiscountPercent;
-                var price = p.Price;
-                var finalPrice = price * (1 - (decimal)discount / 100);
+                bool hasUnrated = subOrder.DetailOrders.Any(d =>
+                    d.Product != null &&
+                    !ratedPairs.Any(r =>
+                        Convert.ToInt32(r.ProductId) == Convert.ToInt32(d.Product.Id)
+                        && Convert.ToInt32(r.SubOrderId) == Convert.ToInt32(subOrder.Id)
+                    )
+                );
 
-                html += "<table class='table mb-0'>";
-                html += "<tr class='align - middle border - 0'>";
-                html += $"<td style='width: 60px; boder:none;'><img src='/images/hnshop/{img}' class='img-fluid rounded border ' style='width:60px;height:60px;object-fit:cover;' /></td>";
-                html += "<td style='vertical-align: top;'>";
-                html += $"<div class='font-weight-bold'>{name}</div>";
-                html += $"<div class='text-muted small'>Đơn giá: {item.UnitPrice:N0} VNĐ</div>";
-                html += $"<div class='text-muted small'>Số lượng: {item.Quantity}</div>";
-                html += $"<div class='text-danger font-weight-bold mt-1'>{(finalPrice * item.Quantity):N0} VNĐ</div>";
-                html += "</td>";
-                html += "</tr>";
-                html += "</table>";
+                html += "<div class='shop-section mb-4 p-3 border rounded bg-white shadow-sm'>";
+                html += $"<h5 class='shop-title mb-3 text-primary font-weight-bold'>🛍 Shop: {shopName}" +
+                        $"<small class='ml-2'>  {statusBadge}</small></h5>";
 
-            }
-            html += "</div>";
+                // Sản phẩm đầu tiên
+                var firstProduct = subOrder.DetailOrders.FirstOrDefault(d => d.Product != null);
+                if (firstProduct != null)
+                {
+                    var p = firstProduct.Product;
+                    var name = WebUtility.HtmlEncode(p.Name);
+                    var img = p.Images?.FirstOrDefault()?.Path ?? "no-image.png";
+                    var discount = p.DiscountPercent;
+                    var price = p.Price;
+                    var finalPrice = price * (1 - (decimal)discount / 100);
 
-            // Tổng tiền
-            var totalPrice = subOrder.DetailOrders.Sum(i =>
-                (i.Product.Price * (1 - (decimal)i.Product.DiscountPercent / 100)) * i.Quantity);
-            html += "</br>";
+                    html += "<table class='table mb-0'>";
+                    html += "<tr>";
+                    html += $"<td style='width: 70px; border:none;'><img src='/images/hnshop/{img}' class='img-fluid rounded border' style='width:70px;height:70px;object-fit:cover;' /></td>";
+                    html += "<td style='vertical-align: top;'>";
+                    html += $"<div class='font-weight-bold'>{name}</div>";
+                    html += $"<div class='text-muted small'>Đơn giá: {price:N0} VNĐ";
+                    if (discount > 0)
+                        html += $" <span class='text-danger ml-2'>-{discount:0.#}%</span>";
+                    html += $"</div><div class='text-muted small'>Số lượng: {firstProduct.Quantity}</div>";
+                    html += $"<div class='text-danger font-weight-bold mt-1'>{(finalPrice * firstProduct.Quantity):N0} VNĐ</div>";
+                    html += "</td>";
+                    html += "</tr>";
+                    html += "</table>";
+                }
 
-            html += "<b>";
-            html += $"<div class='d-flex justify-content-end mt-2 font-weight-bold'>Tổng tiền shop: <span class='text-danger ml-2'>{totalPrice:N0} VNĐ</span></div>";
-            html += "</b>";
-            // Hành động
-            html += "<div class='text-right mt-3' style='margin-right:50px;'>";
-            html += $"<a href='/Orders/Details/{order.Id}' class='btn btn-outline-info btn-sm'>Chi tiết đơn</a> ";
+                // Nút xem tất cả
+                if (subOrder.DetailOrders.Count > 1)
+                {
+                    html += $"<div class='mb-2'><a href='javascript:void(0)' onclick='toggleProducts(\"{blockId}\", this)'>Xem tất cả sản phẩm</a></div>";
+                }
 
-            bool hasUnrated = subOrder.DetailOrders.Any(d =>
-                d.Product != null &&
-                ratedPairs != null &&
-                !ratedPairs.Any(r => r.ProductId == d.Product.Id && r.SubOrderId == subOrder.Id));
+                // Danh sách sản phẩm còn lại
+                html += $"<div id='{blockId}' style='display:none;'>";
+                foreach (var item in subOrder.DetailOrders.Skip(1))
+                {
+                    var p = item.Product;
+                    if (p == null) continue;
+                    var name = WebUtility.HtmlEncode(p.Name);
+                    var img = p.Images?.FirstOrDefault()?.Path ?? "no-image.png";
+                    var discount = p.DiscountPercent;
+                    var price = p.Price;
+                    var finalPrice = price * (1 - (decimal)discount / 100);
 
-            if (subOrder.Status == SubOrderStatus.Completed && hasUnrated)
-            {
-                html += $"<a href='/Ratings/Create?subOrderId={subOrder.Id}' class='btn btn-warning btn-sm ml-2'>Đánh giá</a>";
-            }
+                    html += "<table class='table mb-0'>";
+                    html += "<tr>";
+                    html += $"<td style='width: 60px; border:none;'><img src='/images/hnshop/{img}' class='img-fluid rounded border' style='width:60px;height:60px;object-fit:cover;' /></td>";
+                    html += "<td style='vertical-align: top;'>";
+                    html += $"<div class='font-weight-bold'>{name}</div>";
+                    html += $"<div class='text-muted small'>Đơn giá: {item.UnitPrice:N0} VNĐ</div>";
+                    html += $"<div class='text-muted small'>Số lượng: {item.Quantity}</div>";
+                    html += $"<div class='text-danger font-weight-bold mt-1'>{(finalPrice * item.Quantity):N0} VNĐ</div>";
+                    html += "</td>";
+                    html += "</tr>";
+                    html += "</table>";
+                }
+                html += "</div>";
 
-            if (subOrder.Status == SubOrderStatus.Delivered)
-            {
-                html += $@"
+                // Tổng tiền
+                var totalPrice = subOrder.DetailOrders.Sum(i =>
+                    (i.Product.Price * (1 - (decimal)i.Product.DiscountPercent / 100)) * i.Quantity);
+                html += "</br>";
+
+                html += "<b>";
+                html += $"<div class='d-flex justify-content-end mt-2 font-weight-bold'>Tổng tiền shop: <span class='text-danger ml-2'>{totalPrice:N0} VNĐ</span></div>";
+                html += "</b>";
+
+                // Hành động
+                html += "<div class='text-right mt-3' style='margin-right:50px;'>";
+                html += $"<a href='/Orders/Details/{order.Id}' class='btn btn-outline-info btn-sm'>Chi tiết đơn</a> ";
+
+                if (subOrder.Status == SubOrderStatus.Completed && hasUnrated)
+                {
+                    html += $"<a href='/Ratings/Create?subOrderId={subOrder.Id}' class='btn btn-warning btn-sm ml-2'>Đánh giá</a>";
+                }
+
+                if (subOrder.Status == SubOrderStatus.Delivered)
+                {
+                    html += $@"
                     <button class='btn btn-success btn-sm ml-2' data-toggle='modal' data-target='#{modalId}'>
                         Đã nhận hàng
-                    </button>
+                    </button>";
+
+                    html += $@"
                     <div class='modal fade' id='{modalId}' tabindex='-1' role='dialog'>
-                        <div class='modal-dialog' role='document'>
-                            <div class='modal-content'>
+                        <div class='modal-dialog modal-dialog-centered' role='document'>
+                            <div class='modal-content rounded-lg shadow' style='border: none;'>
                                 <form method='post' action='/Orders/ConfirmReceived/{order.Id}?subOrderId={subOrder.Id}'>
-                                    <div class='modal-header'>
-                                        <h5 class='modal-title'>Xác nhận đã nhận hàng</h5>
-                                        <button type='button' class='close' data-dismiss='modal'><span>&times;</span></button>
+                                    <div class='modal-header border-bottom-0 pb-0'>
+                                        <h5 class='modal-title font-weight-bold' style='color: #264653;'>Xác nhận đã nhận hàng</h5>
+                                        <button type='button' class='close' data-dismiss='modal' aria-label='Đóng'>
+                                            <span aria-hidden='true' style='font-size: 1.5rem;'>&times;</span>
+                                        </button>
                                     </div>
-                                    <div class='modal-body'>
-                                        Bạn chắc chắn đã nhận hàng từ <strong>{shopName}</strong>?
+                                    <div class='modal-body text-center pt-2 pb-3'>
+                                        <div style='font-size: 1.1rem; margin-bottom: 18px;'>
+                                            Bạn chắc chắn đã nhận hàng từ <strong style='color:#f48c06;'>{shopName}</strong>?
+                                        </div>
                                     </div>
-                                    <div class='modal-footer'>
-                                        <button type='button' class='btn btn-secondary' data-dismiss='modal'>Hủy</button>
-                                        <button type='submit' class='btn btn-primary'>Xác nhận</button>
+                                    <div class='modal-footer border-top-0 justify-content-center'>
+                                        <button type='button' class='btn btn-outline-secondary px-4 mr-2' data-dismiss='modal'>Hủy</button>
+                                        <button type='submit' class='btn px-4' style='background:#f48c06;color:#fff;font-weight:600;border-radius:6px;'>
+                                            Xác nhận
+                                        </button>
                                     </div>
                                 </form>
                             </div>
                         </div>
                     </div>";
+
+                }
+
+                html += "</div></div>";
+                html += "<hr/>";
+                html += "<br/>";
             }
 
-            html += "</div></div>";
-            // html += "</hr>";
+            return html;
         }
-
-        return html;
     }
+
 
     private string GetStatusBadge(SubOrderStatus status)
     {

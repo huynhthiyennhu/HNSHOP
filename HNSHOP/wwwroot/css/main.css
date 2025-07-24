@@ -2654,6 +2654,14 @@ h2.title {
     color: #007bff;
 }
 
+/* Thêm vào site.css nếu muốn tuỳ biến thêm */
+.card .card-title {
+	min-height: 2.5rem;
+}
+
+#toastMessage .toast-body {
+	font-size: 1rem;
+}
 
 
 
