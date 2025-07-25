@@ -2,76 +2,133 @@
 @model HNSHOP.Dtos.Response.SaleEventProductResDto
 @{
     ViewData["Title"] = "Cập Nhật Chương Trình Giảm Giá";
-
 }
+<style>
+    .sale-event-form-card {
+        background: #fffefb;
+        border-radius: 20px;
+        box-shadow: 0 6px 32px 0 rgba(40, 48, 64, 0.13);
+        padding: 36px 32px 24px 32px;
+        margin-top: 36px;
+        max-width: 820px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .title-highlight {
+        color: #f48c06;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 24px;
+        font-size: 2rem;
+        text-align: center;
+    }
+
+    .img-sale-illustration {
+        max-width: 100%;
+        max-height: 280px;
+        border-radius: 12px;
+        object-fit: cover;
+        border: 1.5px solid #ffd48b;
+        margin-bottom: 8px;
+        background: #fcf6e8;
+    }
+
+    .card-section-title {
+        font-weight: bold;
+        color: #f48c06;
+        font-size: 1.18rem;
+        margin: 24px 0 12px 0;
+    }
+
+    .form-group label {
+        font-weight: 600;
+    }
+    /* DataTables cải tiến */
+    div.dataTables_filter {
+        float: right !important;
+        text-align: right !important;
+        margin-top: -54px !important;
+        margin-bottom: 18px !important;
+        margin-right: 0px !important;
+    }
+
+        div.dataTables_filter input {
+            width: 210px !important;
+            display: inline-block;
+            margin-left: 5px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            height: 32px;
+            padding: 5px 10px;
+        }
+
+    .dataTables_wrapper .dataTables_filter {
+        padding-right: 12px;
+    }
+
+        .dataTables_wrapper .dataTables_filter label {
+            font-weight: bold;
+            font-size: 1.09rem;
+        }
+</style>
+
 <section id="cart_items">
     <div class="container p-5">
-        <div class="breadcrumbs">
+        <div class="breadcrumbs mb-4">
             <ol class="breadcrumb">
                 <li><a asp-controller="Home" asp-action="Index">Home</a></li>
                 <li><a asp-controller="SaleEvent" asp-action="Index">Quản Lý Giảm Giá</a></li>
                 <li class="active">Chỉnh Sửa Chương Trình Giảm Giá</li>
             </ol>
         </div>
+        <div class="sale-event-form-card">
+            <div class="title-highlight">Chỉnh Sửa Chương Trình Giảm Giá</div>
 
-        <h2 class="title text-center">Chỉnh Sửa Chương Trình Giảm Giá</h2>
+            <form id="editSaleEventForm" enctype="multipart/form-data" action="/SaleEvent/Edit" method="post">
+                <input type="hidden" name="Id" value="@Model.Id" />
 
-        <form id="editSaleEventForm" enctype="multipart/form-data" action="/SaleEvent/Edit" method="post">
-            <input type="hidden" name="Id" value="@Model.Id" />
-
-            <div class="card p-3">
-                <!-- Ảnh minh họa -->
-                <div class="form-group text-center">
+                <div class="form-group text-center mb-4">
                     <input type="file" name="Illustration" id="eventImageInput" style="display: none;">
-
                     <div id="previewImage" class="mt-2 w-100">
-                        <img id="selectedImage" src="~/images/hnshop/@Model.Illustration" class="img-fluid rounded w-100"
-                             style="max-height: 300px; object-fit: cover;">
+                        <img id="selectedImage" src="~/images/hnshop/@Model.Illustration" class="img-sale-illustration" alt="Minh hoạ">
                     </div>
-
-                    <button type="button" id="customFileButton" class="btn btn-primary mt-2">Chọn ảnh mới</button>
+                    <button type="button" id="customFileButton" class="btn btn-warning mt-2"><i class="fa fa-camera"></i> Chọn ảnh mới</button>
                 </div>
 
-                <!-- Thông tin chương trình -->
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label for="SaleEventName">Tên chương trình</label>
                             <input type="text" name="Name" class="form-control" value="@Model.Name" required />
                         </div>
-
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label for="SaleEventDescription">Mô tả</label>
                             <textarea name="Description" class="form-control" rows="5" required>@Model.Description</textarea>
                         </div>
                     </div>
-
                     <div class="col-md-6">
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label for="SaleEventDiscount">Giảm giá (%)</label>
-                            <input type="number" name="Discount" class="form-control" value="@Model.Discount" required />
+                            <input type="number" name="Discount" class="form-control" value="@Model.Discount" required min="1" max="100" />
                         </div>
-
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label for="SaleEventStartDate">Ngày bắt đầu</label>
-                            <input type="date" name="StartDate" class="form-control"
-                                   value="@Model.StartDate.ToString("yyyy-MM-dd")" required />
+                            <input type="date" name="StartDate" class="form-control" value="@Model.StartDate.ToString("yyyy-MM-dd")" required />
                         </div>
-
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label for="SaleEventEndDate">Ngày kết thúc</label>
-                            <input type="date" name="EndDate" class="form-control"
-                                   value="@Model.EndDate.ToString("yyyy-MM-dd")" required />
+                            <input type="date" name="EndDate" class="form-control" value="@Model.EndDate.ToString("yyyy-MM-dd")" required />
                         </div>
                     </div>
                 </div>
 
-                <!-- Loại khách hàng áp dụng -->
-                <h3>Loại Khách Hàng Áp Dụng</h3>
+                <div class="card-section-title">Loại Khách Hàng Áp Dụng</div>
                 <div class="table-responsive cart_info">
-                    <table class="table table-condensed">
+                    <table class="table table-bordered table-striped">
                         <thead>
-                            <tr class="cart_menu">
+                            <tr class="cart_menu" style="background: #fbe7bb;">
                                 <th>Loại khách hàng</th>
                                 <th>Mô tả</th>
                                 <th class="text-center">Chọn</th>
@@ -83,7 +140,7 @@
                                 <tr>
                                     <td>@type.Name</td>
                                     <td>@type.Description</td>
-                                    <td class="text-center">
+                                    <td class="text-center align-middle">
                                         <input type="checkbox" name="CustomerTypeIds" value="@type.Id" @(type.IsSelected ? "checked" : "")>
                                     </td>
                                 </tr>
@@ -92,12 +149,11 @@
                     </table>
                 </div>
 
-                <!-- Danh sách sản phẩm -->
-                <h3>Sản phẩm áp dụng</h3>
+                <div class="card-section-title">Sản phẩm áp dụng</div>
                 <div class="table-responsive cart_info">
-                    <table id="productTable" class="table table-condensed">
+                    <table id="productTable" class="table table-bordered table-hover table-condensed">
                         <thead>
-                            <tr class="cart_menu">
+                            <tr class="cart_menu" style="background: #ffe0b2;">
                                 <th>Hình ảnh</th>
                                 <th>Tên sản phẩm</th>
                                 <th>Giá sản phẩm</th>
@@ -110,11 +166,20 @@
                                 var image = product.Images.FirstOrDefault();
                                 <tr>
                                     <td>
-                                        <img src="~/images/hnshop/@image?.Path" width="80" height="80">
+                                        <img src="~/images/hnshop/@image?.Path" width="74" height="74" style="object-fit:cover;border-radius:6px;background:#f8f8f7;">
                                     </td>
-                                    <td>@product.Name</td>
+                                    <td style="max-width:210px;">
+                                        @if ((product.Name?.Length ?? 0) > 52)
+                                        {
+                                            <span title="@product.Name">@product.Name.Substring(0, 52)...</span>
+                                        }
+                                        else
+                                        {
+                                            @product.Name
+                                        }
+                                    </td>
                                     <td>@product.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</td>
-                                    <td class="text-center">
+                                    <td class="text-center align-middle">
                                         <input type="checkbox" name="ProductIds" value="@product.Id" @(product.IsSelected ? "checked" : "")>
                                     </td>
                                 </tr>
@@ -123,12 +188,13 @@
                     </table>
                 </div>
 
-
-                <div class="text-center">
-                    <button type="submit" class="btn btn-success">Cập nhật chương trình</button>
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-success btn-lg px-5">
+                        <i class="fa fa-save mr-2"></i> Cập nhật chương trình
+                    </button>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </section>
 
@@ -168,10 +234,7 @@
                     "infoEmpty": "Không có dữ liệu",
                     "infoFiltered": "(lọc từ _MAX_ sản phẩm)",
                     "search": "Tìm kiếm:",
-                    "paginate": {
-                        "previous": "Trước",
-                        "next": "Tiếp"
-                    }
+                    "paginate": { "previous": "Trước", "next": "Tiếp" }
                 }
             });
         });

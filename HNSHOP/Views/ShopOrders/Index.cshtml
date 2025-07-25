@@ -92,7 +92,8 @@
                             @foreach (var item in sub.DetailOrders)
                             {
                                 <tr style="background-color:#f3f1ed">
-                                    <td>@item.Product.Name</td>
+                                    <td>@((item.Product.Name?.Length > 100) ? item.Product.Name.Substring(0,100) + "..." : item.Product.Name)</td>
+
                                     <td class="text-center">@item.Quantity</td>
                                     <td class="text-right">@item.UnitPrice.ToString("N0", CultureInfo.GetCultureInfo("vi-VN")) đ</td>
                                     <td class="text-right">@((item.UnitPrice * item.Quantity).ToString("N0", CultureInfo.GetCultureInfo("vi-VN"))) đ</td>

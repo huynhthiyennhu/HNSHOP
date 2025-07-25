@@ -45,7 +45,7 @@ public class SaleEventController : Controller
         if (saleEvent == null) return NotFound();
 
         // Lấy danh sách tất cả sản phẩm và loại khách hàng
-        var allProducts = await _db.Products
+        var allProducts = await _db.Products.Where(p => (!p.IsDeleted))
             .Include(p => p.ProductImages)
             .ToListAsync();
         var allCustomerTypes = await _db.CustomerTypes.ToListAsync();
@@ -105,7 +105,7 @@ public class SaleEventController : Controller
         try
         {
             var customerTypes = _db.CustomerTypes.ToList();
-            var products = _db.Products
+            var products = _db.Products.Where(p => (!p.IsDeleted))
                 .Include(p => p.ProductImages)
                 .ToList();
 
@@ -210,7 +210,7 @@ public class SaleEventController : Controller
         if (saleEvent == null) return NotFound();
 
        
-        var allProducts = await _db.Products
+        var allProducts = await _db.Products.Where(p => (!p.IsDeleted))
             .Include(p => p.ProductImages)
             .ToListAsync();
 

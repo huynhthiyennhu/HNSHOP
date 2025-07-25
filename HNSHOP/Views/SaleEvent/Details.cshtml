@@ -2,20 +2,171 @@
 @model HNSHOP.Dtos.Response.SaleEventProductResDto
 @{
     ViewData["Title"] = "Chi Tiết Chương Trình Giảm Giá";
-
 }
 <style>
-    .full-width-banner {
-        width: 80vw;
-        height: 300px;
-        max-height: 300px;
+    .sale-banner-blur {
+        width: 100%;
+        height: 260px;
+        max-height: 260px;
         object-fit: cover;
-        display: block;
+        border-radius: 22px;
+        margin-bottom: 14px;
+        box-shadow: 0 4px 24px #e1be83ba;
     }
-   
+
+    .main-sale-info-block {
+        background: linear-gradient(90deg, #fffbe6 60%, #f9edc7 100%);
+        border-radius: 18px;
+        box-shadow: 0 2px 16px #ffe6a1b2;
+        padding: 32px 32px 22px 32px;
+        margin-bottom: 22px;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .main-sale-title {
+        font-size: 2.12rem;
+        font-weight: 700;
+        color: #e69a00;
+        letter-spacing: -0.5px;
+        margin-bottom: 12px;
+        text-align: center;
+    }
+
+    .sale-period {
+        font-size: 1.13rem;
+        color: #635440;
+        font-weight: 600;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+
+    .sale-desc {
+        color: #664f1a;
+        font-size: 1.1rem;
+        margin-bottom: 4px;
+        text-align: center;
+    }
+
+    .table-sale-section {
+        background: #fcf6e8;
+        border-radius: 14px;
+        padding: 12px 10px 10px 10px;
+        margin-bottom: 32px;
+        box-shadow: 0 1px 7px #e8d9a6aa;
+        max-width: 900px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .product-card-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 28px 20px;
+        justify-content: center;
+    }
+
+    .product-card-sale {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 3px 16px #f9da90b9;
+        width: 290px;
+        min-height: 380px;
+        margin-bottom: 16px;
+        padding: 14px 10px 16px 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition: box-shadow 0.2s;
+    }
+
+        .product-card-sale:hover {
+            box-shadow: 0 8px 32px #ffd561ee;
+        }
+
+        .product-card-sale img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            background: #f8f6f2;
+        }
+
+        .product-card-sale h2 {
+            color: #f48c06;
+            font-size: 1.25rem;
+            margin-bottom: 3px;
+            font-weight: 700;
+        }
+
+        .product-card-sale p {
+            font-size: 1.09rem;
+            color: #322f1a;
+            min-height: 48px;
+            margin-bottom: 7px;
+        }
+
+    .choose {
+        width: 100%;
+        padding-top: 4px;
+    }
+
+        .choose ul {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+        }
+
+        .choose li {
+            list-style: none;
+        }
+
+        .choose a, .btn-default {
+            color: #f48c06;
+            font-weight: 600;
+            transition: color 0.18s, background 0.18s;
+        }
+
+            .choose a:hover {
+                color: #e48010;
+            }
+
+    .btn-default {
+        border: 1.2px solid #ffe6a1;
+        background: #fffbe8;
+        border-radius: 20px;
+        padding: 7px 18px;
+        font-size: 1.06rem;
+        margin-top: 5px;
+        margin-bottom: 2px;
+    }
+
+        .btn-default:hover, .add-to-cart:hover {
+            background: #fce5b2;
+        }
+
+    .like-btn .fa-heart.text-danger {
+        color: #ec3838;
+    }
+    @@media (max-width:900px) {
+        .main-sale-info-block
+
+    {
+        padding: 20px 8px 14px 8px;
+    }
+
+    .table-sale-section {
+        padding: 7px 2px 7px 2px;
+    }
+
+    }
 </style>
 <section id="cart_items">
-    <div class="container p-5">
+    <div class="container p-4">
         <div class="breadcrumbs">
             <ol class="breadcrumb">
                 <li><a asp-controller="Home" asp-action="Index">Home</a></li>
@@ -24,119 +175,138 @@
             </ol>
         </div>
 
-        <h2 class="title text-center">Chi Tiết Chương Trình Giảm Giá</h2>
-
-        <div class="card p-3">
-            <!-- Ảnh minh họa -->
+        <div class="main-sale-info-block">
             <div class="text-center">
-                <img src="~/images/hnshop/@Model.Illustration" class="img-fluid full-width-banner">
+                <img src="~/images/hnshop/@Model.Illustration" class="sale-banner-blur" alt="Banner" />
+            </div>
+            <div class="main-sale-title"> @Model.Name </div>
+            <div class="sale-period">
+                <i class="fa fa-calendar"></i>
+                Áp dụng từ <b>@Model.StartDate.ToString("dd/MM/yyyy")</b> đến <b>@Model.EndDate.ToString("dd/MM/yyyy")</b>
+            </div>
+            <div class="sale-desc">
+                <i class="fa fa-info-circle"></i>
+                @Model.Description
+            </div>
+            <div class="sale-period" style="font-size:1.18rem;">
+                <span class="badge badge-success" style="font-size:1.12rem;">
+                    Giảm giá lên đến <b>@Model.Discount%</b> cho sản phẩm tham gia!
+                </span>
+            </div>
+        </div>
+
+        @if (User.IsInRole("Admin") || User.IsInRole("Shop"))
+        {
+            <div class="table-sale-section">
+                <h4 class="text-center text-warning mb-3" style="font-weight:700;">
+                    <i class="fa fa-users"></i> Đối tượng khách hàng được áp dụng
+                </h4>
+                <table class="table table-bordered table-striped mb-3">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Loại khách hàng</th>
+                            <th>Mô tả</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var type in Model.CustomerTypes.Where(ct => ct.IsSelected))
+                        {
+                            <tr>
+                                <td>@type.Name</td>
+                                <td>@type.Description</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
 
-            <!-- Thông tin chương trình -->
-            <div class="row mt-3">
-                    <h3><strong> Chương trình giảm giá @Model.Name @Model.Description </strong></h3>
-                    <h3><strong>Giảm giá đến @Model.Discount%, áp dụng từ ngày @Model.StartDate.ToString("dd/MM/yyyy") đến hết ngày @Model.EndDate.ToString("dd/MM/yyyy")  </strong></h3>
+            <div class="table-sale-section">
+                <h4 class="text-center text-success mb-3" style="font-weight:700;">
+                    <i class="fa fa-gift"></i> Danh sách sản phẩm được giảm giá
+                </h4>
+                <table class="table table-bordered table-hover table-striped">
+                    <thead>
+                        <tr>
+                            <th>Hình ảnh</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Giá sản phẩm</th>
+                            <th>Giá sau giảm</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var product in Model.Products.Where(p => p.IsSelected))
+                        {
+                            var giaGoc = product.Price;
+                            var giamGia = Model.Discount;
+                            var giaSauGiam = giaGoc * (1 - (decimal)giamGia / 100);
+                            <tr>
+                                <td>
+                                    <img src="~/images/hnshop/@product.Images.FirstOrDefault()?.Path" width="80" height="80" style="object-fit:cover;border-radius:7px;background:#f6f6f6;">
+                                </td>
+                                <td>
+                                    @if ((product.Name?.Length ?? 0) > 48)
+                                    {
+                                        <span title="@product.Name">@product.Name.Substring(0, 48)...</span>
+                                    }
+                                    else
+                                    {
+                                        @product.Name
+                                    }
+                                </td>
+                                <td>@giaGoc.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</td>
+                                <td>
+                                    <span class="text-danger font-weight-bold">@giaSauGiam.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
 
-                   
+                </table>
             </div>
-
-            <hr />
-            <br />
-            <br />
-            <br />
-
-            <!-- Nếu là Admin hoặc Shop -->
-            @if (User.IsInRole("Admin") || User.IsInRole("Shop"))
+        }
+        else
+        {
+            @if (Model.IsApplicableCustomer)
             {
-                <h2 class="title text-center"> Chương trình áp dụng cho các loại khách hàng sau:</h2>
-
-                <div class="table-responsive cart_info">
-                    <table class="table table-condensed">
-                        <thead>
-                            <tr class="cart_menu">
-                                <th>Loại khách hàng</th>
-                                <th>Mô tả</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var type in Model.CustomerTypes.Where(ct => ct.IsSelected))
-                            {
-                                <tr>
-                                    <td>@type.Name</td>
-                                    <td>@type.Description</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-
-                <h2 class="title text-center"> Danh sách các sản phẩm có trong chương trình</h2>
-
-                <div class="table-responsive cart_info">
-                    <table class="table table-condensed">
-                        <thead>
-                            <tr class="cart_menu">
-                                <th>Hình ảnh</th>
-                                <th>Tên sản phẩm</th>
-                                <th>Giá sản phẩm</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var product in Model.Products.Where(p => p.IsSelected))
-                            {
-                                <tr>
-                                    <td>
-                                        <img src="~/images/hnshop/@product.Images.FirstOrDefault()?.Path" width="80" height="80">
-                                    </td>
-                                    <td>@product.Name</td>
-                                    <td>@product.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-            else
-            {
-                <!-- Nếu là khách hàng -->
-                @if (Model.IsApplicableCustomer)
-                {
-                    <h2 class="title text-center">Danh sách sản phẩm trong chương trình</h2>
-                                @foreach (var product in Model.Products.Where(p => p.IsSelected))
+                <div class="table-sale-section">
+                    <h4 class="text-center text-success mb-4" style="font-weight:700;">
+                        <i class="fa fa-shopping-basket"></i> Sản phẩm giảm giá dành cho bạn
+                    </h4>
+                    <div class="product-card-list">
+                        @foreach (var product in Model.Products.Where(p => p.IsSelected))
+                        {
+                            <div class="product-card-sale">
+                                <img src="~/images/hnshop/@(product.Images.FirstOrDefault()?.Path ?? "default.jpg")"
+                                     alt="@product.Name" />
+                                <h2>@product.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</h2>
+                                <p>
+                                    @if ((product.Name?.Length ?? 0) > 48)
+                                    {
+                                        <span title="@product.Name">@product.Name.Substring(0, 48)...</span>
+                                    }
+                                    else
+                                    {
+                                        @product.Name
+                                    }
+                                </p>
+                                @if (User.Identity.IsAuthenticated && User.IsInRole("User"))
                                 {
-                                    <div class="col-sm-4">
-                            <div class="product-image-wrapper">
-                                <div class="single-products">
-                                    <div class="productinfo text-center">
-                                        <img src="~/images/hnshop/@(product.Images.FirstOrDefault()?.Path ?? "default.jpg")"
-                                             alt="@product.Name" style="height: 300px; width:260px" />
-                                        <h2>@product.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</h2>
-                                        <p>@product.Name</p>
-
-                                        @if (User.Identity.IsAuthenticated && User.IsInRole("User"))
-                                        {
-                                            <!-- Chỉ tài khoản khách hàng mới có nút thêm vào giỏ -->
-                                            <button class="btn btn-default add-to-cart" data-product-id="@product.Id"
-                                                    data-quantity="1">
-                                                <i class="fa fa-shopping-cart"></i> Thêm vào giỏ hàng
-                                            </button>
-                                        }
-                                    </div>
-                                </div>
-
+                                    <button class="btn btn-default add-to-cart" data-product-id="@product.Id"
+                                            data-quantity="1">
+                                        <i class="fa fa-shopping-cart"></i> Thêm vào giỏ hàng
+                                    </button>
+                                }
                                 <div class="choose">
-                                    <ul class="nav nav-pills nav-justified">
+                                    <ul>
                                         @if (User.Identity.IsAuthenticated && User.IsInRole("User"))
                                         {
-                                            <!-- Chỉ user mới có thêm yêu thích -->
                                             <li>
                                                 <a href="javascript:void(0);" class="like-btn" data-product-id="@product.Id">
-                                                    <i class="fa fa-heart"></i>
+                                                    <i class="fa fa-heart @(product.IsLiked ? "text-danger" : "")"></i>
                                                     <span class="like-text">@(product.IsLiked ? "Bỏ yêu thích" : "Thêm yêu thích")</span>
                                                 </a>
                                             </li>
                                         }
-
                                         <li>
                                             <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id">
                                                 <i class="fa fa-plus-square"></i> Chi tiết sản phẩm
@@ -145,20 +315,46 @@
                                     </ul>
                                 </div>
                             </div>
-                                    </div>
-                                }
-                            
-                    
-                }
-                else
-                {
-                    <div class="alert alert-warning text-center">
-                        <strong>Bạn không thuộc đối tượng áp dụng chương trình giảm giá này.</strong>
+                        }
                     </div>
-                }
+                </div>
             }
-
-        </div>
+            else
+            {
+                <div class="alert alert-warning text-center mt-4 mb-5 p-4" style="font-size:1.2rem;">
+                    <strong>
+                        <i class="fa fa-info-circle"></i>
+                        Bạn không thuộc đối tượng áp dụng chương trình giảm giá này.
+                    </strong>
+                </div>
+            }
+        }
     </div>
-    <br />
 </section>
+<script>
+    // Like
+           $(document).on("click", ".like-btn", function (e) {
+               e.preventDefault();
+               let button = $(this);
+               let productId = button.data("product-id");
+               $.ajax({
+                   url: "/Products/ToggleLike",
+                   type: "POST",
+                   data: { productId: productId },
+                   success: function (res) {
+                       if (res.success) {
+                           if (res.liked) {
+                               button.find("i").addClass("text-danger");
+                               button.find(".like-text").text("Bỏ yêu thích");
+                           } else {
+                               button.find("i").removeClass("text-danger");
+                               button.find(".like-text").text("Thêm yêu thích");
+                           }
+                       }
+                   },
+                   error: function () {
+                       alert("Lỗi khi thực hiện thao tác.");
+                   }
+               });
+           });
+</script>

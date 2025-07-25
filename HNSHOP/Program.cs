@@ -102,6 +102,8 @@ builder.Services.AddAuthorizationBuilder()
           policy.RequireRole(ConstConfig.AdminRoleName, ConstConfig.ShopRoleName, ConstConfig.UserRoleName)
      );
 
+
+
 //builder.Services.AddAuthorization(options =>
 //{
 //    options.AddPolicy("ShopPolicy", policy => policy.RequireRole("shop"));

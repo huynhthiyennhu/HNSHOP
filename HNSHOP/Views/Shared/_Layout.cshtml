@@ -51,20 +51,20 @@
 <body>
 	<div class="page-wrapper">
 		<header id="header">
-		<div class="header-middle">
-			<!--header-middle-->
-			<div class="container"  >
-				<div class="row" >
-					<div class="col-sm-4">
-						<div class="logo pull-left">
+			<div class="header-middle">
+				<!--header-middle-->
+				<div class="container"  >
+					<div class="row" >
+						<div class="col-sm-4">
+							<div class="logo pull-left">
 								<a asp-controller="Home" asp-action="Index"><img src="~/images/home/logo.png" alt="" /></a>
-						</div>
+							</div>
 
-					</div>
-					<div class="col-sm-8">
-						<div class="shop-menu pull-right">
-							@if (User.Identity.IsAuthenticated){
-								<ul class="nav navbar-nav">
+						</div>
+						<div class="col-sm-8">
+							<div class="shop-menu pull-right">
+								@if (User.Identity.IsAuthenticated){
+									<ul class="nav navbar-nav">
 										@{
 											int unreadNotificationCount = 0;
 
@@ -84,7 +84,7 @@
 												<i class="fa fa-bell"></i> Thông báo
 												@if (unreadNotificationCount > 0)
 												{
-													<span class="badge badge-danger" style="position: absolute; top: -8px; right: -10px;">
+													<span class="badge badge-danger" style="position: absolute; top: -12px; right: -10px; background-color:#E89415;">
 														@unreadNotificationCount
 													</span>
 												}
@@ -93,34 +93,34 @@
 
 									@using System.Security.Claims
 									@inject HNSHOP.Data.ApplicationDbContext _context
+										@if (User.Identity.IsAuthenticated && !User.IsInRole("Admin")) // Chỉ khách hàng
+										{
+											<li class="position-relative">
+												<a asp-controller="Chat" asp-action="Index">
+													<i class="fa fa-comments"></i> Trò chuyện
+													<span id="chatBadge" class="badge badge-danger" style="position: absolute; top: -12px; right: -10px; display:none; background-color:#E89415; ">
+														0
+													</span>
+												</a>
+											</li>
+										}
 
-										<li class="position-relative">
-											<a asp-controller="Chat" asp-action="Index">
-												<i class="fa fa-comments"></i> Trò chuyện
-												<span id="chatBadge" class="badge badge-danger" style="position: absolute; top: -8px; right: -10px; display:none;">
-													0
-												</span>
-											</a>
-										</li>
 
+										@if (User.Identity.IsAuthenticated && User.IsInRole("User")) // Chỉ khách hàng
+										{
+											<li><a asp-controller="Products" asp-action="Favorites"><i class="fa fa-heart"></i> Yêu Thích</a></li>
+											<li><a asp-controller="Orders" asp-action="Index"><i class="fa fa-credit-card"></i> Đơn Hàng</a></li>
 
+											<li>
+												<a asp-controller="Cart" asp-action="Index">
+													<i class="fa fa-shopping-cart"></i> Giỏ hàng <span id="cart-count" class="badge badge-danger" style="position: absolute; top: -12px; right: -10px; display:none; background-color:#E89415">@ViewBag.CartCount</span>
+												</a>
+											</li>
+										}
 
-									@if (User.Identity.IsAuthenticated && User.IsInRole("User")) // Chỉ khách hàng
-									{
-										@* <li><a asp-controller="ACcounts" asp-action="Index"><i class="fa fa-user"></i> Tài Khoản</a></li> *@
-										<li><a asp-controller="Products" asp-action="Favorites"><i class="fa fa-heart"></i> Yêu Thích</a></li>
-										<li><a asp-controller="Orders" asp-action="Index"><i class="fa fa-credit-card"></i> Đơn Hàng</a></li>
-
-										<li>
-											<a asp-controller="Cart" asp-action="Index">
-												<i class="fa fa-shopping-cart"></i> Giỏ hàng (<span id="cart-count">@ViewBag.CartCount</span>)
-											</a>
-										</li>
-									}
-									
 
 										<li class="dropdown">
-												<div style="margin-top:4px;">
+											<div style="margin-top:4px;">
 												<a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
 													<span class="ml-1">@User.Identity.Name</span>
 													<img src="~/images/hnshop/avatar/@User.FindFirst("Avatar")?.Value" class="rounded-circle" style="width:32px; height:32px; border-radius: 50%" />
@@ -136,89 +136,149 @@
 														</form>
 													</li>
 												</ul>
-												</div>
-									</li>
+											</div>
+										</li>
 
 
 
-								</ul>
-							}
-							else{}
+									</ul>
+								}
+								else{}
+							</div>
 						</div>
 					</div>
 				</div>
 			</div>
-		</div>
 
-		<div class="header-bottom">
-			<!--header-bottom-->
-			<div class="container">
-				<div class="row">
-					<div class="col-sm-9">
-						<div class="navbar-header">
-							<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-								<span class="sr-only">Toggle navigation</span>
-								<span class="icon-bar"></span>
-								<span class="icon-bar"></span>
-								<span class="icon-bar"></span>
-							</button>
-						</div>
-						<div class="mainmenu pull-left">
-							<ul class="nav navbar-nav collapse navbar-collapse">
-								<li><a asp-controller="Home" asp-action="Index" class="active">Home</a></li>
-
+			<div class="header-bottom">
+				<!--header-bottom-->
+				<div class="container">
+					<div class="row">
+						<div class="col-sm-9">
+							<div class="navbar-header">
+								<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+									<span class="sr-only">Toggle navigation</span>
+									<span class="icon-bar"></span>
+									<span class="icon-bar"></span>
+									<span class="icon-bar"></span>
+								</button>
+							</div>
+							<div class="mainmenu pull-left">
+								<ul class="nav navbar-nav collapse navbar-collapse">
 									@if (User.Identity.IsAuthenticated && User.IsInRole("Shop"))
 									{
+										<li>
+											<a asp-controller="Home" asp-action="Index" class="active">
+												<i class="fa fa-home"></i> Home
+											</a>
+										</li>
 										<li class="dropdown">
-											<a href="#">Cửa Hàng <i class="fa fa-angle-down"></i></a>
+											<a href="#"><i class="fa fa-shopping-bag"></i> Cửa Hàng <i class="fa fa-angle-down"></i></a>
 											<ul role="menu" class="sub-menu">
 												<li>
-													<a asp-controller="Products" asp-action="Manage">Quản lý sản phẩm</a>
+													<a asp-controller="Products" asp-action="Manage">
+														<i class="fa fa-cubes"></i> Quản lý sản phẩm
+													</a>
 												</li>
 												<li>
-													<a asp-controller="ShopOrders" asp-action="Index">Quản lý đơn hàng</a>
+													<a asp-controller="ShopOrders" asp-action="Index">
+														<i class="fa fa-truck"></i> Quản lý đơn hàng
+													</a>
 												</li>
 												<li>
-													<a asp-controller="ACcounts" asp-action="Index">Tài Khoản</a>
+													<a asp-controller="ACcounts" asp-action="Index">
+														<i class="fa fa-user-circle"></i> Tài Khoản
+													</a>
 												</li>
-												<li><a asp-controller="ShopStats" asp-action="Index">Thống kê của Shop</a></li>
-
+												<li>
+													<a asp-controller="ShopStats" asp-action="Index">
+														<i class="fa fa-bar-chart"></i> Thống kê của Shop
+													</a>
+												</li>
 											</ul>
 										</li>
-									}
 
+									}
 
 									@if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
 									{
 										<li class="dropdown">
-											<a href="#">Quản Trị <i class="fa fa-angle-down"></i></a>
+											<a href="#"><i class="fa fa-cogs"></i> Quản Trị <i class="fa fa-angle-down"></i></a>
 											<ul role="menu" class="sub-menu">
-												<li><a asp-controller="SaleEvent" asp-action="Index">Quản Lý giảm giá</a></li>
-												<li><a asp-controller="AdminOrders" asp-action="Index">Kiểm tra đơn hàng</a></li>
-												<li><a asp-controller="ProductType" asp-action="Index">Quản lý loại sản phẩm</a></li>
-												<li><a asp-controller="AdminStats" asp-action="Index">📊 Thống kê sản phẩm</a></li> <!-- thêm dòng này -->
+												<li>
+													<a asp-controller="SaleEvent" asp-action="Index">
+														<i class="fa fa-tags"></i> Quản Lý giảm giá
+													</a>
+												</li>
+												<li>
+													<a asp-controller="AdminOrders" asp-action="Index">
+														<i class="fa fa-clipboard"></i> Kiểm tra đơn hàng
+													</a>
+												</li>
+												<li>
+													<a asp-controller="ProductType" asp-action="Index">
+														<i class="fa fa-list-alt"></i> Quản lý loại sản phẩm
+													</a>
+												</li>
+												<li>
+													<a asp-controller="AdminStats" asp-action="Index">
+														<i class="fa fa-bar-chart"></i> Thống kê sản phẩm
+													</a>
+												</li>
 											</ul>
 										</li>
 										<li class="dropdown">
-											<a href="#">Quản Tài Khoản <i class="fa fa-angle-down"></i></a>
+											<a href="#"><i class="fa fa-users"></i> Quản Tài Khoản <i class="fa fa-angle-down"></i></a>
 											<ul role="menu" class="sub-menu">
-												<li><a asp-controller="AdminShop" asp-action="Index">Quản lý Shop</a></li>
-												<li><a asp-controller="Customers" asp-action="Index">Quản lý khách hàng</a></li>
+												<li>
+													<a asp-controller="AdminShop" asp-action="Index">
+														<i class="fa fa-cart-plus"></i> Quản lý Shop
+													</a>
+												</li>
+												<li>
+													<a asp-controller="Customers" asp-action="Index">
+														<i class="fa fa-user"></i> Quản lý khách hàng
+													</a>
+												</li>
+											</ul>
+										</li>
+
+									}
+
+									@if (!User.Identity.IsAuthenticated)
+									{
+										<li class="dropdown">
+											<a href="#"><i class="fa fa-user-plus"></i> Đăng Ký<i class="fa fa-angle-down"></i></a>
+											<ul role="menu" class="sub-menu">
+												<li>
+													<a asp-controller="Auth" asp-action="Register">
+														<i class="fa fa-user"></i> Tài khoản Khách Hàng
+													</a>
+												</li>
+												<li>
+													<a asp-controller="Auth" asp-action="RegisterShop">
+														<i class="fa fa-cart-plus"></i> Tài khoản Shop
+													</a>
+												</li>
+												<li>
+													<a asp-controller="Auth" asp-action="VerifyEmail">
+														<i class="fa fa-check"></i> Xác thực tài khoản
+													</a>
+												</li>
 											</ul>
 										</li>
 									}
 
-								<li class="dropdown">
-									<a href="#">Đăng Ký<i class="fa fa-angle-down"></i></a>
-									<ul role="menu" class="sub-menu">
-										<li><a asp-controller="Auth" asp-action="Register">Tài khoản Khách Hàng</a></li>
-										<li><a asp-controller="Auth" asp-action="RegisterShop">Tài khoản Shop</a></li>
-										<li><a asp-controller="Auth" asp-action="VerifyEmail"> Xác thực tài khoản</a>
-									</ul>
-								</li>
 
-								@if (!User.Identity.IsAuthenticated){
-									<li><a asp-controller="Auth" asp-action="Login"> Đăng Nhập</a></li>}
+									@if (!User.Identity.IsAuthenticated)
+									{
+										<li>
+											<a asp-controller="Auth" asp-action="Login">
+												<i class="fa fa-sign-in"></i> Đăng Nhập
+											</a>
+										</li>
+									}
+
 								
 							</ul>
 						</div>
@@ -293,9 +353,11 @@
 				</div>
 			</div>
 		</div>
-
+			
 	</footer><!--/Footer-->
 	</div>
+
+	
 	<script>
 		function confirmLogout() {
 			if (confirm("Bạn có chắc chắn muốn đăng xuất không?")) {
@@ -324,9 +386,18 @@
 			setInterval(loadUnreadChatCount, 60000);
 		});
 	</script>
-
-
-	@* <script src="~/js/home.js"></script> *@
+	<script>
+		$(document).ready(function () {
+			$('.mark-read-btn').click(function () {
+				const btn = $(this);
+				const id = btn.data('id');
+				$.post('/Notification/MarkAsRead', { notificationId: id }, function () {
+					btn.replaceWith('<span class="noti-badge-read"><i class="fa fa-check"></i> Đã đọc</span>');
+					$('#notification-' + id).removeClass('unread');
+				});
+			});
+		});
+	</script>
 
 	<script src="~/js/auth.js"></script>
 	<script src="~/js/cart.js"></script>

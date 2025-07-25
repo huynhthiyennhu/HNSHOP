@@ -67,7 +67,9 @@
                                     </a>
                                 }
                             </td>
-                            <td>@product.Name</td>
+                                <td>
+                                    @((product.Name?.Length > 80) ? product.Name.Substring(0, 80) + "..." : product.Name)
+                                </td>
                             <td>@product.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</td>
                             <td>@product.Quantity</td>
                            

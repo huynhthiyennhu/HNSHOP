@@ -32,7 +32,8 @@ namespace HNSHOP.Controllers
             // Bước 1: Query filter thô và select các trường cần thiết + LikeCount, AvgRating
             var query = _db.Products
                 .AsNoTracking()
-                .Where(p => (!productTypeId.HasValue || p.ProductTypeId == productTypeId)
+                .Where(p => (!p.IsDeleted)
+                &&(!productTypeId.HasValue || p.ProductTypeId == productTypeId )
                          && (string.IsNullOrWhiteSpace(search) ||
                               p.Name.ToLower().Contains(search.ToLower()) ||
                               p.Description.ToLower().Contains(search.ToLower()))
@@ -44,6 +45,7 @@ namespace HNSHOP.Controllers
                     p.Id,
                     p.Name,
                     p.Price,
+                    p.Quantity,
                     p.Description,
                     Images = p.ProductImages.Select(img => new ProductImageResDto
                     {
@@ -111,6 +113,7 @@ namespace HNSHOP.Controllers
                 Price = p.Price,
                 Description = p.Description,
                 Images = p.Images,
+                Quantity=p.Quantity,
                 IsLiked = likedProductIds.Contains(p.Id)
             }).ToList();
 
@@ -167,15 +170,15 @@ namespace HNSHOP.Controllers
             if (!interactedIds.Any()) return new List<ProductResDto>();
 
             var interactedTypes = await _db.Products
-                .Where(p => interactedIds.Contains(p.Id))
+                .Where(p => interactedIds.Contains(p.Id) && !p.IsDeleted)
                 .GroupBy(p => p.ProductTypeId)
                 .OrderByDescending(g => g.Count())
                 .Select(g => g.Key)
                 .ToListAsync();
 
             var suggestedProducts = await _db.Products
-                .Include(p => p.ProductImages)
-                .Where(p => interactedTypes.Contains(p.ProductTypeId) && !interactedIds.Contains(p.Id))
+                .Include(p => p.ProductImages) 
+                .Where(p => interactedTypes.Contains(p.ProductTypeId) && !interactedIds.Contains(p.Id) && !p.IsDeleted)
                 .OrderByDescending(p => p.Likes.Count + p.Ratings.Count)
                 .Take(8)
                 .ToListAsync();
@@ -186,6 +189,7 @@ namespace HNSHOP.Controllers
                 Id = p.Id,
                 Name = p.Name,
                 Price = p.Price,
+                Quantity=p.Quantity,
                 Description = p.Description,
                 Images = p.ProductImages.Select(img => new ProductImageResDto
                 {

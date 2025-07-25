@@ -29,29 +29,32 @@ function uploadAvatar(input) {
 
         fetch('/Accounts/UpdateAvatar', {
             method: 'POST',
-            body: formData
-        }).then(response => response.json())
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     let avatarPreview = document.getElementById("avatarPreview");
                     let newSrc = "/images/hnshop/avatar/" + data.imageName + "?t=" + new Date().getTime();
-
-                    avatarPreview.src = newSrc;
-
-                    avatarPreview.onload = function () {
-                        console.log("Ảnh cập nhật thành công!");
-                    };
+                    if (avatarPreview) {
+                        avatarPreview.src = newSrc;
+                        alert("Cập nhật ảnh thành công!");
+                    } else {
+                        location.reload();
+                    }
                 } else {
                     alert("Cập nhật ảnh thất bại: " + data.message);
                 }
-            }).catch(error => {
-                console.error("Lỗi upload:", error);
+            })
+            .catch(error => {
                 alert("Có lỗi xảy ra, vui lòng thử lại!");
+                console.error("Lỗi upload:", error);
             });
     }
 }
-
-
 
 
 

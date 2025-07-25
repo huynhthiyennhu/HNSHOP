@@ -117,8 +117,8 @@
                                          class="img-fluid rounded border"
                                          style="width: 80px; height: 80px; object-fit: cover;" />
                                 </td>
-                                <td><b>@item.Product.Name</b></td>
-                                <td>@item.Product.Price.ToString("N0") VNĐ</td>
+                            <td>@((item.Product.Name?.Length > 90) ? item.Product.Name.Substring(0, 90) + "..." : item.Product.Name)</td>
+                            <td>@item.Product.Price.ToString("N0") VNĐ</td>
                                 <td>
                                     @if (item.Product.DiscountPercent > 0)
                                     {

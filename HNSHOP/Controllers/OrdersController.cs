@@ -279,7 +279,7 @@ namespace HNSHOP.Controllers
                     return BadRequest("Giỏ hàng trống!");
 
                 // Lấy sản phẩm
-                var products = await _db.Products
+                var products = await _db.Products.Where(p => (!p.IsDeleted))
                     .Include(p => p.Shop)
                     .Include(p => p.ProductSaleEvents)
                         .ThenInclude(pse => pse.SaleEvent)

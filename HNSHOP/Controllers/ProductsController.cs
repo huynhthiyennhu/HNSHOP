@@ -24,7 +24,7 @@ public class ProductsController(ApplicationDbContext db, IMapper mapper, CartSer
    
     public async Task<IActionResult> Index()
     {
-        var products = await _db.Products
+        var products = await _db.Products.Where(p => (!p.IsDeleted))
             .Include(p => p.ProductImages)
             .ToListAsync();
 
@@ -35,7 +35,7 @@ public class ProductsController(ApplicationDbContext db, IMapper mapper, CartSer
 
     public async Task<IActionResult> Details(int id)
     {
-        var product = await _db.Products
+        var product = await _db.Products.Where(p => (!p.IsDeleted))
             .Include(p => p.ProductImages)
             .Include(p => p.Shop)
             .Include(p => p.ProductType)
@@ -53,13 +53,13 @@ public class ProductsController(ApplicationDbContext db, IMapper mapper, CartSer
 
         int soldQuantity = product.DetailOrders.Sum(d => d.Quantity);
 
-        var relatedProducts = await _db.Products
+        var relatedProducts = await _db.Products.Where(p => (!p.IsDeleted))
             .Include(p => p.ProductImages)
             .Where(p => p.ProductTypeId == product.ProductTypeId && p.Id != id)
             .Take(4)
             .ToListAsync();
 
-        var shopProducts = await _db.Products
+        var shopProducts = await _db.Products.Where(p => (!p.IsDeleted))
             .Include(p => p.ProductImages)
             .Where(p => p.ShopId == product.ShopId && p.Id != id)
             .Take(4)
@@ -122,7 +122,7 @@ public class ProductsController(ApplicationDbContext db, IMapper mapper, CartSer
     [HttpGet]
     public async Task<IActionResult> GetProduct(int id)
     {
-        var product = await _db.Products
+        var product = await _db.Products.Where(p => (!p.IsDeleted))
             .Include(p => p.ProductImages)
             .Include(p => p.ProductType)
             .FirstOrDefaultAsync(p => p.Id == id);
@@ -237,6 +237,7 @@ public class ProductsController(ApplicationDbContext db, IMapper mapper, CartSer
     }
 
     [Authorize(Roles = ConstConfig.ShopRoleName)]
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
@@ -249,21 +250,11 @@ public class ProductsController(ApplicationDbContext db, IMapper mapper, CartSer
         if (product == null)
             return Json(new { success = false, message = "Sản phẩm không tồn tại hoặc không thuộc quyền sở hữu." });
 
-        // Xóa ảnh khỏi thư mục
-        foreach (var image in product.ProductImages)
-        {
-            var filePath = Path.Combine(_env.WebRootPath, "images", "hnshop", image.Path);
-            if (System.IO.File.Exists(filePath))
-            {
-                System.IO.File.Delete(filePath);
-            }
-        }
-
-        _db.ProductImages.RemoveRange(product.ProductImages);
-        _db.Products.Remove(product);
+        // XÓA MỀM: Chỉ cập nhật IsDeleted = true, không xóa ảnh, không xóa cứng product
+        product.IsDeleted = true;
         await _db.SaveChangesAsync();
 
-        return Json(new { success = true, message = "Sản phẩm đã được xóa thành công!" });
+        return Json(new { success = true, message = "Sản phẩm đã được ẩn khỏi hệ thống!" });
     }
 
     private async Task SaveProductImages(List<IFormFile> Images, int productId)

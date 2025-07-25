@@ -29,5 +29,7 @@ namespace HNSHOP.Models
         public List<ProductImage> ProductImages { get; set; } = [];
 
         public List<Rating> Ratings { get; set; } = [];
+        public bool IsDeleted { get; set; } = false;
+
     }
 }

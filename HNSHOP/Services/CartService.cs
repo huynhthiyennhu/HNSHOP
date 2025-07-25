@@ -51,7 +51,7 @@ namespace HNSHOP.Services
 
             var productIds = cart.Select(x => x.ProductId).ToList();
             var products = _db.Products
-                              .Where(p => productIds.Contains(p.Id))
+                              .Where(p => productIds.Contains(p.Id) && !p.IsDeleted)
                               .Include(p => p.Shop)
                               .Include(p => p.ProductImages)
                               .ToDictionary(p => p.Id);

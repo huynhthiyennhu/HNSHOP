@@ -41,7 +41,7 @@
                         <th class="text-center">Hành động</th>
                     </tr>
                 </thead>
-                 <tbody>
+                <tbody id="shopTableBody">
                     @foreach (var shop in Model)
                     {
                         <tr>
@@ -128,6 +128,15 @@
             let selectedShopId = null;
             let selectedAccountId = null;
 
+             // Tìm kiếm khách hàng
+            $("#searchButton").click(function () {
+                let searchValue = $("#searchShop").val().trim().toLowerCase();
+                $("#shopTableBody tr").each(function () {
+                    let name = $(this).find("td:nth-child(1)").text().toLowerCase();
+                    let email = $(this).find("td:nth-child(2)").text().toLowerCase();
+                    $(this).toggle(name.includes(searchValue) || email.includes(searchValue));
+                });
+            });
             // XÓA SHOP
             $(".delete-btn").click(function () {
                 selectedShopId = $(this).data("id");

@@ -1,29 +1,167 @@
 ﻿@model List<HNSHOP.Dtos.Response.SaleEventResDto>
-
 @{
     ViewBag.Title = "Quản Lý Chương Trình Giảm Giá";
 }
+<style>
+    .sale-header {
+        background: linear-gradient(90deg,#f48c06,#ffa94d 90%);
+        color: #fff;
+        border-radius: 18px 18px 0 0;
+        font-weight: 600;
+        font-size: 1.08rem;
+    }
+
+    .sale-table tbody tr:hover {
+        background-color: #fffbe8 !important;
+        transition: background 0.18s;
+    }
+
+    .badge-discount {
+        background: #22bb33;
+        color: #fff;
+        font-weight: 600;
+        padding: 5px 14px;
+        border-radius: 14px;
+        font-size: 1rem;
+    }
+
+    .sale-status {
+        padding: 4px 13px;
+        border-radius: 8px;
+        font-size: 0.99rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+        .sale-status.active {
+            background: #1ca462;
+            color: #fff;
+        }
+
+        .sale-status.upcoming {
+            background: #f48c06;
+            color: #fff;
+        }
+
+        .sale-status.ended {
+            background: #e0e0e0;
+            color: #aa8833;
+        }
+
+    .sale-action-btn {
+        border-radius: 50%;
+        padding: 8px 12px;
+        font-size: 1.17rem;
+        margin-right: 4px;
+        background: #fff;
+        border: 1px solid #ffa94d;
+        color: #ffa94d;
+        transition: background 0.16s, color 0.16s;
+    }
+
+        .sale-action-btn:hover {
+            background: #ffa94d;
+            color: #fff;
+        }
+
+    .table td, .table th {
+        vertical-align: middle !important;
+    }
+
+    .sale-event-thumb {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 12px;
+        box-shadow: 0 2px 6px #e6ce9c33;
+        transition: transform .15s;
+    }
+
+        .sale-event-thumb:hover {
+            transform: scale(1.08);
+        }
+
+    .top-action-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .summary-cards {
+        display: flex;
+        gap: 24px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+
+    .summary-card {
+        flex: 1 1 120px;
+        background: #fff3d4;
+        border-radius: 16px;
+        padding: 16px 24px;
+        min-width: 140px;
+        box-shadow: 0 2px 12px #f3d6993b;
+        font-weight: 500;
+        text-align: center;
+        color: #e48b07;
+    }
+    @@media (max-width: 650px) {
+        .top-action-bar
+
+    {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .summary-cards {
+        flex-direction: column;
+    }
+
+    }
+</style>
 
 <section id="cart_items">
     <div class="container p-5">
-        <div class="breadcrumbs">
+        <div class="breadcrumbs mb-2">
             <ol class="breadcrumb">
                 <li><a asp-controller="Home" asp-action="Index">Home</a></li>
                 <li class="active">Quản lý Giảm Giá</li>
             </ol>
         </div>
-        <h2 class="title text-center">Quản lý chương trình giảm giá</h2>
+        <div class="top-action-bar">
+            <h2 class="title" style="margin-bottom:0;">🎁 Quản lý chương trình giảm giá</h2>
+            <a class="btn btn-success" asp-action="Create" style="font-weight:600;font-size:1.07rem;">
+                <i class="fa fa-plus mr-1"></i> Thêm Chương trình
+            </a>
+        </div>
+
+        <!-- Summary Card -->
+        @{
+            int total = Model?.Count ?? 0;
+            int running = Model.Count(e => e.StartDate <= DateTime.Now && e.EndDate >= DateTime.Now);
+            int upcoming = Model.Count(e => e.StartDate > DateTime.Now);
+            int ended = Model.Count(e => e.EndDate < DateTime.Now);
+        }
+        <div class="summary-cards">
+            <div class="summary-card">Tổng: <span style="font-size:1.2rem;font-weight:700">@total</span></div>
+            <div class="summary-card">Đang diễn ra: <span style="color:#12af67;font-weight:700">@running</span></div>
+            <div class="summary-card">Sắp diễn ra: <span style="color:#f48c06;font-weight:700">@upcoming</span></div>
+            <div class="summary-card">Kết thúc: <span style="color:#b1a17c;font-weight:700">@ended</span></div>
+        </div>
 
         <div class="table-responsive cart_info">
-            <table class="table table-condensed">
-                <thead>
-                    <tr class="cart_menu">
-                        <td><b>Hình ảnh</b></td>
-                        <td><b>Tên</b></td>
-                        <td><b>Mô tả</b></td>
-                        <td><b>Giảm giá (%)</b></td>
-                        <td><b>Thời gian</b></td>
-                        <td><b>Hành động</b></td>
+            <table class="table table-hover sale-table shadow">
+                <thead class="sale-header">
+                    <tr>
+                        <th>Hình ảnh</th>
+                        <th>Tên chương trình</th>
+                        <th style="width:250px;">Mô tả</th>
+                        <th>Giảm giá</th>
+                        <th>Trạng thái</th>
+                        <th>Thời gian</th>
+                        <th>Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -31,13 +169,22 @@
                     {
                         foreach (var eventItem in Model)
                         {
+                            var now = DateTime.Now;
+                            string statusClass = eventItem.EndDate < now ? "ended"
+                            : eventItem.StartDate > now ? "upcoming"
+                            : "active";
+                            string statusText = eventItem.EndDate < now ? "Đã kết thúc"
+                            : eventItem.StartDate > now ? "Sắp diễn ra"
+                            : "Đang diễn ra";
                             <tr>
                                 <td>
-                                    <img src="~/images/hnshop/@eventItem.Illustration" width="60" class="border rounded" />
+                                    <img src="~/images/hnshop/@eventItem.Illustration"
+                                         class="sale-event-thumb"
+                                         alt="@eventItem.Name" />
                                 </td>
                                 <td>@eventItem.Name</td>
                                 <td>
-                                    @if (eventItem.Description.Length > 50)
+                                    @if (!string.IsNullOrEmpty(eventItem.Description) && eventItem.Description.Length > 50)
                                     {
                                         <span title="@eventItem.Description">
                                             @eventItem.Description.Substring(0, 50)...
@@ -48,39 +195,35 @@
                                         @eventItem.Description
                                     }
                                 </td>
-                                <td>@eventItem.Discount%</td>
+                                <td>
+                                    <span class="badge badge-discount">@eventItem.Discount%</span>
+                                </td>
+                                <td>
+                                    <span class="sale-status @statusClass">@statusText</span>
+                                </td>
                                 <td>@eventItem.StartDate.ToString("dd/MM/yyyy") - @eventItem.EndDate.ToString("dd/MM/yyyy")</td>
                                 <td>
-                                    <div class="d-flex justify-content-center align-items-center gap-2">
-                                        <a class="btn btn-info btn-sm" asp-action="Details" asp-route-id="@eventItem.Id">
-                                            <i class="fa fa-eye"></i> Chi tiết
-                                        </a>
-
-                                        <a class="btn btn-warning btn-sm" asp-action="Edit" asp-route-id="@eventItem.Id">
-                                            <i class="fa fa-edit"></i> Sửa
-                                        </a>
-
-                                        <button type="button" class="btn btn-danger btn-sm delete-btn" data-id="@eventItem.Id" data-name="@eventItem.Name">
-                                            <i class="fa fa-trash"></i> Xóa
-                                        </button>
-                                    </div>
+                                    <a class="sale-action-btn" title="Chi tiết"
+                                       asp-action="Details" asp-route-id="@eventItem.Id"><i class="fa fa-eye"></i></a>
+                                    <a class="sale-action-btn" title="Sửa"
+                                       asp-action="Edit" asp-route-id="@eventItem.Id"><i class="fa fa-edit"></i></a>
+                                    <button type="button" class="sale-action-btn delete-btn" title="Xóa"
+                                            data-id="@eventItem.Id" data-name="@eventItem.Name">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
                                 </td>
-
                             </tr>
                         }
                     }
                     else
                     {
                         <tr>
-                            <td colspan="5" class="text-center" >Không có chương trình giảm giá nào.</td>
+                            <td colspan="7" class="text-center" style="font-size:1.09rem;">Không có chương trình giảm giá nào.</td>
                         </tr>
                     }
                 </tbody>
-            </table>           
+            </table>
         </div>
-    </div> 
-    <div class="text-center">
-        <a class="btn btn-success" asp-action="Create">Thêm Chương trình Giảm giá</a>
     </div>
     <br />
 </section>
@@ -90,45 +233,40 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header d-flex justify-content-between align-items-center">
-                <h3 class="modal-title">Xác nhận xóa</h3>
+                <h3 class="modal-title text-danger">
+                    <i class="fa fa-exclamation-triangle mr-2"></i>Xác nhận xóa
+                </h3>
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
                 <p>Bạn có chắc chắn muốn xóa chương trình <strong id="deleteSaleEventName"></strong> không?</p>
-                <button type="button" class="btn btn-danger" id="confirmDeleteSaleEvent">Xóa</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteSaleEvent">
+                    <i class="fa fa-trash"></i> Xóa
+                </button>
             </div>
         </div>
     </div>
 </div>
-
-
 
 @section Scripts {
     <script>
         $(document).ready(function () {
             let selectedEventId = null;
             let selectedRow = null;
-
-            // Khi nhấn nút xóa, mở modal xác nhận
             $(".delete-btn").click(function () {
                 selectedEventId = $(this).data("id");
-                selectedRow = $(this).closest("tr"); // Lưu lại dòng dữ liệu để xóa sau
-
-                let eventName = selectedRow.find("td:nth-child(2)").text(); // Lấy tên chương trình
+                selectedRow = $(this).closest("tr");
+                let eventName = selectedRow.find("td:nth-child(2)").text();
                 $("#deleteSaleEventName").text(eventName);
                 $("#deleteSaleEventModal").modal('show');
             });
-
-            // Xử lý xác nhận xóa
             $("#confirmDeleteSaleEvent").off('click').on('click', function () {
                 if (!selectedEventId) {
                     alert("Không tìm thấy chương trình giảm giá để xóa.");
                     return;
                 }
-
                 let btn = $(this);
-                btn.text("Đang xóa...").prop("disabled", true);
-
+                btn.html('<i class="fa fa-spinner fa-spin"></i> Đang xóa...').prop("disabled", true);
                 $.ajax({
                     url: '/SaleEvent/Delete',
                     type: 'POST',
@@ -137,20 +275,17 @@
                         alert(res.message);
                         if (res.success) {
                             $("#deleteSaleEventModal").modal('hide');
-                            selectedRow.fadeOut(300, function () { $(this).remove(); }); // Xóa hàng đã chọn khỏi bảng
+                            selectedRow.fadeOut(300, function () { $(this).remove(); });
                         }
                     },
                     error: function (xhr) {
                         alert("Lỗi khi xóa: " + xhr.responseText);
                     },
                     complete: function () {
-                        btn.text("Xóa").prop("disabled", false);
+                        btn.html('<i class="fa fa-trash"></i> Xóa').prop("disabled", false);
                     }
                 });
             });
-
         });
     </script>
 }
-
-

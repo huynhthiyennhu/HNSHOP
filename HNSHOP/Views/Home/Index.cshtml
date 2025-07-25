@@ -8,13 +8,11 @@
     ViewData["Title"] = "Trang Chủ";
 
 }
-
-
 <section id="slider" style="margin-bottom:40px">
     <div class="container">
         <div class="row">
             <div class="col-sm-12">
-                <div id="slider-carousel" class="carousel slide" data-ride="carousel">
+                <div id="slider-carousel" class="carousel slide sale-carousel" data-ride="carousel">
                     <ol class="carousel-indicators">
                         @if (ViewBag.SaleEvents != null)
                         {
@@ -31,14 +29,31 @@
                             foreach (var eventItem in ViewBag.SaleEvents)
                             {
                                 <div class="item @(index == 0 ? "active" : "")">
-                                    <div class="col-sm-6" style="margin-top:-40px">
-                                        <h1>@eventItem.Name</h1>
-                                        <h2>Giảm giá lên đến @eventItem.Discount%</h2>
-                                        <p>@eventItem.Description</p>
-                                        <a href="/SaleEvent/Details/@eventItem.Id" class="btn btn-default get">Xem chi tiết</a>
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <img src="~/images/hnshop/@eventItem.Illustration" class="img-responsive w-100" alt="Chương trình giảm giá" />
+                                    <div class="row no-gutters">
+                                        <div class="col-md-12 position-relative" style="min-height:230px;">
+                                            <!-- Ảnh nền -->
+                                            <img src="~/images/hnshop/@eventItem.Illustration"
+                                                 class="banner-bg"
+                                                 alt="Chương trình @eventItem.Name" />
+
+                                            <!-- Overlay mờ nhẹ để chữ nổi bật -->
+                                            <div class="banner-overlay"></div>
+
+                                            <!-- Nội dung đè lên ảnh -->
+                                            <div class="banner-content d-flex flex-column flex-md-row align-items-center justify-content-between">
+                                                <div class="slider-info text-left">
+                                                    <h1>@eventItem.Name</h1>
+                                                    <div class="discount-label">
+                                                        <i class="fa fa-bolt"></i> Giảm giá lên đến <span>@eventItem.Discount%</span>
+                                                    </div>
+                                                    <div class="desc">@eventItem.Description</div>
+                                                    <a href="/SaleEvent/Details/@eventItem.Id" class="btn btn-warning get">Xem chi tiết</a>
+                                                </div>
+                                                <div class="slider-img d-none d-md-block text-center">
+                                                    <!-- Có thể thêm hình/ảnh sản phẩm hoặc minh họa riêng -->
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 index++;
@@ -47,12 +62,13 @@
                         else
                         {
                             <div class="item active">
-                                <div class="col-sm-12 text-center">
+                                <div class="col-sm-12 text-center" style="background:#fffbe9; border-radius:18px; padding:36px 0">
                                     <h2>Hiện tại không có chương trình giảm giá nào</h2>
                                 </div>
                             </div>
                         }
                     </div>
+
                     <a href="#slider-carousel" class="left control-carousel hidden-xs" data-slide="prev">
                         <i class="fa fa-angle-left"></i>
                     </a>
@@ -157,10 +173,21 @@
                                             <p class="fixed-height-name">@p.Name</p>
                                             @if (User.Identity.IsAuthenticated && User.IsInRole("User"))
                                             {
-                                                <button class="btn btn-default add-to-cart" data-product-id="@p.Id"
-                                                        data-quantity="1">
-                                                    <i class="fa fa-shopping-cart"></i> Thêm vào giỏ hàng
-                                                </button>
+                                                if (p.Quantity > 0)
+                                                {
+                                                    <button class="btn btn-default add-to-cart"
+                                                            data-product-id="@p.Id"
+                                                            data-quantity="1">
+                                                        <i class="fa fa-shopping-cart"></i> Thêm vào giỏ hàng
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <span class="btn btn-default disabled" style="opacity:0.7;">
+                                                        <i class="fa fa-shopping-cart"></i> Hết hàng
+                                                    </span>
+                                                    <br />
+                                                }
                                             }
                                         </div>
                                     </div>

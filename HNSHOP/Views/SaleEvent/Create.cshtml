@@ -1,125 +1,196 @@
 ﻿@using System.Globalization
 @{
     ViewData["Title"] = "Thêm Chương Trình Giảm Giá";
-
 }
- <section id="cart_items">
-        <div class="container p-5">
-            <div class="breadcrumbs">
-                <ol class="breadcrumb">
-                    <li><a asp-controller="Home" asp-action="Index">Home</a></li>
-                    <li><a asp-controller="SaleEvent" asp-action="Index">Quản Lý Giảm Giá</a></li>
-                    <li class="active">Thêm Chương Trình Giảm Giá</li>
-                </ol>
-            </div>
-        <h2 class="title text-center">Thêm Chương Trình Giảm Giá</h2>
-        <form id="addSaleEventForm" enctype="multipart/form-data" action="/SaleEvent/Create" method="post">
-            <div class="card p-3">
+<style>
+    .sale-card {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 4px 32px 0 rgba(253, 180, 48, 0.09);
+        padding: 32px 36px 28px 36px;
+        max-width: 900px;
+        margin: 0 auto 24px auto;
+        border-top: 6px solid #ffa94d;
+    }
+    .sale-card h2.title {
+        color: #f48c06;
+        font-weight: 700;
+        margin-top: 0;
+    }
+    .table-title {
+        background: linear-gradient(90deg,#fbc75e,#ffe9b3 90%);
+        border-radius: 10px 10px 0 0;
+        font-weight: 600;
+        color: #664b14;
+        padding: 8px 0 8px 16px;
+        font-size: 1.13rem;
+        letter-spacing: .1px;
+        margin-bottom: 0;
+    }
+    .form-group label { color: #b98d0c; font-weight: 600;}
+    .form-control, textarea.form-control {
+        border-radius: 8px;
+        border: 1.5px solid #ffe0b2;
+        font-size: 1.08rem;
+        margin-bottom: 8px;
+    }
+    .form-control:focus { border-color: #ffa94d; box-shadow: 0 0 0 2px #fffbe7;}
+    .btn-primary, .btn-success { border-radius: 16px; font-weight: 600; font-size: 1.04rem;}
+    .btn-primary { background: #f48c06; border: none; }
+    .btn-primary:hover { background: #ffa94d; color: #fff;}
+    .btn-success { background: #22bb33; border: none; }
+    .btn-success:hover { background: #188e22;}
+    .table thead th, .cart_menu th { background: #fbc75e !important; color: #865700; font-weight: 700;}
+    .table tbody tr:hover { background: #fffbe9;}
+    .table img { border-radius: 10px;}
+    .dataTables_wrapper .dataTables_filter label {font-weight: bold; font-size: 1.09rem;}
+    div.dataTables_filter {
+        float: right !important;
+        text-align: right !important;
+        margin-top: -48px !important;
+        margin-bottom: 14px !important;
+        margin-right: 0px !important;
+        padding-right: 16px;
+    }
+    div.dataTables_filter input {
+        width: 210px !important;
+        display: inline-block;
+        margin-left: 5px;
+        border-radius: 8px;
+        border: 1px solid #ffdb99;
+        height: 34px;
+        padding: 5px 10px;
+        font-size: 1.07rem;
+    }
+    @@media (max-width: 900px) {
+        .sale-card { padding: 18px 6px 22px 6px; }
+    }
+</style>
+
+<section id="cart_items">
+    <div class="container p-5">
+        <div class="breadcrumbs">
+            <ol class="breadcrumb">
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li><a asp-controller="SaleEvent" asp-action="Index">Quản Lý Giảm Giá</a></li>
+                <li class="active">Thêm Chương Trình Giảm Giá</li>
+            </ol>
+        </div>
+        <div class="sale-card">
+            <h2 class="title text-center mb-4">🎉 Thêm Chương Trình Giảm Giá</h2>
+            <form id="addSaleEventForm" enctype="multipart/form-data" action="/SaleEvent/Create" method="post">
                 <div class="form-group text-center">
                     <input type="file" name="Illustration" id="eventImageInput" style="display: none;">
-
                     <div id="previewImage" class="mt-2 w-100" style="display: none;">
                         <img id="selectedImage" src="#" class="img-fluid rounded w-100" style="max-height: 300px; object-fit: cover;">
                     </div>
-
-                    <button type="button" id="customFileButton" class="btn btn-primary">Chọn ảnh</button>
+                    <button type="button" id="customFileButton" class="btn btn-primary mb-3">
+                        <i class="fa fa-image"></i> Chọn ảnh
+                    </button>
                 </div>
-
-
-
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="SaleEventName">Tên chương trình</label>
                             <input type="text" name="Name" class="form-control" required />
                         </div>
-
                         <div class="form-group">
                             <label for="SaleEventDescription">Mô tả</label>
                             <textarea name="Description" class="form-control" rows="5" required></textarea>
                         </div>
                     </div>
-
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="SaleEventDiscount">Giảm giá (%)</label>
                             <input type="number" name="Discount" class="form-control" required />
                         </div>
-
                         <div class="form-group">
                             <label for="SaleEventStartDate">Ngày bắt đầu</label>
                             <input type="date" name="StartDate" class="form-control" required />
                         </div>
-
                         <div class="form-group">
                             <label for="SaleEventEndDate">Ngày kết thúc</label>
                             <input type="date" name="EndDate" class="form-control" required />
                         </div>
                     </div>
                 </div>
-
-                <h3>Loại Khách Hàng Áp Dụng</h3>
-                <div class="table-responsive cart_info">
-                  
-
-                    <table class="table table-condensed">
-                        <thead>
-                            <tr class="cart_menu">
-                                <th>Loại khách hàng</th>
-                                <th>Mô tả</th>
-                                <th class="text-center">Chọn</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var type in ViewBag.CustomerTypes)
-                            {
-                                <tr>
-                                    <td>@type.Name</td>
-                                    <td>@type.Description</td>
-                                    <td class="text-center"><input type="checkbox" name="CustomerTypeIds" value="@type.Id"></td>
+                <div class="mb-3">
+                    <h4 class="table-title mb-2">Loại Khách Hàng Áp Dụng</h4>
+                    <div class="table-responsive cart_info">
+                        <table class="table table-condensed mb-1">
+                            <thead>
+                                <tr class="cart_menu">
+                                    <th>Loại khách hàng</th>
+                                    <th>Mô tả</th>
+                                    <th class="text-center">Chọn</th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach (var type in ViewBag.CustomerTypes)
+                                {
+                                    <tr>
+                                        <td>@type.Name</td>
+                                        <td>@type.Description</td>
+                                        <td class="text-center">
+                                            <input type="checkbox" name="CustomerTypeIds" value="@type.Id">
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <h3>Sản phẩm áp dụng</h3>
-                <div class="table-responsive cart_info">
-                    <table id="productTable" class="table table-condensed">
-                        <thead>
-                            <tr class="cart_menu">
-                                <th>Hình ảnh</th>
-                                <th>Tên sản phẩm</th>
-                                <th>Giá sản phẩm</th>
-                                <th class="text-center">Chọn</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var product in ViewBag.Products)
-                            {
-                                <tr>
-                                    <td>
-                                        @{
-                                            var image = (product.Images as List<HNSHOP.Dtos.Response.ProductImageResDto>)?.FirstOrDefault();
-                                        }
-                                        <img src="~/images/hnshop/@image?.Path" width="80" height="80">
-                                    </td>
-                                    <td>@product.Name</td>
-                                    <td>@product.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</td>
-                                    <td class="text-center">
-                                        <input type="checkbox" name="ProductIds" value="@product.Id">
-                                    </td>
+                <div>
+                    <h4 class="table-title mb-2">Sản Phẩm Áp Dụng</h4>
+                    <div class="table-responsive cart_info">
+                        <table id="productTable" class="table table-condensed">
+                            <thead>
+                                <tr class="cart_menu">
+                                    <th>Hình ảnh</th>
+                                    <th>Tên sản phẩm</th>
+                                    <th>Giá sản phẩm</th>
+                                    <th class="text-center">Chọn</th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach (var product in ViewBag.Products)
+                                {
+                                    <tr>
+                                        <td>
+                                            @{
+                                                var image = (product.Images as List<HNSHOP.Dtos.Response.ProductImageResDto>)?.FirstOrDefault();
+                                            }
+                                            <img src="~/images/hnshop/@image?.Path" width="80" height="80">
+                                        </td>
+                                        <td>
+                                            @if (product.Name != null && product.Name.Length > 40)
+                                            {
+                                                <span title="@product.Name">
+                                                    @product.Name.Substring(0, 40)... 
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                @product.Name
+                                            }
+                                        </td>
+                                        <td>@product.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</td>
+                                        <td class="text-center">
+                                            <input type="checkbox" name="ProductIds" value="@product.Id">
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-
-
-                <div class="text-center">
-                    <button type="submit" class="btn btn-success">Thêm chương trình giảm giá</button>
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fa fa-plus-circle"></i> Thêm chương trình giảm giá
+                    </button>
                 </div>
-            </div>
         </form>
+    </div>
     </div>
     <br />
 </section>
@@ -127,7 +198,7 @@
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js"></script>
     <script>
-          $(document).ready(function () {
+        $(document).ready(function () {
             $("#customFileButton").click(function () {
                 $("#eventImageInput").click();
             });
@@ -145,12 +216,12 @@
             });
 
             $("#productTable").DataTable({
-                "paging": true,         
-                "pageLength": 5,        
-                "lengthChange": false,  
-                "searching": true,      
-                "ordering": true,       
-                "info": true,           
+                "paging": true,
+                "pageLength": 5,
+                "lengthChange": false,
+                "searching": true,
+                "ordering": true,
+                "info": true,
                 "autoWidth": false,
                 "language": {
                     "lengthMenu": "Hiển thị _MENU_ sản phẩm mỗi trang",
@@ -167,7 +238,5 @@
             });
 
         });
-
-
-</script>
+    </script>
 }

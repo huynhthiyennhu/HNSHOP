@@ -2,7 +2,6 @@
 @{
     ViewData["Title"] = "Thống Kê Sản Phẩm";
     Layout = "_Layout";
-
     var categoryStats = ViewBag.ProductByCategory as IEnumerable<dynamic>;
     var shopStats = ViewBag.ProductByShop as IEnumerable<dynamic>;
     var topStats = ViewBag.TopSellingProducts as IEnumerable<dynamic>;
@@ -10,163 +9,183 @@
     var hiddenStats = ViewBag.HiddenOrExpiredProducts as IEnumerable<dynamic>;
 }
 
+<style>
+    .stat-card {
+        border-radius: 20px;
+        box-shadow: 0 2px 18px 0 #f6debb91;
+        background: #fffbea;
+        margin-bottom: 32px;
+        padding: 24px 24px 18px 24px;
+        transition: box-shadow .18s;
+    }
+    .stat-card:hover {
+        box-shadow: 0 4px 32px 0 #fbc75e81;
+    }
+    .stat-card-title {
+        font-size: 1.23rem;
+        font-weight: bold;
+        color: #c48d16;
+        letter-spacing: .4px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .stat-table th, .stat-table td {
+        vertical-align: middle !important;
+    }
+    .stat-table thead tr {
+        background: linear-gradient(90deg,#ffe6b3,#ffecdb);
+    }
+    .stat-table tbody tr:hover {
+        background: #fff2cc!important;
+    }
+    .chart-wrapper {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 1px 7px 0 #f0e0b7;
+        padding: 20px 10px 16px 10px;
+        margin-bottom: 18px;
+    }
+    @@media (max-width: 800px) {
+        .stat-card { padding: 10px; }
+        .stat-card-title { font-size: 1.02rem;}
+    }
+</style>
+
 <section id="cart_items">
-    <div class="container p-5">
+    <div class="container p-4 p-md-5">
         <div class="breadcrumbs">
             <ol class="breadcrumb">
                 <li><a asp-controller="Home" asp-action="Index">Home</a></li>
                 <li class="active">Thống kê sản phẩm</li>
             </ol>
         </div>
-        <h2 class="title text-center">📊 Thống kê sản phẩm - Tổng  @ViewBag.TotalProducts sản phẩm </h2>
-        <div class="table-responsive cart_info">
-
+        <h2 class="title text-center mb-5" style="color:#bc8e13;letter-spacing:.3px;">
+            <i class="fa fa-bar-chart"></i> Thống kê sản phẩm - Tổng <b style="color:#d09305">@ViewBag.TotalProducts</b> sản phẩm 
+        </h2>
+        <div class="row row-cols-1 row-cols-md-2">
 
             <!-- 1. Sản phẩm theo danh mục -->
-            <div class="row mt-4">
-                <div class="col-md-6">
-                    <h4 class="text-center">Sản phẩm theo danh mục</h4>
-                    <br />
-                                <table class="table table-condensed">
-                        <thead><tr class="cart_menu"><th>Danh mục</th><th>Số lượng</th></tr></thead>
-                                        <tbody>
-                                            @foreach (var item in categoryStats)
-                                            {
-                                                <tr><td>@item.CategoryName</td><td>@item.Count</td></tr>
-                                            }
-                                        </tbody>
-                    </table>
+            <div class="col stat-card">
+                <div class="stat-card-title"><i class="fa fa-tags"></i> Sản phẩm theo danh mục</div>
+                <div class="chart-wrapper">
+                    <canvas id="chartCategory" style="height:220px; max-height:240px;"></canvas>
                 </div>
-                <div class="col-md-6">
-                    <h4 class="text-center">Biểu đồ: Sản phẩm theo danh mục</h4>
-                    <br />
-
-                    <canvas id="chartCategory" style="max-height:300px; width:100%;"></canvas>
-                </div>
+                <table class="table table-sm stat-table">
+                    <thead><tr><th>Danh mục</th><th>Số lượng</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in categoryStats) {
+                            <tr>
+                                <td>@item.CategoryName</td>
+                                <td>@item.Count</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
             <br />
             <br />
-            <hr />
-          <!-- 2. Sản phẩm theo shop -->
-            <div class="row mt-4">
-                <div class="col-md-6">
-                    <h4 class="text-center">Sản phẩm theo shop</h4>
-                    <br />
-
-                    <table class="table table-condensed">
-                        <thead><tr class="cart_menu"><th>Shop</th><th>Số lượng</th></tr></thead>
-                        <tbody>
-                            @foreach (var item in shopStats)
-                            {
-                                <tr><td>@item.ShopName</td><td>@item.Count</td></tr>
-                            }
-                        </tbody>
-                    </table>
+            <!-- 2. Sản phẩm theo shop -->
+            <div class="col stat-card">
+                <div class="stat-card-title"><i class="fa fa-store"></i> Sản phẩm theo shop</div>
+                <div class="chart-wrapper">
+                    <canvas id="chartShop" style="height:120px; max-height:240px;"></canvas>
                 </div>
-                <div class="col-md-6">
-                    <h4 class="text-center">Biểu đồ: Sản phẩm theo shop</h4>
-                    <br />
-
-                    <canvas id="chartShop" style="max-height:300px; width:100%;"></canvas>
-                </div>
+                <table class="table table-sm stat-table">
+                    <thead><tr><th>Shop</th><th>Số lượng</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in shopStats) {
+                            <tr>
+                                <td>@item.ShopName</td>
+                                <td>@item.Count</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
             <br />
             <br />
-            <hr />
-            <!-- 3. Top sản phẩm bán chạy -->
-            <div class="row mt-4">
-                <div class="col-md-6">
-                    <h4 class="text-center">Top sản phẩm bán chạy</h4>
-                    <br />
-
-                    <table class ="table table-condensed">
-                        <thead><tr class="cart_menu"><th>Sản phẩm</th><th>SL</th></tr></thead>
-                        <tbody>
-                            @foreach (var item in topStats)
-                            {
-                                <tr><td>@item.ProductName</td><td>@item.Sold</td></tr>
-                            }
-                        </tbody>
-                    </table>
+            <!-- 3. Top bán chạy -->
+            <div class="col stat-card">
+                <div class="stat-card-title"><i class="fa fa-trophy"></i> Top sản phẩm bán chạy</div>
+                <div class="chart-wrapper">
+                    <canvas id="chartTopSelling" style="height:220px; max-height:240px;"></canvas>
                 </div>
-                <div class="col-md-6">
-                    <h4 class="text-center">Biểu đồ: Top sản phẩm bán chạy</h4>
-                    <br />
-
-                    <canvas id="chartTopSelling" style="max-height:300px; width:100%;"></canvas>
-                </div>
+                <table class="table table-sm stat-table">
+                    <thead><tr><th>Sản phẩm</th><th>SL</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in topStats) {
+                            <tr>
+                                <td>
+                                    @if ((item.ProductName?.Length ?? 0) > 36) {
+                                        <span title="@item.ProductName">@item.ProductName.Substring(0, 36)...</span>
+                                    } else { @item.ProductName }
+                                </td>
+                                <td>@item.Sold</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
             <br />
             <br />
-            <hr />
             <!-- 4. Tồn kho thấp -->
-            <div class="row mt-4">
-                <div class="col-md-6">
-                    <h4 class="text-center">Sản phẩm tồn kho thấp (&lt; 10)</h4>
-                    <br />
-
-                    <table class="table table-condensed">
-                        <thead><tr class="cart_menu"><th>Tên</th><th>Shop</th><th>SL</th></tr></thead>
-                        <tbody>
-                            @foreach (var item in lowStockStats)
-                            {
-                                <tr><td>@item.Name</td><td>@item.Shop.Name</td><td>@item.Quantity</td></tr>
-                            }
-                        </tbody>
-                    </table>
+            <div class="col stat-card">
+                <div class="stat-card-title"><i class="fa fa-exclamation-triangle"></i> Sản phẩm tồn kho thấp (&lt; 10)</div>
+                <div class="chart-wrapper">
+                    <canvas id="chartLowStock" style="height:220px; max-height:240px;"></canvas>
                 </div>
-                <div class="col-md-6">
-                    <h4 class="text-center">Biểu đồ: Tồn kho thấp</h4>
-                    <br />
-
-                    <canvas id="chartLowStock" style="max-height:300px; width:100%;"></canvas>
-                </div>
+                <table class="table table-sm stat-table">
+                    <thead><tr><th>Tên</th><th>Shop</th><th>SL</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in lowStockStats) {
+                            <tr>
+                                <td>@item.Name</td>
+                                <td>@item.Shop.Name</td>
+                                <td>@item.Quantity</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
-            <br />
-            <br />
-            <hr />
-            <!-- 5. Sản phẩm bị ẩn / hết hạn -->
-            @if (hiddenStats != null && hiddenStats.Any())
-            {
-            <div class="row mt-4 mb-5">
-                <div class="col-md-6">
-                        <h4 class="text-center">Sản phẩm bị ẩn / hết hạn</h4>
-                        <br />
-
-                        <table class="table table-condensed">
-                            <thead><tr class="cart_menu"><th>Tên</th><th>Danh mục</th><th>Shop</th></tr></thead>
-                        <tbody>
-                            @foreach (var item in hiddenStats)
-                            {
-                                <tr><td>@item.Name</td><td>@item.ProductType.Name</td><td>@item.Shop.Name</td></tr>
-                            }
-                        </tbody>
-                    </table>
+        </div>
+        <br />
+        <br />
+        <!-- 5. Sản phẩm bị ẩn / hết hạn -->
+        @if (hiddenStats != null && hiddenStats.Any()) {
+            <div class="stat-card mt-3">
+                <div class="stat-card-title"><i class="fa fa-eye-slash"></i> Sản phẩm bị ẩn / hết hạn</div>
+                <div class="chart-wrapper">
+                    <canvas id="chartHidden" style="height:220px; max-height:240px;"></canvas>
                 </div>
-                <div class="col-md-6">
-                        <h4 class="text-center">Biểu đồ: Sản phẩm bị ẩn / hết hạn</h4>
-                        <br />
-
-                    <canvas id="chartHidden" style="max-height:300px; width:100%;"></canvas>
-                </div>
+                <table class="table table-sm stat-table">
+                    <thead><tr><th>Tên</th><th>Danh mục</th><th>Shop</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in hiddenStats) {
+                            <tr>
+                                <td>@item.Name</td>
+                                <td>@item.ProductType.Name</td>
+                                <td>@item.Shop.Name</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
-            }
-
-</div>
-</div>
+        }
+    </div>
 </section>
+
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-            const COLORS = [
-                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
-                '#9966FF', '#FF9F40', '#2ecc71', '#e74c3c',
-                '#3498db', '#9b59b6', '#e67e22', '#1abc9c',
-                '#c0392b', '#f1c40f', '#7f8c8d'
-            ];
-
+        const COLORS = [
+            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+            '#9966FF', '#FF9F40', '#2ecc71', '#e74c3c',
+            '#3498db', '#9b59b6', '#e67e22', '#1abc9c',
+            '#c0392b', '#f1c40f', '#7f8c8d'
+        ];
         document.addEventListener('DOMContentLoaded', function () {
-            // Chart data bindings
             const categoryStats = @Html.Raw(JsonConvert.SerializeObject(categoryStats));
             const shopStats = @Html.Raw(JsonConvert.SerializeObject(shopStats));
             const topStats = @Html.Raw(JsonConvert.SerializeObject(topStats));
@@ -179,7 +198,7 @@
                     type: 'pie',
                     data: {
                         labels: categoryStats.map(x => x.CategoryName),
-                        datasets: [{ data: categoryStats.map(x => x.Count) }]
+                        datasets: [{ data: categoryStats.map(x => x.Count), backgroundColor: COLORS }]
                     },
                     options: { responsive: true }
                 });
@@ -194,9 +213,7 @@
                         datasets: [{
                             label: 'Sản phẩm',
                             data: shopStats.map(x => x.Count),
-                            backgroundColor: topStats.map((_, i) => COLORS[i % COLORS.length])
-
-
+                            backgroundColor: COLORS
                         }]
                     },
                     options: {
@@ -212,20 +229,17 @@
                 new Chart(document.getElementById('chartTopSelling'), {
                     type: 'bar',
                     data: {
-                            labels: topStats.map(x => x.ProductName.length > 30 ? x.ProductName.substring(0, 30) + '...' : x.ProductName),
-                            datasets: [{
+                        labels: topStats.map(x => x.ProductName.length > 30 ? x.ProductName.substring(0, 30) + '...' : x.ProductName),
+                        datasets: [{
                             label: 'Đã bán',
                             data: topStats.map(x => x.Sold),
-                            backgroundColor: topStats.map((_, i) => COLORS[i % COLORS.length])
-
-                                }]
+                            backgroundColor: COLORS
+                        }]
                     },
-                        options: {
+                    options: {
                         responsive: true,
                         indexAxis: 'y',
-                        scales: {
-                            x: { beginAtZero: true }
-                        },
+                        scales: { x: { beginAtZero: true } },
                         plugins: {
                             tooltip: {
                                 callbacks: {
@@ -236,8 +250,7 @@
                                 }
                             }
                         }
-        }
-
+                    }
                 });
             }
 
@@ -250,9 +263,7 @@
                         datasets: [{
                             label: 'Tồn kho',
                             data: lowStock.map(x => x.Quantity),
-                            backgroundColor: topStats.map((_, i) => COLORS[i % COLORS.length])
-
-
+                            backgroundColor: COLORS
                         }]
                     },
                     options: { responsive: true, scales: { y: { beginAtZero: true } } }
@@ -260,7 +271,6 @@
             }
 
             // Sản phẩm bị ẩn
-
             if (hiddenStats.length) {
                 new Chart(document.getElementById('chartHidden'), {
                     type: 'bar',
@@ -269,9 +279,7 @@
                         datasets: [{
                             label: 'Bị ẩn / hết hạn',
                             data: hiddenStats.map(x => 1),
-                            backgroundColor: topStats.map((_, i) => COLORS[i % COLORS.length])
-
-
+                            backgroundColor: COLORS
                         }]
                     },
                     options: {

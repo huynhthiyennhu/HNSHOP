@@ -3,8 +3,138 @@
 <link href="~/css/profile.css?t=@DateTime.Now.Ticks" rel="stylesheet">
 @{
 	ViewData["Title"] = "Thông Tin";
+	var avatarUrl = Url.Content($"~/images/hnshop/avatar/{Model.Avatar ?? "no-avatar.jpg"}?t={DateTime.Now.Ticks}");
 
 }
+<style>
+	.profile-blur-bg {
+		position: relative;
+		width: 100%;
+		min-height: 90vh;
+		background-position: center;
+		background-size: cover;
+		background-repeat: no-repeat;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+
+		.profile-blur-bg:before {
+			content: '';
+			position: absolute;
+			z-index: 1;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: rgba(200, 170, 110, 0.26);
+			backdrop-filter: blur(22px);
+			-webkit-backdrop-filter: blur(22px);
+		}
+
+	.profile-card-modern {
+		position: relative;
+		z-index: 2;
+		background: #fff;
+		border-radius: 32px;
+		box-shadow: 0 6px 32px 0 rgba(40, 48, 64, 0.13);
+		padding: 52px 48px 44px 48px;
+		max-width: 510px;
+		width: 100%;
+		margin: 32px 0;
+	}
+
+	.profile-avatar-wrap {
+		width: 110px;
+		height: 110px;
+		border-radius: 50%;
+		overflow: hidden;
+		box-shadow: 0 2px 12px 0 rgba(170, 136, 97, 0.18);
+		position: relative;
+		margin-bottom: 18px;
+	}
+
+	.profile-avatar-img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		border-radius: 50%;
+		display: block;
+	}
+
+	.profile-title {
+		font-size: 3.35rem;
+		font-weight: 700;
+		color: #222;
+		text-align: center;
+		margin-bottom: 6px;
+		letter-spacing: -1.5px;
+	}
+
+	.profile-role {
+		color: #ec9913;
+		font-size: 2.17rem;
+		letter-spacing: 1.1px;
+		font-weight: 700;
+		margin-bottom: 12px;
+		text-align: center;
+	}
+
+	.profile-about h5 {
+		font-size: 1.99rem;
+		font-weight: 700;
+		margin-bottom: 3px;
+		color: #cf9813;
+		letter-spacing: 0.3px;
+	}
+
+	.profile-desc {
+		font-size: 1.99rem;
+		color: #564f43;
+		margin-bottom: 9px;
+	}
+
+	.profile-info-list {
+		list-style: none;
+		padding: 0;
+		margin: 0 0 16px 0;
+	}
+
+		.profile-info-list li {
+			font-size: 1.99rem;
+			color: #474444;
+			padding: 7px 0 4px 0;
+			border-bottom: 1px solid #f6e8dc;
+		}
+
+			.profile-info-list li:last-child {
+				border-bottom: none;
+			}
+
+	.btn-modern {
+		background: #f48c06;
+		color: #fff;
+		font-weight: 700;
+		border-radius: 20px;
+		padding: 10px 30px;
+		border: none;
+		font-size: 1.29rem;
+		transition: background .18s;
+	}
+
+		.btn-modern:hover {
+			background: #e07d12;
+			color: #fff;
+		}
+	@@media (max-width: 600px) {
+		.profile-card-modern
+
+	{
+		padding: 16px 3vw 18px 3vw;
+	}
+
+	}
+</style>
 <section id="cart_items">
 	<div class="container p-5">
 		<div class="breadcrumbs">
@@ -17,52 +147,70 @@
 
 
 			<div class="padding-right">
-				<div class="product-details">
-					<!--product-details-->
-					<div class="col-sm-5 text-center">
-						<div class="profile-avatar">
-							<img id="avatarPreview" src="~/images/hnshop/avatar/@(Model.Avatar ?? "no-avatar.jpg")?t=@DateTime.Now.Ticks" alt="Avatar">
-							@if (ViewBag.IsOwner)
-							{
-								<label for="avatarUpload" class="edit-avatar-icon">
-									<i class="fa fa-pencil"></i>
-								</label>
-							}
-							<input type="file" id="avatarUpload" style="display: none;" accept="image/*" onchange="uploadAvatar(this)">
-						</div>
-						<h1 class="profile-name">@(Model.Shop != null ? Model.Shop.Name : Model.Customer?.Name)</h1>
-					</div>
-
-					<div class="col-sm-7 ">
-						<div class="product-information profile">
-							<h1>Thông tin tài khoản</h1>
-							<p><strong>Email:</strong> @Model.Email</p>
-							<p><strong>SĐT:</strong> @Model.Phone</p>
-							<p><strong>Ngày tham gia:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy")</p>
-							<p><strong>Ngày cập nhật cuối:</strong> @Model.UpdatedAt.ToString("dd/MM/yyyy")</p>
-							@if (Model.Shop != null) {
-								<p><strong>Loại tài khoản: </strong> Tài Khoản Shop</p>
-								<p><strong>Thông tin: </strong> @Model.Shop.Description</p>
-							}else{
-								@if (Model.Customer != null)
+				<div class="profile-blur-bg d-flex justify-content-center align-items-center" style="background-image: url('@avatarUrl'); min-height: 90vh;">
+					<div class="profile-card-modern">
+						<div class="d-flex flex-column align-items-center">
+							<div class="profile-avatar-wrap mb-4">
+								<img class="profile-avatar-img" src="@avatarUrl" alt="Avatar">
+								@if (ViewBag.IsOwner)
 								{
-									<p><strong>Loại tài khoản: </strong> Tài Khoản Khách Hàng</p>
-									<p><strong>Thông tin: </strong> @Model.Customer.Description</p>
-								}else{
-									<p><strong>Loại tài khoản: </strong> Tài Khoản Quản Trị Viên</p>
+									<label for="avatarUpload" class="edit-avatar-icon" style="margin-bottom:-10px;">
+										<i class="fa fa-pencil"></i>
+									</label>
+									<input type="file" id="avatarUpload" style="display: none;" accept="image/*" onchange="uploadAvatar(this)">
 								}
-							}
-
-							<br />
-							@if (ViewBag.IsOwner)
-							{
-								<btn class=" btn btn-primary" data-toggle="modal" data-target="#updateModal">
-									Chỉnh sửa
-								</btn>
-							}
+							</div>
+							<h1 class="profile-title mb-1">
+								@(Model.Shop?.Name ?? Model.Customer?.Name ?? "Admin")
+							</h1>
+							<div class="profile-role text-uppercase mb-3">
+								@if (Model.Shop != null)
+								{
+									<span>Shop</span>
+								}
+								else if (Model.Customer != null)
+								{
+									<span>Khách hàng</span>
+								}
+								else
+								{
+									<span>Quản trị viên</span>
+								}
+							</div>
 						</div>
+						<div class="profile-about mb-3 mt-2">
+							<h5 class="mb-1" style="color:#88603c;font-weight:600;">About</h5>
+							<div class="profile-desc">
+								@if (Model.Shop != null)
+								{
+									@Model.Shop.Description
+								}
+								else if (Model.Customer != null)
+								{
+									@Model.Customer.Description
+								}
+								else
+								{
+									<span>Admin hệ thống HNSHOP.</span>
+								}
+							</div>
+						</div>
+						<ul class="profile-info-list mb-0" >
+                            <h5><li><strong>Email:</strong> @Model.Email</li></h5>
+							<li><strong>SĐT:</strong> @Model.Phone</li>
+							<li><strong>Ngày tham gia:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy")</li>
+							<li><strong>Cập nhật cuối:</strong> @Model.UpdatedAt.ToString("dd/MM/yyyy")</li>
+						</ul>
+						@if (ViewBag.IsOwner)
+						{
+							<button class="btn btn-modern mt-4" data-toggle="modal" data-target="#updateModal">
+								<i class="fa fa-pencil mr-1"></i> Chỉnh sửa thông tin
+							</button>
+						}
 					</div>
 				</div>
+				<br />
+
 				@if (Model.Shop != null)
 				{
 					<h2 class="title text-center">Danh sách sản phẩm của Shop</h2>
@@ -159,7 +307,32 @@
 		</div>
 	</div>
 </div>
-
+<script>
+	$(document).on("click", ".like-btn", function (e) {
+			   e.preventDefault();
+			   let button = $(this);
+			   let productId = button.data("product-id");
+			   $.ajax({
+				   url: "/Products/ToggleLike",
+				   type: "POST",
+				   data: { productId: productId },
+				   success: function (res) {
+					   if (res.success) {
+						   if (res.liked) {
+							   button.find("i").addClass("text-danger");
+							   button.find(".like-text").text("Bỏ yêu thích");
+						   } else {
+							   button.find("i").removeClass("text-danger");
+							   button.find(".like-text").text("Thêm yêu thích");
+						   }
+					   }
+				   },
+				   error: function () {
+					   alert("Lỗi khi thực hiện thao tác.");
+				   }
+			   });
+		   });
+	</script>
 <script src="~/js/profile.js"></script>
 
 

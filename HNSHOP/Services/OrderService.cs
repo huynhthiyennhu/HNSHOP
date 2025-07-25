@@ -101,7 +101,7 @@ namespace HNSHOP.Services
             var cartItems = _cartService.GetCartItems();
             if (cartItems == null || !cartItems.Any()) throw new Exception("Giỏ hàng trống.");
 
-            var products = await _db.Products
+            var products = await _db.Products.Where(p => (!p.IsDeleted))
                 .Include(p => p.ProductSaleEvents)
                 .Include(p => p.Shop)
                 .ToListAsync();

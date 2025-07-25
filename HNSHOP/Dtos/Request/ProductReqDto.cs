@@ -18,4 +18,6 @@ public class ProductReqDto
 
     [Required]
     public int ProductTypeId { get; set; }
+    public bool IsDeleted { get; set; }
+
 }

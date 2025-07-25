@@ -3,18 +3,22 @@
     ViewData["Title"] = "Thông Báo Của Bạn";
 }
 <style>
-    .notification-background {
-        min-height: 300px;
+    .notification-bg {
+        min-height: 320px;
         position: relative;
+        border-radius: 18px;
+        overflow: hidden;
+        background: linear-gradient(120deg, #fff6e0 0%, #fafafa 100%);
+        box-shadow: 0 4px 36px 0 #e9d7ba49;
     }
 
-        .notification-background::before {
+        .notification-bg::before {
             content: "";
             background-image: url('/images/home/thongbao.jpg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            opacity: 0.1; 
+            opacity: 0.10;
             position: absolute;
             top: 0;
             left: 0;
@@ -24,7 +28,118 @@
             pointer-events: none;
         }
 
+    .noti-list {
+        position: relative;
+        z-index: 2;
+        margin: 0;
+        padding: 0;
+    }
+
+    .noti-item {
+        display: flex;
+        gap: 18px;
+        background: #fff;
+        border-radius: 13px;
+        box-shadow: 0 2px 8px #fae7bb34;
+        padding: 24px 28px 18px 22px;
+        margin-bottom: 18px;
+        align-items: flex-start;
+        border-left: 6px solid #ffd76d;
+        transition: box-shadow .14s, border-color .22s;
+    }
+
+        .noti-item.unread {
+            border-left: 6px solid #fa983a;
+            background: #fff9e7;
+            box-shadow: 0 4px 18px 0 #ffd76d36;
+        }
+
+        .noti-item .noti-icon {
+            flex-shrink: 0;
+            font-size: 2.9rem;
+            color: #ffd166;
+            background: #f9e7bd;
+            border-radius: 50%;
+            padding: 9px 14px 6px 14px;
+            margin-right: 2px;
+            box-shadow: 0 2px 6px #f2d17938;
+            margin-top: 3px;
+        }
+
+        .noti-item .noti-content {
+            flex: 1;
+        }
+
+    .noti-title {
+        font-size: 2.19rem;
+        font-weight: 700;
+        color: #d38a16;
+        margin-bottom: 2px;
+        letter-spacing: .04rem;
+        line-height: 1.25;
+    }
+
+    .noti-body {
+        font-size: 1.72rem;
+        color: #4b442b;
+        margin-bottom: 2px;
+        line-height: 1.33;
+    }
+
+    .noti-footer {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-top: 7px;
+    }
+
+    .noti-time {
+        font-size: 1.33rem;
+        color: #ac9646;
+    }
+
+    .noti-btn-read {
+        border-radius: 18px;
+        padding: 5px 20px;
+        font-size: 2rem;
+        font-weight: 600;
+        background: #ffcd61;
+        color: #af7e00;
+        border: none;
+        transition: background .13s, color .13s;
+    }
+
+        .noti-btn-read:hover {
+            background: #fad493;
+            color: #9b6904;
+        }
+
+    .noti-badge-read {
+        background: #f0efea;
+        color: #999066;
+        font-size: 1.33rem;
+        padding: 4px 13px;
+        border-radius: 16px;
+        margin-left: 2px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    @@media (max-width: 600px) {
+        .noti-item
+
+    {
+        padding: 11px 5px 13px 5px;
+    }
+
+    .noti-title {
+        font-size: 1.01rem;
+    }
+
+    }
 </style>
+
 <section id="cart_items">
     <div class="container p-5">
         <div class="breadcrumbs">
@@ -39,42 +154,52 @@
                     <i class="fa fa-bell"></i> THÔNG BÁO CỦA BẠN
                 </h2>
 
-                <div class="notification-background position-relative rounded overflow-hidden p-4">
-                    <div class="position-relative" style="z-index: 2;">
-                        @foreach (var item in Model)
+                <div class="notification-bg p-md-4 p-2">
+                    <div class="noti-list">
+                        @if (Model == null || Model.Count == 0)
                         {
-                            <div class="list-group-item mb-3 shadow-sm bg-white rounded @(item.IsRead ? "" : "border-left border-info")">
-                                <div class="d-flex justify-content-between align-items-center flex-wrap">
-                                    <div class="mr-auto">
-                                        <h4 class="mb-1" style="color:coral">@item.Title</h4>
-                                        <h5 class="mb-1">@item.Body</h5>
-                                    </div>
-                                    <div class="text-right ml-3 d-flex flex-column align-items-end" style="min-width: 150px;">
-                                        <small class="text-muted mb-2">@item.CreatedAt.ToString("HH:mm dd/MM/yyyy")</small>
-
-                                        @if (!item.IsRead)
-                                        {
-                                            <button class="btn btn-sm btn-outline-primary mark-read-btn" data-id="@item.Id">
-                                                <i class="fa fa-check-circle"></i> Đánh dấu đã đọc
-                                            </button>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge badge-pill badge-secondary" style="font-size: 0.85rem;">
-                                                <i class="fa fa-check"></i> Đã đọc
-                                            </span>
-                                        }
+                            <div class="text-center text-muted py-5" style="font-size:1.2rem;">
+                                <i class="fa fa-inbox" style="font-size:2rem;color:#fad287"></i> <br />
+                                Bạn chưa có thông báo nào.
+                            </div>
+                        }
+                        else
+                        {
+                            foreach (var item in Model)
+                            {
+                                var unread = !item.IsRead ? "unread" : "";
+                                <div class="noti-item @unread" id="notification-@item.Id">
+                                    <span class="noti-icon">
+                                        <i class="fa @(item.IsRead ? "fa-envelope-open" : "fa-envelope")"></i>
+                                    </span>
+                                    <div class="noti-content">
+                                        <div class="noti-title">@item.Title</div>
+                                        <div class="noti-body">@item.Body</div>
+                                        <div class="noti-footer">
+                                            <span class="noti-time"><i class="fa fa-clock-o"></i> @item.CreatedAt.ToString("HH:mm dd/MM/yyyy")</span>
+                                            @if (!item.IsRead)
+                                            {
+                                                <button class="noti-btn-read mark-read-btn" data-id="@item.Id">
+                                                    <i class="fa fa-check-circle"></i> Đánh dấu đã đọc
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <span class="noti-badge-read">
+                                                    <i class="fa fa-check"></i> Đã đọc
+                                                </span>
+                                            }
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            }
                         }
                     </div>
                 </div>
-
             </div>
         </div>
         <br />
-</div>
+    </div>
 </section>
 @section Scripts {
     <script>
@@ -82,10 +207,9 @@
             $('.mark-read-btn').click(function () {
                 const btn = $(this);
                 const id = btn.data('id');
-
                 $.post('/Notification/MarkAsRead', { notificationId: id }, function () {
-                    btn.replaceWith('<span class="badge badge-pill badge-secondary" style="font-size: 0.85rem;"><i class="fa fa-check"></i> Đã đọc</span>');
-                    $('#notification-' + id).removeClass('bg-light border-left border-info');
+                    btn.replaceWith('<span class="noti-badge-read"><i class="fa fa-check"></i> Đã đọc</span>');
+                    $('#notification-' + id).removeClass('unread');
                 });
             });
         });

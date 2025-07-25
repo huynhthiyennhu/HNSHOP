@@ -22,7 +22,7 @@ namespace HNSHOP.Services
 
         public async Task<List<ProductResDto>> GetAllProductsAsync()
         {
-            var products = await _db.Products.Include(p => p.ProductImages).ToListAsync();
+            var products = await _db.Products.Where(p => (!p.IsDeleted)).Include(p => p.ProductImages).ToListAsync();
             return _mapper.Map<List<ProductResDto>>(products);
         }
 
