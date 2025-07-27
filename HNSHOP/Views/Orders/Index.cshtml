@@ -5,6 +5,7 @@
     ViewData["Title"] = "Danh Sách Đơn Hàng";
 
 }
+
 <section id="cart_items">
     <div class="container p-5">
         <div class="breadcrumbs">
@@ -49,10 +50,7 @@
                     </div>
                 </div>
 
-                @if (TempData["SuccessMessage"] != null)
-                {
-                    <div class="alert alert-success mt-3">@TempData["SuccessMessage"]</div>
-                }
+               
             </div>
         </section>
     </div>

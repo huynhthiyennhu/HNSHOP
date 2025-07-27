@@ -164,6 +164,18 @@
     }
 
     }
+
+    .badge-discount {
+        background: #ff7f50;
+        color: #fff;
+        font-weight: 600;
+        padding: 4px 12px;
+        border-radius: 13px;
+        font-size: 0.97rem;
+        vertical-align: middle;
+        margin-left: 2px;
+    }
+
 </style>
 <section id="cart_items">
     <div class="container p-4">
@@ -272,51 +284,79 @@
                     <h4 class="text-center text-success mb-4" style="font-weight:700;">
                         <i class="fa fa-shopping-basket"></i> Sản phẩm giảm giá dành cho bạn
                     </h4>
-                    <div class="product-card-list">
-                        @foreach (var product in Model.Products.Where(p => p.IsSelected))
-                        {
-                            <div class="product-card-sale">
-                                <img src="~/images/hnshop/@(product.Images.FirstOrDefault()?.Path ?? "default.jpg")"
-                                     alt="@product.Name" />
-                                <h2>@product.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</h2>
-                                <p>
-                                    @if ((product.Name?.Length ?? 0) > 48)
-                                    {
-                                        <span title="@product.Name">@product.Name.Substring(0, 48)...</span>
-                                    }
-                                    else
-                                    {
-                                        @product.Name
-                                    }
-                                </p>
-                                @if (User.Identity.IsAuthenticated && User.IsInRole("User"))
-                                {
-                                    <button class="btn btn-default add-to-cart" data-product-id="@product.Id"
-                                            data-quantity="1">
-                                        <i class="fa fa-shopping-cart"></i> Thêm vào giỏ hàng
-                                    </button>
-                                }
-                                <div class="choose">
-                                    <ul>
-                                        @if (User.Identity.IsAuthenticated && User.IsInRole("User"))
-                                        {
-                                            <li>
-                                                <a href="javascript:void(0);" class="like-btn" data-product-id="@product.Id">
-                                                    <i class="fa fa-heart @(product.IsLiked ? "text-danger" : "")"></i>
-                                                    <span class="like-text">@(product.IsLiked ? "Bỏ yêu thích" : "Thêm yêu thích")</span>
-                                                </a>
-                                            </li>
-                                        }
-                                        <li>
-                                            <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id">
-                                                <i class="fa fa-plus-square"></i> Chi tiết sản phẩm
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        }
-                    </div>
+                   <div class="product-card-list">
+    @foreach (var product in Model.Products.Where(p => p.IsSelected))
+    {
+        
+            var discount = Model.Discount; // hoặc product.Discount nếu giảm giá mỗi SP khác nhau
+            var price = product.Price;
+            var finalPrice = price;
+            if (discount > 0)
+            {
+                finalPrice = price - price * ((decimal)discount / 100);
+            }
+        
+        <div class="product-card-sale">
+            <img src="~/images/hnshop/@(product.Images.FirstOrDefault()?.Path ?? "default.jpg")"
+                 alt="@product.Name" />
+            <div style="min-height:54px;">
+                @if (discount > 0)
+                {
+                    <span style="font-size:1.08rem; color:#999; text-decoration: line-through;">
+                        @price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))
+                    </span>
+                    <span style="font-size:1.22rem; color:#ef6c00; font-weight:700; margin-left:9px;">
+                        @finalPrice.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))
+                    </span>
+                    <span class="badge badge-discount ml-1">-@discount%</span>
+                }
+                else
+                {
+                    <span style="font-size:1.17rem; color:#ef6c00; font-weight:700;">
+                        @price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))
+                    </span>
+                }
+            </div>
+            <p>
+                @if ((product.Name?.Length ?? 0) > 48)
+                {
+                    <span title="@product.Name">@product.Name.Substring(0, 48)...</span>
+                }
+                else
+                {
+                    @product.Name
+                }
+            </p>
+            @if (User.Identity.IsAuthenticated && User.IsInRole("User"))
+            {
+                <button class="btn btn-default add-to-cart" data-product-id="@product.Id"
+                        data-quantity="1">
+                    <i class="fa fa-shopping-cart"></i> Thêm vào giỏ hàng
+                </button>
+                <br />
+            }
+            <div class="choose">
+                <ul>
+                    @if (User.Identity.IsAuthenticated && User.IsInRole("User"))
+                    {
+                        <li>
+                            <a href="javascript:void(0);" class="like-btn" data-product-id="@product.Id">
+                                <i class="fa fa-heart @(product.IsLiked ? "text-danger" : "")"></i>
+                                <span class="like-text">@(product.IsLiked ? "Bỏ yêu thích" : "Thêm yêu thích")</span>
+                            </a>
+                        </li>
+                    }
+                    <li>
+                        <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id">
+                            <i class="fa fa-plus-square"></i> Chi tiết sản phẩm
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    }
+</div>
+
                 </div>
             }
             else

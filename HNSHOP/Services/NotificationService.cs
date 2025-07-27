@@ -101,5 +101,27 @@ namespace HNSHOP.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task DeleteNotificationAsync(int accountId, int notificationId)
+        {
+            var userNoti = await _context.UserNotifications
+                .FirstOrDefaultAsync(un => un.AccountId == accountId && un.NotificationId == notificationId);
+
+            if (userNoti != null && userNoti.IsRead)
+            {
+                _context.UserNotifications.Remove(userNoti);
+
+               
+                await _context.SaveChangesAsync();
+            }
+        }
+        public async Task DeleteAllNotificationsAsync(int accountId)
+        {
+            var userNotis = _context.UserNotifications
+                .Where(x => x.AccountId == accountId);
+            _context.UserNotifications.RemoveRange(userNotis);
+            await _context.SaveChangesAsync();
+        }
+
+
     }
 }

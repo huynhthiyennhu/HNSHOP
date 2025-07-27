@@ -33,4 +33,22 @@ public class NotificationController : Controller
         await _notificationService.MarkAsReadAsync(accountId, notificationId);
         return Ok(); // Trả về JSON 200
     }
+
+    [HttpPost]
+    public async Task<IActionResult> Delete(int notificationId)
+    {
+        var accountId = GetAccountId();
+        await _notificationService.DeleteNotificationAsync(accountId, notificationId);
+        return Ok();
+    }
+    [HttpPost]
+    public async Task<IActionResult> DeleteAll()
+    {
+        var accountId = GetAccountId();
+        await _notificationService.DeleteAllNotificationsAsync(accountId);
+        return Ok();
+    }
+
+
+
 }

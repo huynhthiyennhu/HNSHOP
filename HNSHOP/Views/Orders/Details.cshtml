@@ -5,13 +5,13 @@
 }
 <style>
     .text-danger {
-        color: #dc3545;
+    color: #dc3545;
     }
 
     .text-truncate {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     }
 </style>
 <section id="order_details">
@@ -32,7 +32,7 @@
             <div class="col-md-6">
                 <h3 class="title" style="background-color:#ffe6b3; padding:10px 100px 10px 10px; margin-top:-2px;">Thông Tin Đơn Hàng</h3>
                 <table class="table table-bordered">
-                   
+
                     <tr>
                         <th>Thanh toán:</th>
                         <td>
@@ -68,10 +68,13 @@
                     <tr>
                         <th>Tổng giảm giá:</th>
                         <td>
-                            @{
-                                var totalDiscount = Model.SubOrders
+                             @{
+                                var totalFinal = Model.SubOrders
                                 .SelectMany(so => so.DetailOrders)
-                                .Sum(d => (d.Product.Price * d.Quantity) * (decimal)d.Product.DiscountPercent / 100);
+                                .Sum(d => d.UnitPrice * d.Quantity);
+                            }
+                            @{
+                                var totalDiscount = totalProductPrice - totalFinal;
                             }
                             @totalDiscount.ToString("N0") VNĐ
                         </td>
@@ -83,11 +86,7 @@
                     <tr>
                         <th>Tổng thanh toán:</th>
                         <td>
-                            @{
-                                var totalFinal = Model.SubOrders
-                                .SelectMany(so => so.DetailOrders)
-                                .Sum(d => (d.Product.Price * (1 - (decimal)d.Product.DiscountPercent / 100)) * d.Quantity);
-                            }
+                           
                             <strong>@totalFinal.ToString("N0") VNĐ</strong>
                         </td>
                     </tr>
@@ -104,7 +103,6 @@
         <!-- DANH SÁCH SẢN PHẨM TRONG ĐƠN HÀNG THEO SHOP -->
         <div class="col-md-12" style="margin:-15px;">
             <h3 class="title" style="background-color:#f3f1ed; padding:10px 40px ;">Danh Sách Sản Phẩm</h3>
-            <br />
 
             @foreach (var subOrder in Model.SubOrders)
             {
@@ -173,18 +171,19 @@
                     <div class="text-right font-weight-bold mt-2">
                         Tổng tiền shop:
                         <span class="text-danger">
-                            @subOrder.DetailOrders.Sum(i =>
-                                     (i.Product.Price * (1 - (decimal)i.Product.DiscountPercent / 100)) * i.Quantity
-                                     ).ToString("N0") VNĐ
+                            @subOrder.Total.ToString("N0") VNĐ
                         </span>
                     </div>
                 </div>
+                <hr />
             }
-
+            
+            <br />
         </div>
-
+      
         <!-- Nút điều hướng -->
         <div class="text-center mt-4">
+            
             <a asp-controller="Orders" asp-action="Index" class="btn btn-secondary">
                 <i class="fa fa-arrow-left"></i> Quay lại danh sách đơn hàng
             </a>

@@ -54,11 +54,23 @@ namespace HNSHOP.Services
                               .Where(p => productIds.Contains(p.Id) && !p.IsDeleted)
                               .Include(p => p.Shop)
                               .Include(p => p.ProductImages)
+                              .Include(p => p.ProductSaleEvents) // Thêm Include
+                                .ThenInclude(pse => pse.SaleEvent)
                               .ToDictionary(p => p.Id);
+
+            DateTime now = DateTime.UtcNow;
 
             return cart.Select(item =>
             {
                 var product = products[item.ProductId];
+
+                // Lấy discount % đang áp dụng (nếu có)
+                var discountPercent = product.ProductSaleEvents
+        .Where(pse => pse.SaleEvent.StartDate <= DateTime.UtcNow && pse.SaleEvent.EndDate >= DateTime.UtcNow)
+        .Select(pse => pse.SaleEvent.Discount)
+        .DefaultIfEmpty(0)
+        .Max();
+
                 return new CartItemResDto
                 {
                     ProductId = product.Id,
@@ -67,10 +79,12 @@ namespace HNSHOP.Services
                     Quantity = item.Quantity,
                     Image = product.ProductImages.FirstOrDefault()?.Path ?? "no-image.png",
                     ShopId = product.ShopId,
-                    ShopName = product.Shop.Name
+                    ShopName = product.Shop.Name,
+                    DiscountPercent = discountPercent
                 };
             }).ToList();
         }
+
 
         // ✅ Thêm sản phẩm vào giỏ
         public int AddToCart(AddToCartReqDto request, string name, decimal price, string image)

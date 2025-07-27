@@ -45,7 +45,7 @@
                 <li class="active">Thông Tin Tài Khoản</li>
             </ol>
         </div>
-<h3 class="text-center">Đánh giá đơn hàng #@Model.OrderId - @Model.Shop.Name</h3>
+        <h2 class="text-center title">Đánh giá đơn hàng #@Model.OrderId - @Model.Shop.Name</h2>
 
 <form asp-action="Create" method="post">
     <input type="hidden" name="SubOrderId" value="@Model.Id" />
@@ -95,6 +95,7 @@
         </div>
     </div>
 </form>
+<br />
 </div>
 </section>
 <script>

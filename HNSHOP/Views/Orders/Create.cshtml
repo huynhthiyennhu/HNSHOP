@@ -320,18 +320,6 @@
                     }
                 }
 
-                // Lấy sản phẩm trong giỏ
-                // const cartItems = [];
-                // $("tr[data-id][data-quantity]").each(function () {
-                //     const productId = $(this).data("id");
-                //     const quantity = $(this).data("quantity");
-                //     if (!isNaN(productId) && !isNaN(quantity)) {
-                //         cartItems.push({
-                //             ProductId: parseInt(productId),
-                //             Quantity: parseInt(quantity)
-                //         });
-                //     }
-                // });
                 const cartItems = [];
                 $("tr[data-id][data-quantity][data-price]").each(function () {
                     const productId = $(this).data("id");

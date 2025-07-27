@@ -39,9 +39,10 @@ public class CartController : Controller
             var product = _db.Products.Find(item.ProductId);
 
             var discount = product.ProductSaleEvents
-                .Where(pse => pse.SaleEvent.StartDate <= DateTime.UtcNow && pse.SaleEvent.EndDate >= DateTime.UtcNow)
-                .Select(pse => pse.SaleEvent.Discount)
-                .FirstOrDefault(); // mặc định là 0 nếu không có khuyến mãi
+             .Where(pse => pse.SaleEvent.StartDate <= DateTime.UtcNow && pse.SaleEvent.EndDate >= DateTime.UtcNow)
+             .Select(pse => pse.SaleEvent.Discount)
+             .FirstOrDefault();
+
 
             decimal itemPrice = product.Price;
             decimal discountAmount = itemPrice * ((decimal)discount / 100);

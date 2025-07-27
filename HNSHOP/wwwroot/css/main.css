@@ -2762,7 +2762,7 @@ h2.title {
 	}
 
 	.banner-content h1 {
-		font-size: 2.1rem;
+		font-size: 3.1rem;
 		font-weight: bold;
 		color: #be8426;
 		margin-bottom: 7px;
@@ -2770,7 +2770,7 @@ h2.title {
 	}
 
 .discount-label {
-	font-size: 1.13rem;
+	font-size: 2.13rem;
 	color: #257a34;
 	margin-bottom: 12px;
 	font-weight: 600;
@@ -2778,7 +2778,7 @@ h2.title {
 
 	.discount-label span {
 		color: #e64a19;
-		font-size: 1.18rem;
+		font-size: 2.18rem;
 		font-weight: bold;
 		margin-left: 4px;
 	}
@@ -2791,7 +2791,7 @@ h2.title {
 
 .banner-content .btn.get {
 	border-radius: 18px;
-	font-size: 1.02rem;
+	font-size: 2.02rem;
 	font-weight: bold;
 	background: #ffc266;
 	border: none;
@@ -2817,3 +2817,4 @@ h2.title {
 			min-width: 0;
 		}
 }
+/*====================================================================chat*/

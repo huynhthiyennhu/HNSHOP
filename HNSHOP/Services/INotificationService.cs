@@ -10,6 +10,8 @@ namespace HNSHOP.Services
         Task<List<NotificationDTO>> GetNotificationsAsync(int accountId);
         Task MarkAsReadAsync(int accountId, int notificationId);
         Task SendNotificationToAdminsAsync(string title, string body, string type);
+        Task DeleteNotificationAsync(int accountId, int notificationId);
+        Task DeleteAllNotificationsAsync(int accountId);
     }
 
 

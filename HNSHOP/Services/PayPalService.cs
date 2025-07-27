@@ -3,6 +3,7 @@ using PayPalCheckoutSdk.Orders;
 using System.Net;
 using HNSHOP.Utils;
 using Microsoft.Extensions.Options;
+using HNSHOP.Dtos.Response;
 
 public class PayPalService
 {
@@ -21,20 +22,24 @@ public class PayPalService
     private PayPalHttpClient GetClient() => new PayPalHttpClient(GetEnvironment());
 
 
-
-public async Task<string?> CreateOrder(decimal total, string currency, string returnUrl, string cancelUrl)
-{
-    var request = new OrdersCreateRequest();
-    request.Prefer("return=representation");
-    request.RequestBody(new OrderRequest
+    public async Task<string?> CreateOrder(
+    decimal total,
+    string currency,
+    string returnUrl,
+    string cancelUrl
+)
     {
-        CheckoutPaymentIntent = "CAPTURE",
-        ApplicationContext = new ApplicationContext
+        var request = new OrdersCreateRequest();
+        request.Prefer("return=representation");
+        request.RequestBody(new OrderRequest
         {
-            ReturnUrl = returnUrl,
-            CancelUrl = cancelUrl
-        },
-        PurchaseUnits = new List<PurchaseUnitRequest>
+            CheckoutPaymentIntent = "CAPTURE",
+            ApplicationContext = new ApplicationContext
+            {
+                ReturnUrl = returnUrl,
+                CancelUrl = cancelUrl
+            },
+            PurchaseUnits = new List<PurchaseUnitRequest>
         {
             new PurchaseUnitRequest
             {
@@ -45,15 +50,15 @@ public async Task<string?> CreateOrder(decimal total, string currency, string re
                 }
             }
         }
-    });
+        });
 
-    var response = await GetClient().Execute(request);
-    var result = response.Result<PayPalCheckoutSdk.Orders.Order>(); 
+        var response = await GetClient().Execute(request);
+        var result = response.Result<PayPalCheckoutSdk.Orders.Order>();
+        return result.Links.FirstOrDefault(l => l.Rel == "approve")?.Href;
+    }
 
-    return result.Links.FirstOrDefault(l => l.Rel == "approve")?.Href;
-}
 
-public async Task<bool> CaptureOrder(string token)
+    public async Task<bool> CaptureOrder(string token)
     {
         var request = new OrdersCaptureRequest(token);
         request.RequestBody(new OrderActionRequest());

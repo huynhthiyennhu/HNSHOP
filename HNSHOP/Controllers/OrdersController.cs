@@ -307,9 +307,10 @@ namespace HNSHOP.Controllers
                         if (product == null) continue;
 
                         var discount = product.ProductSaleEvents
-                            .Where(pse => pse.SaleEvent.StartDate <= DateTime.UtcNow && pse.SaleEvent.EndDate >= DateTime.UtcNow)
-                            .Select(pse => pse.SaleEvent.Discount)
-                            .FirstOrDefault();
+                           .Where(pse => pse.SaleEvent.StartDate <= DateTime.UtcNow && pse.SaleEvent.EndDate >= DateTime.UtcNow)
+                           .Select(pse => pse.SaleEvent.Discount)
+                           .DefaultIfEmpty(0)
+                           .Max();
 
                         var finalPrice = product.Price * (1 - (decimal)discount / 100);
                         subTotal += finalPrice * item.Quantity;
@@ -500,6 +501,7 @@ namespace HNSHOP.Controllers
                         ShopId = so.Shop.Id,
                         ShopName = so.Shop.Name,
                         Status = so.Status,
+                        Total=so.Total,
                         DetailOrders = so.DetailOrders.Select(d => new DetailOrderResDto
                         {
                             Quantity = d.Quantity,
@@ -557,16 +559,34 @@ namespace HNSHOP.Controllers
 
             return Redirect(paymentUrl ?? "/Orders/Create");
         }
-
-        [HttpPost]
         public IActionResult PreparePaypal([FromBody] CreateOrderReqDto orderRequest)
         {
-            if (orderRequest == null || orderRequest.DetailOrderReqDtos == null || !orderRequest.DetailOrderReqDtos.Any())
-                return BadRequest("Dữ liệu đơn hàng không hợp lệ.");
+            int userId = GetUserIdFromToken();
+            var productIds = orderRequest.DetailOrderReqDtos.Select(x => x.ProductId).ToList();
 
-            HttpContext.Session.SetString("PendingOrder", JsonConvert.SerializeObject(orderRequest));
+            var products = _db.Products
+                .Include(p => p.ProductSaleEvents).ThenInclude(pse => pse.SaleEvent)
+                .Where(p => productIds.Contains(p.Id) && !p.IsDeleted)
+                .ToList();
 
-            var total = orderRequest.DetailOrderReqDtos.Sum(x => x.Quantity * x.UnitPrice);
+            decimal total = 0;
+            foreach (var item in orderRequest.DetailOrderReqDtos)
+            {
+                var product = products.FirstOrDefault(p => p.Id == item.ProductId);
+                if (product == null) continue;
+
+                // Tính giảm giá
+                var discount = product.ProductSaleEvents
+                    .Where(pse => pse.SaleEvent.StartDate <= DateTime.UtcNow && pse.SaleEvent.EndDate >= DateTime.UtcNow)
+                    .Select(pse => pse.SaleEvent.Discount)
+                    .DefaultIfEmpty(0)
+                    .Max();
+
+                var finalPrice = product.Price * (1 - (decimal)discount / 100);
+                total += finalPrice * item.Quantity;
+            }
+
+            // total bây giờ đã có giảm giá, truyền sang PayPal
             return Json(new { redirectUrl = Url.Action("PayWithPaypal", "Orders", new { total }) });
         }
 
@@ -703,6 +723,12 @@ namespace HNSHOP.Controllers
             TempData["SuccessMessage"] = "Bạn đã xác nhận đã nhận hàng thành công.";
             return RedirectToAction("Index");
         }
+
+
+
+
+
+
 
         [HttpGet]
         public IActionResult PayWithVnPay(decimal total)

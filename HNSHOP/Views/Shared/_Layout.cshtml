@@ -49,6 +49,7 @@
 </head><!--/head-->
 @RenderSection("Scripts", required: false)
 <body>
+
 	<div class="page-wrapper">
 		<header id="header">
 			<div class="header-middle">
@@ -306,10 +307,7 @@
 
 		<main>
             <section>
-                @if (TempData["SuccessMessage"] != null)
-                {
-                    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
-                }
+               
 
                 <div class="container">
                     @RenderBody()
@@ -386,18 +384,7 @@
 			setInterval(loadUnreadChatCount, 60000);
 		});
 	</script>
-	<script>
-		$(document).ready(function () {
-			$('.mark-read-btn').click(function () {
-				const btn = $(this);
-				const id = btn.data('id');
-				$.post('/Notification/MarkAsRead', { notificationId: id }, function () {
-					btn.replaceWith('<span class="noti-badge-read"><i class="fa fa-check"></i> Đã đọc</span>');
-					$('#notification-' + id).removeClass('unread');
-				});
-			});
-		});
-	</script>
+	
 
 	<script src="~/js/auth.js"></script>
 	<script src="~/js/cart.js"></script>
