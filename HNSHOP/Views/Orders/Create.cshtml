@@ -47,42 +47,48 @@
 
                     <button type="button" class="btn btn-primary mt-2" id="addNewAddressBtn">Nhập địa chỉ mới</button>
                     <div id="newAddressForm" class="mt-2" style="display: none;">
+                        <br />
+                        <!-- Nhập số điện thoại luôn hiển thị -->
+                        <div class="form-group">
+                            <input type="text" id="phoneNumber" class="form-control mt-2" placeholder="Số điện thoại người nhận" />
+                        </div>
 
                         <!-- Radio lựa chọn nhập địa chỉ -->
-                        <div class="form-group">
+                        <div class="form-group mt-2">
                             <label><strong>Phương thức nhập địa chỉ</strong></label><br />
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="addressInputMode" id="structuredAddress" value="structured" checked />
+                                <input class="form-check-input" type="radio" name="addressInputMode" id="structuredAddress" value="structured"  />
                                 <label class="form-check-label" for="structuredAddress">Nhập từng phần</label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="addressInputMode" id="manualAddress" value="manual" />
+                                <input class="form-check-input" type="radio" name="addressInputMode" id="manualAddress" value="manual" checked />
                                 <label class="form-check-label" for="manualAddress">Nhập tay toàn bộ</label>
                             </div>
                         </div>
 
                         <!-- Textarea khi chọn nhập toàn bộ -->
-<textarea id="manualAddressDetail" class="form-control d-none" placeholder="Nhập toàn bộ địa chỉ..."></textarea>
+                        <textarea id="manualAddressDetail" class="form-control d-none" placeholder="Nhập toàn bộ địa chỉ..."></textarea>
 
                         <!-- Nhập từng phần -->
-                        <input type="text" id="houseNumber" class="form-control mt-2" placeholder="Số nhà" />
-                        <input type="text" id="phoneNumber" class="form-control mt-2" placeholder="Số điện thoại người nhận" />
+                        <div id="structuredFields">
+                            <input type="text" id="houseNumber" class="form-control mt-2" placeholder="Số nhà" />
 
-                        <!-- Chọn tỉnh -->
-                        <select id="citySelect" class="form-control mt-2">
-                            <option value="">Chọn Tỉnh/Thành phố</option>
-                        </select>
+                            <select id="citySelect" class="form-control mt-2">
+                                <option value="">Chọn Tỉnh/Thành phố</option>
+                            </select>
 
-                        <!-- Quận, phường, đường -->
-                        <select id="districtSelect" class="form-control mt-2">
-                            <option value="">Chọn Quận/Huyện</option>
-                        </select>
-                        <select id="wardSelect" class="form-control mt-2">
-                            <option value="">Chọn Phường/Xã</option>
-                        </select>
-                        <select id="streetSelect" class="form-control mt-2">
-                            <option value="">Chọn Đường/Phố</option>
-                        </select>
+                            <select id="districtSelect" class="form-control mt-2">
+                                <option value="">Chọn Quận/Huyện</option>
+                            </select>
+
+                            <select id="wardSelect" class="form-control mt-2">
+                                <option value="">Chọn Phường/Xã</option>
+                            </select>
+
+                            <select id="streetSelect" class="form-control mt-2">
+                                <option value="">Chọn Đường/Phố</option>
+                            </select>
+                        </div>
                     </div>
 
 
@@ -259,19 +265,21 @@
                 $("#addressSelect").val("");
             });
 
-                   $("input[name='addressInputMode']").change(function () {
+         $("input[name='addressInputMode']").change(function () {
             const isManual = $(this).val() === "manual";
 
             if (isManual) {
                 $("#manualAddressDetail").removeClass("d-none");
-                $("#houseNumber, #phoneNumber, #citySelect, #districtSelect, #wardSelect, #streetSelect")
-                    .closest(".form-group, .form-control").hide();
+                $("#structuredFields").hide();
+                $("#manualAddressDetail").show();
             } else {
                 $("#manualAddressDetail").addClass("d-none");
-                $("#houseNumber, #phoneNumber, #citySelect, #districtSelect, #wardSelect, #streetSelect")
-                    .closest(".form-group, .form-control").show();
+                $("#manualAddressDetail").hide();
+                $("#structuredFields").show();
+
             }
         }).trigger("change");
+
 
 
             // Xử lý đặt hàng

@@ -435,18 +435,29 @@
             const fileInput = document.getElementById("imageInput");
             const file = fileInput.files[0];
             if (!file) return;
+
             const formData = new FormData();
             formData.append("file", file);
+
             try {
                 const response = await fetch("/Chat/UploadImage", { method: "POST", body: formData });
                 if (!response.ok) throw new Error("Lỗi upload ảnh");
+
                 const imageUrl = await response.text();
+
+                // 🔹 Hiển thị ngay lập tức
+                appendMessageToChatBox(imageUrl, new Date(), true, null);
+
+                // 🔹 Gửi cho SignalR để các client khác nhận
                 connection.invoke("SendToConversation", conversationId, senderRole, senderId, imageUrl)
                     .catch(err => console.error("❌ Gửi ảnh lỗi:", err));
+
                 fileInput.value = '';
-            } catch (error) { alert(error.message); }
+            } catch (error) {
+                alert(error.message);
+            }
         }
-                function appendMessageToChatBox(message, sentAt, isMine, avatar) {
+                        function appendMessageToChatBox(message, sentAt, isMine, avatar) {
             const chatBox = document.getElementById("chatMessages");
             const alignment = isMine ? "message-row right" : "message-row";
             const bubbleClass = isMine ? "message-bubble sender" : "message-bubble receiver";

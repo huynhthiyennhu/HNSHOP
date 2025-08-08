@@ -575,7 +575,6 @@ namespace HNSHOP.Controllers
                 var product = products.FirstOrDefault(p => p.Id == item.ProductId);
                 if (product == null) continue;
 
-                // Tính giảm giá
                 var discount = product.ProductSaleEvents
                     .Where(pse => pse.SaleEvent.StartDate <= DateTime.UtcNow && pse.SaleEvent.EndDate >= DateTime.UtcNow)
                     .Select(pse => pse.SaleEvent.Discount)
@@ -586,7 +585,9 @@ namespace HNSHOP.Controllers
                 total += finalPrice * item.Quantity;
             }
 
-            // total bây giờ đã có giảm giá, truyền sang PayPal
+            // 🔹 Lưu đơn hàng vào session trước khi redirect
+            HttpContext.Session.SetString("PendingOrder", JsonConvert.SerializeObject(orderRequest));
+
             return Json(new { redirectUrl = Url.Action("PayWithPaypal", "Orders", new { total }) });
         }
 
@@ -723,11 +724,6 @@ namespace HNSHOP.Controllers
             TempData["SuccessMessage"] = "Bạn đã xác nhận đã nhận hàng thành công.";
             return RedirectToAction("Index");
         }
-
-
-
-
-
 
 
         [HttpGet]

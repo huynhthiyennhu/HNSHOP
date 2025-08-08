@@ -98,7 +98,7 @@ namespace HNSHOP.Controllers
                 }
 
                 subOrder.SubTotal = subTotal;
-                subOrder.Total = subTotal; // Nếu không có thêm phí vận chuyển riêng
+                subOrder.Total = subTotal; 
                 orderTotal += subTotal;
             }
 

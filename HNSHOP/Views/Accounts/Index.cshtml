@@ -3,8 +3,11 @@
 <link href="~/css/profile.css?t=@DateTime.Now.Ticks" rel="stylesheet">
 @{
 	ViewData["Title"] = "Thông Tin";
-	var avatarUrl = Url.Content($"~/images/hnshop/avatar/{Model.Avatar ?? "no-avatar.jpg"}?t={DateTime.Now.Ticks}");
+	var avatarFile = string.IsNullOrWhiteSpace(Model.Avatar)
+			? "no-avatar.jpg"
+			: Model.Avatar;
 
+	var avatarUrl = Url.Content($"~/images/hnshop/avatar/{avatarFile}?t={DateTime.Now.Ticks}");
 }
 <style>
 	.profile-blur-bg {
@@ -151,8 +154,9 @@
 					<div class="profile-card-modern">
 						<div class="d-flex flex-column align-items-center">
 							<div class="profile-avatar-wrap mb-4">
-								<img class="profile-avatar-img" src="@avatarUrl" alt="Avatar">
-								@if (ViewBag.IsOwner)
+								<img class="profile-avatar-img" src="@avatarUrl" alt="Avatar"
+									 onerror="this.onerror=null; this.src='/images/hnshop/avatar/no-avatar.jpg';">
+									 @if (ViewBag.IsOwner)
 								{
 									<label for="avatarUpload" class="edit-avatar-icon" style="margin-bottom:-10px;">
 										<i class="fa fa-pencil"></i>

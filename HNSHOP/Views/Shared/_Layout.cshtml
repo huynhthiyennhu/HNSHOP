@@ -124,7 +124,15 @@
 											<div style="margin-top:4px;">
 												<a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
 													<span class="ml-1">@User.Identity.Name</span>
-													<img src="~/images/hnshop/avatar/@User.FindFirst("Avatar")?.Value" class="rounded-circle" style="width:32px; height:32px; border-radius: 50%" />
+													@{
+														var avatarPath = User.FindFirst("Avatar")?.Value;
+														var avatarFile = string.IsNullOrEmpty(avatarPath) ? "no-avatar.jpg" : avatarPath;
+													}
+
+													<img src="~/images/hnshop/avatar/@avatarFile"
+														 class="rounded-circle"
+														 style="width:32px; height:32px; border-radius:50%"
+														 alt="Avatar" />
 
 												</a>
 												<ul class="dropdown-menu">

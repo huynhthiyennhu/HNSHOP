@@ -41,63 +41,66 @@
         </div>
         <h2 class="title text-center">Quản lý Sản phẩm của Shop</h2>
         <br />
-        <div class="table-responsive cart_info">
-            <table id="productTable" class="table table-condensed">
-                <thead>
-                    <tr class="cart_menu">
-                        <td><b>Hình ảnh</b></td>
-                        <td><b>Sản phẩm</b></td>
-                        <td><b>Giá</b></td>
-                        <td><b>Số lượng</b></td>
-                        
-                        <td><b>Hành động</b></td>
-                </tr>
-            </thead>
-            <tbody>
-                @if (Model != null && Model.Count > 0)
+       
+            @if (Model != null && Model.Count > 0)
                 {
-                    foreach (var product in Model)
-                    {
-                        <tr>
-                            <td>
-                                @if (product.Images != null && product.Images.Count > 0)
-                                {
-                                    <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id">
-                                        <img src="~/images/hnshop/@product.Images[0].Path" width="60" />
-                                    </a>
-                                }
-                            </td>
-                                <td>
-                                    @((product.Name?.Length > 80) ? product.Name.Substring(0, 80) + "..." : product.Name)
-                                </td>
-                            <td>@product.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</td>
-                            <td>@product.Quantity</td>
-                           
-                                <td>
-                                    <div class="d-flex justify-content-center gap-2">
-                                        <button class="btn btn-warning btn-sm edit-btn" data-id="@product.Id">
-                                            Sửa
-                                        </button>
-                                        <button class="btn btn-danger btn-sm delete-btn" data-id="@product.Id">
-                                            Xóa
-                                        </button>
-                                    </div>
-                                </td>
+            <div class="table-responsive cart_info">
+                <table id="productTable" class="table table-condensed">
+                    <thead>
+                        <tr class="cart_menu">
+                            <th><b>Hình ảnh</b></th>
+                            <th><b>Sản phẩm</b></th>
+                            <th><b>Giá</b></th>
+                            <th><b>Số lượng</b></th>
 
+                            <th><b>Hành động</b></th>
                         </tr>
-                    }
-                }
-                else
-                {
+                    </thead>
+                    <tbody>
+                    @foreach (var product in Model)
+                    {
+               
                     <tr>
-                        <td colspan="5">Không có sản phẩm nào.</td>
+                        <td>
+                            @if (product.Images != null && product.Images.Count > 0)
+                            {
+                                <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id">
+                                    <img src="~/images/hnshop/@product.Images[0].Path" width="60" />
+                                </a>
+                            }
+                        </td>
+                        <td>
+                            @((product.Name?.Length > 80) ? product.Name.Substring(0, 80) + "..." : product.Name)
+                        </td>
+                        <td>@product.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</td>
+                        <td>@product.Quantity</td>
+
+                        <td>
+                            <div class="d-flex justify-content-center gap-2">
+                                <button class="btn btn-warning btn-sm edit-btn" data-id="@product.Id">
+                                    Sửa
+                                </button>
+                                <button class="btn btn-danger btn-sm delete-btn" data-id="@product.Id">
+                                    Xóa
+                                </button>
+                            </div>
+                        </td>
+
                     </tr>
-                }
+                
+                       } 
+                  
             </tbody>
         </table>
-           
+                </div>
+                }
+                
+            
+            else
+            {
+                <h2 class="title text-center" >Chưa có sản phẩm nào.</h2>
+            }
 
-        </div>
         <div class="text-center">
             <button class="btn btn-success mb-3" data-toggle="modal" data-target="#addProductModal">
                 Thêm Sản phẩm

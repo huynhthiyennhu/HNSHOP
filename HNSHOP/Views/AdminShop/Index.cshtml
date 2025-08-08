@@ -45,7 +45,13 @@
                     @foreach (var shop in Model)
                     {
                         <tr>
-                            <td><img src="~/images/hnshop/avatar/@shop.Account.Avatar" class="avatar ms-4" alt="@shop.Account.Avatar" /></td>
+                            <td>
+                                <img src="~/images/hnshop/avatar/@(
+                                        string.IsNullOrEmpty(shop.Account.Avatar) ? "no-avatar.jpg" : shop.Account.Avatar
+                                    )"
+                                     class="avatar ms-4" alt="Avatar" />
+                            </td>
+
                             <td>@shop.Name</td>
                             <td>@shop.Account.Email</td>
                             <td>@shop.Account.CreatedAt.ToString("dd/MM/yyyy")</td>
@@ -60,7 +66,7 @@
                                 }
 
                                 @* Luôn hiển thị nút Xóa *@
-                                <button class="btn btn-outline-danger btn-sm delete-btn" data-id="@shop.Id">Xóa</button>
+                                @* <button class="btn btn-outline-danger btn-sm delete-btn" data-id="@shop.Id">Xóa</button> *@
                             </td>
                         </tr>
                     }

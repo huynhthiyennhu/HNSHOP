@@ -147,7 +147,7 @@ namespace HNSHOP.Controllers
 
 
 
-        // Hàm trả về sản phẩm gợi ý (list ProductResDto)
+        // Hàm trả về danh sách sản phẩm gợi ý dựa trên Content-Based Filtering (TF-IDF)
         private async Task<List<ProductResDto>> GetSuggestedProductsAsync()
         {
             var userId = GetUserId();
@@ -156,56 +156,128 @@ namespace HNSHOP.Controllers
             var customer = await _db.Customers.FirstOrDefaultAsync(c => c.AccountId == userId);
             if (customer == null) return new List<ProductResDto>();
 
+            // Lấy danh sách sản phẩm mà người dùng đã tương tác (like + mua)
             var likedProductIds = await _db.Likes
                 .Where(l => l.CustomerId == customer.Id)
-                .Select(l => l.ProductId).ToListAsync();
+                .Select(l => l.ProductId)
+                .ToListAsync();
 
             var purchasedProductIds = await _db.SubOrders
                 .Where(so => so.Order.CustomerId == customer.Id)
                 .SelectMany(so => so.DetailOrders.Select(d => d.ProductId))
-                .Distinct().ToListAsync();
+                .Distinct()
+                .ToListAsync();
 
             var interactedIds = likedProductIds.Concat(purchasedProductIds).Distinct().ToList();
-
             if (!interactedIds.Any()) return new List<ProductResDto>();
 
-            var interactedTypes = await _db.Products
-                .Where(p => interactedIds.Contains(p.Id) && !p.IsDeleted)
-                .GroupBy(p => p.ProductTypeId)
-                .OrderByDescending(g => g.Count())
-                .Select(g => g.Key)
+            // Lấy toàn bộ sản phẩm còn bán
+            var allProducts = await _db.Products
+                .Include(p => p.ProductImages)
+                .Include(p => p.ProductType)
+                .Include(p => p.Shop)
+                .Where(p => !p.IsDeleted)
                 .ToListAsync();
 
-            var suggestedProducts = await _db.Products
-                .Include(p => p.ProductImages) 
-                .Where(p => interactedTypes.Contains(p.ProductTypeId) && !interactedIds.Contains(p.Id) && !p.IsDeleted)
-                .OrderByDescending(p => p.Likes.Count + p.Ratings.Count)
+            // -------------------- 1. Chuẩn bị dữ liệu nội dung --------------------
+            var productContents = allProducts.Select(p =>
+                $"{p.Name} {p.Description} {p.ProductType?.Name} {p.Shop?.Name}".ToLower()
+            ).ToList();
+
+            // Tokenize thành danh sách từ
+            var tokenizedProducts = productContents
+                .Select(doc => doc.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                .ToList();
+
+            // Xây dựng từ điển từ vựng
+            var vocabulary = tokenizedProducts
+                .SelectMany(x => x)
+                .Distinct()
+                .ToList();
+
+            int N = allProducts.Count;           // Số sản phẩm
+            int V = vocabulary.Count;            // Kích thước từ vựng
+
+            // -------------------- 2. Tính ma trận TF-IDF --------------------
+            double[][] tfidfMatrix = tokenizedProducts.Select(tokens =>
+            {
+                return vocabulary.Select(term =>
+                {
+                    int tf = tokens.Count(t => t == term);
+                    int df = tokenizedProducts.Count(doc => doc.Contains(term));
+                    double idf = Math.Log((double)N / (1 + df));
+                    return tf * idf;
+                }).ToArray();
+            }).ToArray();
+
+            // -------------------- 3. Tạo hồ sơ người dùng --------------------
+            var userVectors = allProducts
+                .Select((p, idx) => new { p.Id, Vector = tfidfMatrix[idx] })
+                .Where(x => interactedIds.Contains(x.Id))
+                .Select(x => x.Vector)
+                .ToList();
+
+            // Trung bình cộng vector để tạo hồ sơ người dùng
+            double[] userProfile = new double[V];
+            foreach (var vec in userVectors)
+            {
+                for (int i = 0; i < V; i++)
+                    userProfile[i] += vec[i];
+            }
+            for (int i = 0; i < V; i++)
+                userProfile[i] /= userVectors.Count;
+
+            // -------------------- 4. Tính Cosine Similarity cho sản phẩm chưa tương tác --------------------
+            double CosineSimilarity(double[] a, double[] b)
+            {
+                double dot = 0.0, normA = 0.0, normB = 0.0;
+                for (int i = 0; i < a.Length; i++)
+                {
+                    dot += a[i] * b[i];
+                    normA += a[i] * a[i];
+                    normB += b[i] * b[i];
+                }
+                return dot / (Math.Sqrt(normA) * Math.Sqrt(normB) + 1e-9); // +1e-9 để tránh chia 0
+            }
+
+            var recommendations = allProducts
+                .Select((p, idx) => new
+                {
+                    Product = p,
+                    Score = interactedIds.Contains(p.Id)
+                        ? -1 // bỏ qua sản phẩm đã tương tác
+                        : CosineSimilarity(userProfile, tfidfMatrix[idx])
+                })
+                .OrderByDescending(x => x.Score)
                 .Take(8)
-                .ToListAsync();
+                .ToList();
 
             var likedSet = likedProductIds.ToHashSet();
-            return suggestedProducts.Select(p => new ProductResDto
+
+            // -------------------- 5. Map sang DTO --------------------
+            return recommendations.Select(x => new ProductResDto
             {
-                Id = p.Id,
-                Name = p.Name,
-                Price = p.Price,
-                Quantity=p.Quantity,
-                Description = p.Description,
-                Images = p.ProductImages.Select(img => new ProductImageResDto
+                Id = x.Product.Id,
+                Name = x.Product.Name,
+                Price = x.Product.Price,
+                Quantity = x.Product.Quantity,
+                Description = x.Product.Description,
+                Images = x.Product.ProductImages.Select(img => new ProductImageResDto
                 {
                     Id = img.Id,
                     Path = img.Path
                 }).ToList(),
-                IsLiked = likedSet.Contains(p.Id)
+                IsLiked = likedSet.Contains(x.Product.Id)
             }).ToList();
         }
 
-        // Block gợi ý sản phẩm - nếu muốn load AJAX riêng
+        // Action để load block gợi ý sản phẩm (AJAX hoặc render trực tiếp)
         public async Task<IActionResult> SuggestedProducts()
         {
             var dtos = await GetSuggestedProductsAsync();
             return PartialView("_ProductListPartial", dtos);
         }
+
 
         // Lấy userId đăng nhập
         private int GetUserId()
