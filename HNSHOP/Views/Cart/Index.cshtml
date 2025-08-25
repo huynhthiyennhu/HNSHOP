@@ -75,7 +75,14 @@
                                             <div class="cart_quantity_button">
                                                 <a href="javascript:void(0);" class="cart_quantity_down"
                                                    data-product-id="@item.ProductId" data-action="decrease"> - </a>
-                                                <input class="cart_quantity_input" type="text" value="@item.Quantity" readonly size="2" />
+                                                <input class="cart_quantity_input"
+                                                       type="number"
+                                                       value="@item.Quantity"
+                                                       min="1"
+                                                       max="@item.StockQuantity"
+                                                       data-product-id="@item.ProductId"
+                                                       data-max="@item.StockQuantity" />
+
                                                 <a href="javascript:void(0);" class="cart_quantity_up"
                                                    data-product-id="@item.ProductId" data-action="increase"> + </a>
                                             </div>
@@ -112,10 +119,10 @@
                         <td>Phí vận chuyển</td>
                         <td>Miễn phí</td>
                     </tr>
-                    <tr>
-                        <td>Tổng giảm giá</td>
-                        <td><span class="text-danger" id="cart-discount">- @ViewBag.TotalDiscount.ToString("N0") VNĐ</span></td>
-                    </tr>
+                    @* <tr> *@
+                    @*     <td>Tổng giảm giá</td> *@
+                    @*     <td><span class="text-danger" id="cart-discount">- @ViewBag.TotalDiscount.ToString("N0") VNĐ</span></td> *@
+                    @* </tr> *@
                     <tr>
                         <td><strong>Tổng thanh toán</strong></td>
                         <td>

@@ -45,7 +45,7 @@ namespace HNSHOP.Controllers
             // Tồn kho thấp
             ViewBag.LowStockProducts = _context.Products
                 .Include(p => p.Shop)
-                .Where(p => p.Quantity < 10 && !p.IsDeleted)
+                .Where(p => p.Quantity < 10)
                 .ToList();
 
             // Sản phẩm bị ẩn / hết hạn (SaleEvent.EndDate < Now)
@@ -54,7 +54,7 @@ namespace HNSHOP.Controllers
                     .ThenInclude(pe => pe.SaleEvent)
                 .Include(p => p.ProductType)
                 .Include(p => p.Shop)
-                .Where(p => p.IsDeleted && (p.Quantity==0))
+                .Where(p => p.IsDeleted || (p.Quantity==0))
                 .ToList();
 
             return View();

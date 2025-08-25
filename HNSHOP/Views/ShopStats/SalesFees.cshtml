@@ -1,0 +1,79 @@
+﻿@model List<HNSHOP.Dtos.Response.MonthlyShopFeeDto>
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Phí bán hàng";
+    var now = DateTime.UtcNow;
+}
+<section id="cart_items">
+    <div class="container p-5">
+        <div class="breadcrumbs">
+            <ol class="breadcrumb">
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li class="active">Phí bán hàng theo tháng</li>
+            </ol>
+        </div>
+        <h2 class="title text-center">@ViewData["Title"]</h2>
+        <div class="table-responsive cart_info">
+
+            <table class="table table-condensed">
+    <thead class="thead-dark">
+                    <tr class="cart_menu">
+                        <th><b>Tháng</b></th>
+                        <th><b>Doanh thu (VNĐ)</b></th>
+                        <th><b>Phí (3%)</b></th>
+                        <th class="text-center"><b>Trạng thái</b></th>
+                        <th class="text-center"><b>Chi tiết</b></th>
+
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var fee in Model)
+        {
+            <tr>
+                <td>@fee.MonthLabel</td>
+                <td>@fee.Revenue.ToString("N0", CultureInfo.GetCultureInfo("vi-VN"))</td>
+                <td>@fee.Fee.ToString("N0", CultureInfo.GetCultureInfo("vi-VN"))</td>
+                <td class="text-center">
+                    @if (fee.IsPaid)
+                    {
+                        <span class="text-success">
+                            <i class="fa fa-check-circle"></i> Đã thanh toán
+                        </span>
+                    }
+                    else if (
+                    fee.Year < now.Year ||
+                    (fee.Year == now.Year && fee.Month < now.Month)
+                    )
+                    {
+                        <form asp-controller="FeePayment" asp-action="Create" method="post" class="d-inline">
+                            <input type="hidden" name="month" value="@fee.Month" />
+                            <input type="hidden" name="year" value="@fee.Year" />
+                            <input type="hidden" name="amount" value="@fee.Fee.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" />
+                            <button type="submit" class="btn btn-sm btn-success" title="Thanh toán phí bán hàng tháng @fee.MonthLabel">
+                                <i class="fa fa-paypal"></i> Thanh toán qua PayPal
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <span class="text-muted">
+                            <i class="fa fa-clock-o"></i> Chưa đến hạn
+                        </span>
+                    }
+                </td>
+                <td class="text-center">
+                    <a asp-controller="ShopStats" asp-action="FeeDetails"
+                       asp-route-month="@fee.Month" asp-route-year="@fee.Year"
+                       class="btn btn-info btn-sm">
+                        Xem chi tiết
+                    </a>
+                </td>
+
+            </tr>
+        }
+    </tbody>
+</table>
+</div>
+</div>
+</section>

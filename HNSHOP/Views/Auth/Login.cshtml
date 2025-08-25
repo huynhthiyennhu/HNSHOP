@@ -9,29 +9,30 @@
     <h2 class="text-center">ĐĂNG NHẬP</h2>
 
     <form asp-action="Login" method="post" class="register-form">
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <!-- Hiển thị tất cả lỗi chung -->
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
 
         <!-- Email -->
-        <div class="input-group">
+        <div class="input-group mb-2">
             <span class="input-icon"><i class="fa fa-envelope"></i></span>
-            <input asp-for="Email" type="email" class="form-control" placeholder="Email" required />
+            <input asp-for="Email" type="email" class="form-control" placeholder="Email" />
         </div>
+        <span asp-validation-for="Email" class="text-danger"></span>
 
         <!-- Mật khẩu -->
-        <!-- Mật khẩu -->
-        <div class="input-group">
+        <div class="input-group mb-2">
             <span class="input-icon"><i class="fa fa-lock"></i></span>
-            <input asp-for="Password" type="password" class="form-control" placeholder="Mật khẩu" id="passwordLogin" required />
+            <input asp-for="Password" type="password" class="form-control" placeholder="Mật khẩu" id="passwordLogin" />
             <span class="toggle-password" onclick="togglePassword('passwordLogin','pwli')">
                 <i id="pwli" class="fa fa-eye"></i>
             </span>
         </div>
+        <span asp-validation-for="Password" class="text-danger"></span>
 
         <!-- Link Quên mật khẩu -->
         <div class="text-right mt-1">
             <a asp-action="ForgotPassword" class="text-decoration-none">Quên mật khẩu?</a>
         </div>
-
 
         <button type="submit" class="btn btn-primary w-100 mt-3">Đăng nhập</button>
     </form>
@@ -41,5 +42,7 @@
     </p>
 </div>
 
-
-
+@section Scripts {
+    <!-- Thêm script để hiển thị lỗi client-side -->
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -40,72 +40,114 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
     {
         return View();
     }
-
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterReqDto request)
     {
+        if (!ModelState.IsValid) return View(request);
 
-        var validationResult = await _registerValidator.ValidateAsync(request);
-        if (!validationResult.IsValid)
-        {
-            validationResult.AddToModelState(ModelState);
-            return View(request);
-        }
+        // Chuẩn hóa input (không ảnh hưởng validate, vì validate đã chạy ở trên)
+        request.Email = request.Email?.Trim().ToLowerInvariant();
+        request.Phone = request.Phone?.Trim();
+        request.Name = request.Name?.Trim();
 
+        // Kiểm tra trùng
         if (await _db.Accounts.AnyAsync(a => a.Email == request.Email))
         {
             ModelState.AddModelError("", "Email đã tồn tại.");
             return View(request);
         }
-
-        string hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
-        string verifyToken = GenerateVerificationToken();
-
-        var account = new Account
+        if (await _db.Accounts.AnyAsync(a => a.Phone == request.Phone))
         {
-            Email = request.Email,
-            Phone = request.Phone,
-            Password = hashedPassword,
-            RoleId =2,  
-            VerifyToken = verifyToken,
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now
-        };
-        
-
-        _db.Accounts.Add(account);
-        await _db.SaveChangesAsync();
-        var customer = new Customer
-                {
-                    Name = request.Name,
-                    AccountId = account.Id,
-                    CustomerTypeId = 1,
-                    Description = "Khách hàng mới"
-                };
-        _db.Customers.Add(customer);
-        await _db.SaveChangesAsync();
-
-        await _emailService.SendVerificationEmail(request.Email, verifyToken);
-
-        //  Gửi thông báo cho Admin khi có khách hàng đăng ký
-        var adminAccounts = await _db.Accounts
-            .Where(a => a.RoleId == 1 && a.IsVerified)
-            .ToListAsync();
-
-        foreach (var admin in adminAccounts)
-        {
-            await _notificationService.SendNotificationToAccountAsync(
-                accountId: admin.Id,
-                title: "Khách hàng mới đăng ký",
-                body: $"Người dùng \"{customer.Name}\" vừa đăng ký tài khoản.",
-                type: "Customer"
-            );
+            ModelState.AddModelError(nameof(request.Phone), "Số điện thoại đã được sử dụng.");
+            return View(request);
         }
 
+        await using var tx = await _db.Database.BeginTransactionAsync();
+        try
+        {
+            var now = DateTime.UtcNow;
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
+            var verifyToken = GenerateVerificationToken();
 
-        TempData["Message"] = "Đăng ký thành công! Vui lòng kiểm tra email để xác thực.";
-        return RedirectToAction("VerifyEmail");
+            var account = new Account
+            {
+                Email = request.Email,
+                Phone = request.Phone,
+                Password = hashedPassword,
+                RoleId = 2,
+                VerifyToken = verifyToken,
+                IsVerified = false,
+                CreatedAt = now,
+                UpdatedAt = now
+            };
+            _db.Accounts.Add(account);
+            await _db.SaveChangesAsync();
+
+            var customer = new Customer
+            {
+                Name = request.Name,
+                AccountId = account.Id,
+                CustomerTypeId = 1,
+                Description = "Khách hàng mới"
+            };
+            _db.Customers.Add(customer);
+            await _db.SaveChangesAsync();
+
+            // Gửi email xác thực (không chặn flow nếu lỗi)
+            try
+            {
+                await _emailService.SendVerificationEmail(request.Email, verifyToken);
+            }
+            catch
+            {
+                TempData["Warning"] = "Tạo tài khoản thành công nhưng gửi email xác thực chưa thành công. Vui lòng thử gửi lại.";
+            }
+
+            // Thông báo Admin (không chặn flow nếu lỗi)
+            try
+            {
+                var admins = await _db.Accounts
+                    .Where(a => a.RoleId == 1 && a.IsVerified)
+                    .ToListAsync();
+
+                foreach (var admin in admins)
+                {
+                    await _notificationService.SendNotificationToAccountAsync(
+                        accountId: admin.Id,
+                        title: "Khách hàng mới đăng ký",
+                        body: $"Người dùng \"{customer.Name}\" vừa đăng ký tài khoản.",
+                        type: "Customer"
+                    );
+                }
+            }
+            catch { /* ignore */ }
+
+            await tx.CommitAsync();
+
+            TempData["Message"] = "Đăng ký thành công! Vui lòng kiểm tra email để xác thực.";
+            return RedirectToAction("VerifyEmail");
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            await tx.RollbackAsync();
+            ModelState.AddModelError("", "Dữ liệu thay đổi trong lúc xử lý. Vui lòng thử lại.");
+            return View(request);
+        }
+        catch (DbUpdateException)
+        {
+            await tx.RollbackAsync();
+            ModelState.AddModelError("", "Có lỗi khi lưu dữ liệu. Vui lòng thử lại.");
+            return View(request);
+        }
+        catch (Exception)
+        {
+            await tx.RollbackAsync();
+            ModelState.AddModelError("", "Đã xảy ra lỗi không xác định. Vui lòng thử lại.");
+            return View(request);
+        }
     }
+
 
     // Hiển thị trang đăng ký Shop
     [HttpGet]
@@ -114,21 +156,34 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
         return View();
     }
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> RegisterShop(RegisterShopReqDto request)
     {
-        var validationResult = await _registerShopValidator.ValidateAsync(request);
-        if (!validationResult.IsValid)
+        // Nếu dùng FluentValidation Auto, không cần gọi _registerShopValidator.ValidateAsync
+        if (!ModelState.IsValid)
         {
-            validationResult.AddToModelState(ModelState);
             return View(request);
         }
 
+        request.Email = request.Email?.Trim().ToLower();
+        request.Phone = request.Phone?.Trim();
+        request.Name = request.Name?.Trim();
+
+        // Kiểm tra email đã tồn tại
         if (await _db.Accounts.AnyAsync(a => a.Email == request.Email))
         {
-            ModelState.AddModelError("", "Email đã tồn tại.");
+            ModelState.AddModelError(nameof(request.Email), "Email đã tồn tại.");
             return View(request);
         }
 
+        // Kiểm tra số điện thoại đã tồn tại
+        if (await _db.Accounts.AnyAsync(a => a.Phone == request.Phone))
+        {
+            ModelState.AddModelError(nameof(request.Phone), "Số điện thoại đã tồn tại.");
+            return View(request);
+        }
+
+        // Hash password
         string hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
         var account = new Account
@@ -136,9 +191,11 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
             Email = request.Email,
             Phone = request.Phone,
             Password = hashedPassword,
-            RoleId = 3,  
+            RoleId = 3, // Shop
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now,
+            IsApproved = false,
+            IsVerified = true // Nếu muốn xác thực qua email thì set false
         };
 
         _db.Accounts.Add(account);
@@ -154,11 +211,10 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
         await _db.SaveChangesAsync();
 
         await _notificationService.SendNotificationToAdminsAsync(
-         title: "Shop mới đăng ký",
-         body: $"Shop \"{shop.Name}\" vừa đăng ký và đang chờ duyệt.",
-         type: "Shop"
-     );
-
+            title: "Shop mới đăng ký",
+            body: $"Shop \"{shop.Name}\" vừa đăng ký và đang chờ duyệt.",
+            type: "Shop"
+        );
 
         TempData["Message"] = "Đăng ký shop thành công! Tài khoản đang chờ quản trị viên duyệt.";
         return RedirectToAction("Login");
@@ -219,25 +275,31 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
     {
         return View();
     }
-    
+
     [HttpPost]
-    public async Task<IActionResult> Login(LoginReqDto request)
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Login(LoginReqDto request, string? returnUrl = null)
     {
-        var validationResult = await _loginValidator.ValidateAsync(request);
-        if (!validationResult.IsValid)
-        {
-            validationResult.AddToModelState(ModelState);
-            return View(request);
-        }
+        if (!ModelState.IsValid) return View(request);
+
+        request.Email = request.Email?.Trim().ToLowerInvariant();
 
         var account = await _db.Accounts
             .Include(a => a.Role)
             .Include(a => a.Customer)
             .Include(a => a.Shop)
-            .FirstOrDefaultAsync(a => a.Email == request.Email);
+            .FirstOrDefaultAsync(a => a.Email.ToLower() == request.Email);
 
+       
+        if (account == null)
+        {
+            _ = BCrypt.Net.BCrypt.Verify(request.Password ?? string.Empty,
+                                         "$2a$11$abcdefghijklmnopqrstuvC9tH5B1m0Nw4v0i3hBv2N6x5oG1P2i3");
+            ModelState.AddModelError("", "Email hoặc mật khẩu không chính xác.");
+            return View(request);
+        }
 
-        if (account == null || !BCrypt.Net.BCrypt.Verify(request.Password, account.Password))
+        if (!BCrypt.Net.BCrypt.Verify(request.Password ?? string.Empty, account.Password))
         {
             ModelState.AddModelError("", "Email hoặc mật khẩu không chính xác.");
             return View(request);
@@ -249,42 +311,45 @@ public class AuthController(ApplicationDbContext db, IEmailService emailService,
             return View(request);
         }
 
+        
         if (account.RoleId == 3 && !account.IsApproved)
         {
             ModelState.AddModelError("", "Tài khoản Shop của bạn đang chờ duyệt.");
             return View(request);
         }
 
-
-        var role = account.Role?.Name ?? ConstConfig.UserRoleName;
-
+        // Claims
+        var roleName = account.Role?.Name ?? ConstConfig.UserRoleName;
         var claims = new List<Claim>
     {
         new Claim(ClaimTypes.NameIdentifier, account.Id.ToString()),
         new Claim(ClaimTypes.Email, account.Email),
-        new Claim(ClaimTypes.Role, role), 
+        new Claim(ClaimTypes.Role, roleName),
         new Claim(ConstConfig.UserIdClaimType, account.Id.ToString()),
         new Claim(ClaimTypes.Name, account.Customer?.Name ?? account.Shop?.Name ?? "Admin"),
-        new Claim("Avatar", account.Avatar ?? "default.png"),
-
+        new Claim("Avatar", account.Avatar ?? "default.png")
     };
-
         if (account.Shop != null)
         {
             claims.Add(new Claim("ShopId", account.Shop.Id.ToString()));
         }
 
-        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        var authProperties = new AuthenticationProperties
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var authProps = new AuthenticationProperties
         {
-            IsPersistent = true,
-            ExpiresUtc = DateTime.UtcNow.AddMinutes(ConstConfig.ExperyTimeJwtToken)
+            IsPersistent = true, 
+            ExpiresUtc = DateTime.UtcNow.AddMinutes(ConstConfig.ExperyTimeJwtToken),
+            AllowRefresh = true
         };
 
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
-            new ClaimsPrincipal(claimsIdentity),
-            authProperties);
+            new ClaimsPrincipal(identity),
+            authProps
+        );
+
+        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+            return Redirect(returnUrl);
 
         return RedirectToAction("Index", "Home");
     }

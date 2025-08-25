@@ -6,6 +6,10 @@
 
 }
 <style>
+    .low-stock {
+        background-color: #ffe5e5 !important; /* đỏ nhạt */
+    }
+
     /* Canh giữa và nằm ngang phần tìm kiếm */
     div.dataTables_filter {
         display: flex;
@@ -44,6 +48,7 @@
        
             @if (Model != null && Model.Count > 0)
                 {
+
             <div class="table-responsive cart_info">
                 <table id="productTable" class="table table-condensed">
                     <thead>
@@ -51,7 +56,7 @@
                             <th><b>Hình ảnh</b></th>
                             <th><b>Sản phẩm</b></th>
                             <th><b>Giá</b></th>
-                            <th><b>Số lượng</b></th>
+                            <th class="sorting"> <b>Số lượng</b> </th>
 
                             <th><b>Hành động</b></th>
                         </tr>
@@ -59,9 +64,9 @@
                     <tbody>
                     @foreach (var product in Model)
                     {
-               
-                    <tr>
-                        <td>
+
+                         <tr class="@(product.Quantity < 10 ? "low-stock" : "")">
+                                <td>
                             @if (product.Images != null && product.Images.Count > 0)
                             {
                                 <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id">
@@ -73,7 +78,13 @@
                             @((product.Name?.Length > 80) ? product.Name.Substring(0, 80) + "..." : product.Name)
                         </td>
                         <td>@product.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</td>
-                        <td>@product.Quantity</td>
+                                <td>
+                                    <span id="quantity-@product.Id">@product.Quantity  </span>
+                                    <button class="btn btn-sm btn-outline-primary ml-2 update-quantity-btn" data-id="@product.Id">
+                                        +
+                                    </button>
+                                </td>
+
 
                         <td>
                             <div class="d-flex justify-content-center gap-2">
@@ -191,10 +202,10 @@
                         <input type="number" name="Price" id="editProductPrice" class="form-control" required />
                     </div>
 
-                    <div class="form-group">
-                        <label for="editProductQuantity">Số lượng</label>
-                        <input type="number" name="Quantity" id="editProductQuantity" class="form-control" required />
-                    </div>
+                    @* <div class="form-group"> *@
+                    @*     <label for="editProductQuantity">Số lượng</label> *@
+                    @*     <input type="number" name="Quantity" id="editProductQuantity" class="form-control" required /> *@
+                    @* </div> *@
 
                     <div class="form-group">
                         <label for="editProductDescription">Mô tả</label>
@@ -419,6 +430,38 @@
                     }
                 });
             });
+                    
+            
+            
+            $(document).on("click", ".update-quantity-btn", function () {
+            const productId = $(this).data("id");
+            const amount = prompt("Nhập số lượng cần thêm:", 1);
+
+            const parsedAmount = parseInt(amount);
+            if (isNaN(parsedAmount) || parsedAmount <= 0) {
+                alert("Vui lòng nhập số hợp lệ!");
+                return;
+            }
+
+            $.ajax({
+                url: '/Products/UpdateQuantity',
+                type: 'POST',
+                data: { id: productId, addQuantity: parsedAmount },
+                headers: {
+                    "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (res) {
+                    alert(res.message);
+                    if (res.success) {
+                        $(`#quantity-${productId}`).text(res.newQuantity);
+                    }
+                },
+                error: function (xhr) {
+                    alert("Lỗi khi cập nhật số lượng: " + xhr.responseText);
+                }
+            });
+        });
+
 
         });
     </script>
@@ -433,6 +476,7 @@
                 "lengthChange": false,
                 "searching": true,
                 "ordering": true,
+                "order": [[3, 'asc']],
                 "info": true,
                 "autoWidth": false,
                 "language": {

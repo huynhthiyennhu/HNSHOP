@@ -12,6 +12,7 @@ using System.Security.Claims;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using HNSHOP.Utils.EnumTypes;
+using System.Globalization;
 
 public class ProductsController(ApplicationDbContext db, IMapper mapper, CartService cartService, IWebHostEnvironment env) : Controller
 {
@@ -62,19 +63,32 @@ public class ProductsController(ApplicationDbContext db, IMapper mapper, CartSer
         var shopProducts = await _db.Products.Where(p => (!p.IsDeleted))
             .Include(p => p.ProductImages)
             .Where(p => p.ShopId == product.ShopId && p.Id != id)
-            .Take(4)
+            .Take(6)
             .ToListAsync();
 
-        // Không cần kiểm tra đã mua hay đã đánh giá nữa
-        // Không cần lấy thông tin Customer nếu không dùng
 
         var productDto = _mapper.Map<DetailProductResDto>(product);
         var relatedProductsDto = _mapper.Map<List<ProductResDto>>(relatedProducts);
         var shopProductsDto = _mapper.Map<List<ProductResDto>>(shopProducts);
         var shopDto = _mapper.Map<ShopResDto>(product.Shop);
+        // Tính trung bình đánh giá toàn bộ sản phẩm của shop
+        var shopRatingData = await _db.Ratings
+    .Include(r => r.Product) // quan trọng!
+    .Where(r => r.Product.ShopId == product.ShopId && !r.Product.IsDeleted)
+    .GroupBy(r => r.Product.ShopId)
+    .Select(g => new
+    {
+        AverageRating = (float)g.Average(r => r.RatingValue),
+        RatingCount = g.Count()
+    })
+    .FirstOrDefaultAsync();
 
+
+        float shopAverageRating = shopRatingData != null ? (float)shopRatingData.AverageRating : 0f;
+        int shopRatingCount = shopRatingData?.RatingCount ?? 0;
         productDto.SoldQuantity = soldQuantity;
-
+        ViewBag.ShopAverageRating = shopRatingData?.AverageRating ?? 0f;
+        ViewBag.ShopRatingCount = shopRatingData?.RatingCount ?? 0;
         ViewBag.RelatedProducts = relatedProductsDto;
         ViewBag.ShopProducts = shopProductsDto;
         ViewBag.Shop = shopDto;
@@ -104,19 +118,37 @@ public class ProductsController(ApplicationDbContext db, IMapper mapper, CartSer
     public async Task<IActionResult> Manage()
     {
         int userId = GetUserIdFromToken();
+
         var shop = await _db.Shops
-            .Include(s => s.Products)
-                .ThenInclude(p => p.ProductImages)
-            .FirstOrDefaultAsync(s => s.AccountId == userId);
+            .Where(s => s.AccountId == userId)
+            .Select(s => new
+            {
+                Shop = s,
+                Products = s.Products
+                    .Where(p => !p.IsDeleted)
+                    .Select(p => new
+                    {
+                        Product = p,
+                        Images = p.ProductImages
+                    }).ToList()
+            })
+            .FirstOrDefaultAsync();
 
         if (shop == null)
             return NotFound();
+
+        foreach (var item in shop.Products)
+        {
+            item.Product.ProductImages = item.Images.ToList();
+        }
+
         ViewBag.ProductTypes = await _db.ProductTypes.ToListAsync();
 
-        var products = _mapper.Map<List<ProductResDto>>(shop.Products);
+        var products = _mapper.Map<List<ProductResDto>>(shop.Products.Select(x => x.Product).ToList());
 
         return View("ManageProducts", products);
     }
+
 
     [Authorize(Roles = ConstConfig.ShopRoleName)]
     [HttpGet]
@@ -153,9 +185,6 @@ public class ProductsController(ApplicationDbContext db, IMapper mapper, CartSer
 
         return Json(new { product = productDto, productTypes });
     }
-
-
-
 
 
 
@@ -204,7 +233,7 @@ public class ProductsController(ApplicationDbContext db, IMapper mapper, CartSer
             product.Name = productReq.Name;
             product.Description = productReq.Description;
             product.Price = productReq.Price;
-            product.Quantity = productReq.Quantity;
+            //product.Quantity = productReq.Quantity;
 
             // Kiểm tra nếu người dùng chọn loại sản phẩm mới
             if (productReq.ProductTypeId != 0 && productReq.ProductTypeId != product.ProductTypeId)
@@ -237,7 +266,30 @@ public class ProductsController(ApplicationDbContext db, IMapper mapper, CartSer
     }
 
     [Authorize(Roles = ConstConfig.ShopRoleName)]
+    [HttpPost]
+    public async Task<IActionResult> UpdateQuantity(int id, int addQuantity)
+    {
+        if (addQuantity <= 0)
+        {
+            return Json(new { success = false, message = "Số lượng phải lớn hơn 0!" });
+        }
 
+        var userId = GetUserIdFromToken();
+        var product = await _db.Products
+            .FirstOrDefaultAsync(p => p.Id == id && p.Shop.AccountId == userId);
+
+        if (product == null)
+        {
+            return Json(new { success = false, message = "Không tìm thấy sản phẩm!" });
+        }
+
+        product.Quantity += addQuantity;
+        await _db.SaveChangesAsync();
+
+        return Json(new { success = true, message = "Đã cập nhật số lượng sản phẩm!", newQuantity = product.Quantity });
+    }
+
+    [Authorize(Roles = ConstConfig.ShopRoleName)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
@@ -416,6 +468,5 @@ public class ProductsController(ApplicationDbContext db, IMapper mapper, CartSer
         return View(favoriteProducts);
     }
 
-
-
+   
 }

@@ -125,7 +125,43 @@
 							<p><b>Chi tiết :</b> @Model.ProductType.Description</p>
 						</div>
 						<div class="tab-pane fade" id="companyprofile">
-							<p><b>Tên Shop :</b><a asp-controller="Accounts" asp-action="Index" asp-route-id="@shop.AccountId"> @shop.Name</a></p>
+							<p>
+								<b>Tên Shop :</b>
+								<a asp-controller="Accounts" asp-action="Index" asp-route-id="@shop.AccountId">
+									@shop.Name
+								</a>
+
+								@if (ViewBag.ShopRatingCount > 0)
+								{
+									@if (ViewBag.ShopRatingCount > 0)
+									{
+										<span class="text-warning ml-2">
+											@for (int i = 1; i <= 5; i++)
+											{
+												if (i <= Math.Floor((float)ViewBag.ShopAverageRating))
+												{
+													<i class="fa fa-star"></i>
+												}
+												else if (i - (float)ViewBag.ShopAverageRating < 1)
+												{
+													<i class="fa fa-star-half-o"></i>
+												}
+												else
+												{
+													<i class="fa fa-star-o"></i>
+												}
+											}
+										</span>
+										<small>(@ViewBag.ShopAverageRating.ToString("0.0"))</small>
+									}
+
+								}
+								else
+								{
+									<small class="text-muted">(Chưa có đánh giá)</small>
+								}
+							</p>
+
 							<p><b>Chi tiết :</b> @shop.Description</p>
 							@if (User.Identity.IsAuthenticated && User.IsInRole("User"))
 							{

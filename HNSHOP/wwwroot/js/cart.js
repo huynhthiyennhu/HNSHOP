@@ -40,17 +40,64 @@
         })
     })
 
-    // Cập nhật số lượng
+    // Tăng/giảm số lượng
     $(document).on("click", ".cart_quantity_up, .cart_quantity_down", function (e) {
         e.preventDefault()
         const productId = $(this).data("product-id")
         const action = $(this).data("action")
         const input = $(this).siblings(".cart_quantity_input")
+        const maxQty = parseInt(input.data("max"))
         let quantity = parseInt(input.val())
 
-        if (action === "increase") quantity++
-        else if (action === "decrease" && quantity > 1) quantity--
+        if (action === "increase") {
+            if (quantity >= maxQty) {
+                Swal.fire({
+                    icon: "warning",
+                    title: "Vượt quá tồn kho",
+                    text: `Chỉ còn ${maxQty} sản phẩm trong kho.`,
+                    timer: 2000,
+                    showConfirmButton: false
+                })
+                return
+            }
+            quantity++
+        } else if (action === "decrease" && quantity > 1) {
+            quantity--
+        }
 
+
+        updateCartQuantity(productId, quantity, input)
+    })
+
+    // Nhập tay số lượng
+    $(document).on("change", ".cart_quantity_input", function () {
+        const input = $(this)
+        const productId = input.data("product-id")
+        const maxQty = parseInt(input.data("max"))
+        let quantity = parseInt(input.val())
+
+        if (isNaN(quantity) || quantity < 1) {
+            quantity = 1
+        }
+
+        if (quantity > maxQty) {
+            Swal.fire({
+                icon: "warning",
+                title: "Vượt quá tồn kho",
+                text: `Số lượng tối đa bạn có thể chọn là ${maxQty}.`,
+                timer: 2000,
+                showConfirmButton: false
+            })
+            quantity = maxQty
+        }
+
+        input.val(quantity)
+        updateCartQuantity(productId, quantity, input)
+    })
+
+
+    // Hàm cập nhật giỏ hàng
+    function updateCartQuantity(productId, quantity, input) {
         $.ajax({
             url: "/Cart/UpdateCart",
             type: "POST",
@@ -60,18 +107,17 @@
                 if (res.success) {
                     input.val(quantity)
                     updateTotalPrice(productId, quantity)
-                    updateCartCount(res.cartCount)       
+                    updateCartCount(res.cartCount)
                     updateCartTotals()
-
                 } else {
-                    Swal.fire({ icon: "error", title: "Lỗi!", text: "Không thể cập nhật số lượng." })
+                    Swal.fire({ icon: "error", title: "Lỗi!", text: res.message || "Không thể cập nhật số lượng." })
                 }
             },
             error: () => {
                 Swal.fire({ icon: "error", title: "Có lỗi xảy ra!", text: "Vui lòng thử lại sau." })
             }
         })
-    })
+    }
 
     // Xóa sản phẩm
     $(document).on("click", ".cart-remove-item", function (e) {
@@ -86,47 +132,57 @@
             confirmButtonText: "Xóa",
             cancelButtonText: "Hủy"
         }).then(result => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: "/Cart/RemoveFromCart",
-                    type: "POST",
-                    contentType: "application/json",
-                    data: JSON.stringify({ ProductId: productId }),
-                    success: function (res) {
-                        if (res.success) {
-                            const $row = $(`#cart-item-${productId}`)
-                            const $shop = $(`#shop-${shopId}`)
+            if (!result.isConfirmed) return
 
-                            $row.fadeOut(200, function () {
+            $.ajax({
+                url: "/Cart/RemoveFromCart",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ ProductId: productId }),
+                success: function (res) {
+                    if (!res.success) {
+                        Swal.fire({ icon: "error", title: "Lỗi!", text: "Không thể xóa sản phẩm." })
+                        return
+                    }
+
+                    const $row = $(`#cart-item-${productId}`)
+                    const $shop = $(`#shop-${shopId}`)
+
+                    $row.fadeOut(200, function () {
+                        $(this).remove()
+
+                        const hasOtherItems = $shop.find("tbody tr").length > 0
+                        if (!hasOtherItems) {
+                            $shop.fadeOut(200, function () {
                                 $(this).remove()
 
-                                const hasOtherItems = $shop.find("tbody tr").length > 0
-                                if (!hasOtherItems) {
-                                    $shop.fadeOut(200, function () {
-                                        $(this).remove()
-
-                                        if ($(".shop-group").length === 0) {
-                                            $("#cart-container").html(`
-                                                <h2 class="title text-center">
-                                                    Giỏ hàng của bạn đang trống.
-                                                    <a href="/">Tiếp tục mua sắm</a>
-                                                </h2>
-                                            `)
-                                        }
-                                    })
+                                if ($(".shop-group").length === 0) {
+                                    $("#cart-container").html(`
+                                        <h2 class="title text-center">
+                                            Giỏ hàng của bạn đang trống.
+                                            <a href="/">Tiếp tục mua sắm</a>
+                                        </h2>
+                                    `)
                                 }
-                            })
 
-                            updateCartCount(res.cartCount)
+                                finalizeAfterRemove()
+                            })
                         } else {
-                            Swal.fire({ icon: "error", title: "Lỗi!", text: "Không thể xóa sản phẩm." })
+                            finalizeAfterRemove()
                         }
-                    },
-                    error: () => {
-                        Swal.fire({ icon: "error", title: "Có lỗi xảy ra!", text: "Vui lòng thử lại." })
+                    })
+
+                    function finalizeAfterRemove() {
+                        updateCartTotals()
+                        if (typeof res.cartCount !== "undefined") {
+                            updateCartCount(res.cartCount)
+                        }
                     }
-                })
-            }
+                },
+                error: () => {
+                    Swal.fire({ icon: "error", title: "Có lỗi xảy ra!", text: "Vui lòng thử lại." })
+                }
+            })
         })
     })
 
@@ -171,19 +227,13 @@
     function updateTotalPrice(productId, quantity) {
         const price = parseFloat($(`#product-price-${productId}`).data("price"))
         const total = price * quantity
-        $(`#product-total-${productId}`).text(total.toLocaleString() + " VNĐ")
-
+        $(`#product-total-${productId}`).text(total.toLocaleString("vi-VN") + " VNĐ")
     }
 
-    // Cập nhật số sản phẩm trong biểu tượng
-    function updateCartCount(count) {
-        const $cart = $("#cart-count")
-        if (count > 0) $cart.text(count).show()
-        else $cart.text(0).hide()
-    }
+    // Cập nhật tổng giỏ hàng
     function updateCartTotals() {
         let total = 0
-        let totalDiscount = 0 // Nếu cần hỗ trợ giảm giá từng sản phẩm thì xử lý tại đây
+        let totalDiscount = 0
 
         $(".cart_total_price").each(function () {
             const raw = $(this).text().replace(/[^\d]/g, "")
@@ -198,8 +248,14 @@
         $("#finalTotal").val(final)
     }
 
+    // Cập nhật số sản phẩm trong biểu tượng
+    function updateCartCount(count) {
+        const $cart = $("#cart-count")
+        if (count > 0) $cart.text(count).show()
+        else $cart.text(0).hide()
+    }
 
-    // Gọi khi load trang
+    // Khởi tạo khi load trang
     $.get("/Cart/GetCartCount", function (res) {
         updateCartCount(res.count)
     })

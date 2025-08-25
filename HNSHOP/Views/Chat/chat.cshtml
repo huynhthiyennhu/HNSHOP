@@ -11,9 +11,16 @@
         ? selectedConvo?.Shop?.Name ?? "Shop"
         : selectedConvo?.Customer?.Name ?? "Khách";
 
-    string receiverAvatar = senderRole == "Customer"
-        ? selectedConvo?.Shop?.Account?.Avatar ?? "default.png"
-        : selectedConvo?.Customer?.Account?.Avatar ?? "default.png";
+    string receiverAvatar = string.IsNullOrWhiteSpace(
+     senderRole == "Customer"
+         ? selectedConvo?.Shop?.Account?.Avatar
+         : selectedConvo?.Customer?.Account?.Avatar
+         ) ? "no-avatar.jpg" : (
+     senderRole == "Customer"
+         ? selectedConvo?.Shop?.Account?.Avatar
+         : selectedConvo?.Customer?.Account?.Avatar
+         );
+
 
     int? conversationIdDangXoa = ViewBag.ConversationId as int?;
     if (!conversations.Any(c => c.Id == conversationIdDangXoa))
@@ -240,9 +247,12 @@
                         @foreach (var convo in conversations)
                         {
                             string name = senderRole == "Customer" ? convo.Shop?.Name ?? "Shop" : convo.Customer?.Name ?? "Khách";
-                            string avatar = senderRole == "Customer"
-                            ? convo.Shop?.Account?.Avatar ?? "default.png"
-                            : convo.Customer?.Account?.Avatar ?? "default.png";
+                            string rawAvatar = senderRole == "Customer"
+                            ? convo.Shop?.Account?.Avatar
+                            : convo.Customer?.Account?.Avatar;
+
+                            string avatar = string.IsNullOrWhiteSpace(rawAvatar) ? "no-avatar.jpg" : rawAvatar;
+
                             string action = senderRole == "Customer" ? "WithShop" : "WithCustomer";
                             object routeValues = senderRole == "Customer"
                             ? new { shopId = convo.ShopId }
@@ -300,7 +310,7 @@
                             <div class="@rowClass">
                                 @if (!isMine)
                                 {
-                                    <img src="~/images/hnshop/avatar/@(avatar ?? "default.png")" class="chat-avatar mr-2" />
+                                    <img src="~/images/hnshop/avatar/@(string.IsNullOrWhiteSpace(avatar) ? "no-avatar.jpg" : avatar)" class="chat-avatar mr-2" />
                                 }
                                 <div class="@bubbleClass">
                                     @if (msg.Content != null && (
@@ -318,7 +328,7 @@
                                 </div>
                                 @* @if (isMine) *@
                                 @* { *@
-                                @*     <img src="~/images/hnshop/avatar/@(avatar ?? "default.png")" class="chat-avatar ml-2" /> *@
+                                @*     <img src="~/images/hnshop/avatar/@(avatar ?? "no-avatar.jpg")" class="chat-avatar ml-2" /> *@
                                 @* } *@
                             </div>
                         }
@@ -360,117 +370,56 @@
         </div>
     </div>
 </section>
-
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
     <script>
-        const conversationId = "@selectedConversationId";
-        const senderId = parseInt("@senderId");
-        const senderRole = "@senderRole";
-        // Enter gửi
+        const conversationId = "@selectedConversationId"
+        const senderId = parseInt("@senderId")
+        const senderRole = "@senderRole"
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;")
+        }
+
         $(document).ready(function () {
             $("#messageInput").keypress(function (e) {
                 if (e.which === 13 && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
+                    e.preventDefault()
+                    sendMessage()
                 }
-            });
-        });
-        // SignalR
-        const connection = new signalR.HubConnectionBuilder().withUrl("/chathub").build();
-        connection.on("ReceiveMessage", function (role, id, message, sentAt, avatar, isMine) {
-            const chatBox = document.getElementById("chatMessages");
-            if (!chatBox) return;
-            const alignment = isMine ? "message-row right" : "message-row";
-            const bubbleClass = isMine ? "message-bubble sender" : "message-bubble receiver";
+            })
+        })
+
+        const connection = new signalR.HubConnectionBuilder().withUrl("/chathub").build()
+
+        connection.on("ReceiveMessage", function (role, id, message, sentAt, avatar) {
+            const chatBox = document.getElementById("chatMessages")
+            if (!chatBox) return
+
+            // ✅ Tự xác định isMine theo người gửi (id & role)
+            const isMine = role === senderRole && parseInt(id) === senderId
+
+            const alignment = isMine ? "message-row right" : "message-row"
+            const bubbleClass = isMine ? "message-bubble sender" : "message-bubble receiver"
+            const avatarUrl = avatar && avatar.trim() !== "" ? avatar : "no-avatar.jpg"
             const avatarHtml = !isMine
-                ? `<img src='/images/hnshop/avatar/${avatar || "default.png"}' class='chat-avatar mr-2' />`
-                : "";
-            // const myAvatarHtml = isMine
-            //     ? `<img src='/images/hnshop/avatar/${avatar || "default.png"}' class='chat-avatar ml-2' />`
-            //     : "";
+                ? `<img src='/images/hnshop/avatar/${avatarUrl}' class='chat-avatar mr-2' />`
+                : ""
+
             const timeText = sentAt
                 ? new Date(sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const isImage = message.match(/\.(jpeg|jpg|gif|png|webp)$/i);
+                : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+            const isImage = /\.(jpeg|jpg|gif|png|webp)$/i.test(message || "")
             const contentHtml = isImage
                 ? `<img src="${message}" alt="Ảnh" style="max-width: 220px; border-radius: 12px;" />`
-                : `<div>${message}</div>`;
-            // const html = `
-            //     <div class="${alignment}">
-            //         ${avatarHtml}
-            //         <div class="${bubbleClass}">
-            //             ${contentHtml}
-            //             <div class="message-meta">${timeText}</div>
-            //         </div>
-            //         ${myAvatarHtml}
-            //     </div>`;
-            chatBox.insertAdjacentHTML("beforeend", html);
-            scrollToBottom();
-        });
-        connection.start().then(function () {
-            if (conversationId) {
-                connection.invoke("JoinConversation", conversationId)
-                    .catch(err => console.error("❌ JoinConversation lỗi:", err));
-                // Đánh dấu đã đọc
-                $.post("/Chat/MarkAsRead", { conversationId: conversationId })
-                    .done(() => { $('#chatBadge').hide(); });
-            }
-        }).catch(err => console.error("❌ Kết nối SignalR lỗi:", err));
-        function sendMessage() {
-            const msg = document.getElementById("messageInput").value.trim();
-            if (!msg) return;
-            // Hiển thị ngay lập tức
-            appendMessageToChatBox(msg, new Date(), true, null); // avatar = null sẽ lấy default
-            connection.invoke("SendToConversation", conversationId, senderRole, senderId, msg)
-                .catch(err => console.error("❌ Gửi lỗi:", err));
-            document.getElementById("messageInput").value = '';
-        }
-                function scrollToBottom() {
-            const chatBox = document.getElementById("chatMessages");
-            if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
-        }
-        $(document).ready(function () { scrollToBottom(); });
-        async function uploadImageAndSend() {
-            const fileInput = document.getElementById("imageInput");
-            const file = fileInput.files[0];
-            if (!file) return;
+                : `<div>${escapeHtml(message || "")}</div>`
 
-            const formData = new FormData();
-            formData.append("file", file);
-
-            try {
-                const response = await fetch("/Chat/UploadImage", { method: "POST", body: formData });
-                if (!response.ok) throw new Error("Lỗi upload ảnh");
-
-                const imageUrl = await response.text();
-
-                // 🔹 Hiển thị ngay lập tức
-                appendMessageToChatBox(imageUrl, new Date(), true, null);
-
-                // 🔹 Gửi cho SignalR để các client khác nhận
-                connection.invoke("SendToConversation", conversationId, senderRole, senderId, imageUrl)
-                    .catch(err => console.error("❌ Gửi ảnh lỗi:", err));
-
-                fileInput.value = '';
-            } catch (error) {
-                alert(error.message);
-            }
-        }
-                        function appendMessageToChatBox(message, sentAt, isMine, avatar) {
-            const chatBox = document.getElementById("chatMessages");
-            const alignment = isMine ? "message-row right" : "message-row";
-            const bubbleClass = isMine ? "message-bubble sender" : "message-bubble receiver";
-            const avatarHtml = !isMine
-                ? `<img src='/images/hnshop/avatar/${avatar || "default.png"}' class='chat-avatar mr-2' />`
-                : "";
-            const timeText = sentAt
-                ? new Date(sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const isImage = message.match(/\.(jpeg|jpg|gif|png|webp)$/i);
-            const contentHtml = isImage
-                ? `<img src="${message}" alt="Ảnh" style="max-width: 220px; border-radius: 12px;" />`
-                : `<div>${message}</div>`;
             const html = `
                 <div class="${alignment}">
                     ${avatarHtml}
@@ -478,10 +427,92 @@
                         ${contentHtml}
                         <div class="message-meta">${timeText}</div>
                     </div>
-                </div>`;
-            chatBox.insertAdjacentHTML("beforeend", html);
-            scrollToBottom();
+                </div>`
+
+            chatBox.insertAdjacentHTML("beforeend", html)
+            scrollToBottom()
+        })
+
+        connection.start().then(function () {
+            if (conversationId) {
+                connection.invoke("JoinConversation", String(conversationId))
+                    .catch(err => console.error("❌ JoinConversation lỗi:", err))
+
+                $.post("/Chat/MarkAsRead", { conversationId: conversationId })
+                    .done(() => { $('#chatBadge').hide() })
+            }
+            scrollToBottom()
+        }).catch(err => console.error("❌ Kết nối SignalR lỗi:", err))
+
+        function sendMessage() {
+            const input = document.getElementById("messageInput")
+            const msg = input.value.trim()
+            if (!msg) return
+
+            // appendMessageToChatBox(msg, new Date(), true, null)
+            connection.invoke("SendToConversation", conversationId, senderRole, senderId, msg)
+                .catch(err => console.error("❌ Gửi lỗi:", err))
+
+            input.value = ''
         }
 
+        async function uploadImageAndSend() {
+            const fileInput = document.getElementById("imageInput")
+            const file = fileInput.files[0]
+            if (!file) return
+
+            const formData = new FormData()
+            formData.append("file", file)
+
+            try {
+                const response = await fetch("/Chat/UploadImage", { method: "POST", body: formData })
+                if (!response.ok) throw new Error("Lỗi upload ảnh")
+                const imageUrl = await response.text()
+
+                // appendMessageToChatBox(imageUrl, new Date(), true, null)
+
+                connection.invoke("SendToConversation", conversationId, senderRole, senderId, imageUrl)
+                    .catch(err => console.error("❌ Gửi ảnh lỗi:", err))
+
+                fileInput.value = ''
+            } catch (error) {
+                alert(error.message)
+            }
+        }
+
+        function appendMessageToChatBox(message, sentAt, isMine, avatar) {
+            const chatBox = document.getElementById("chatMessages")
+            const alignment = isMine ? "message-row right" : "message-row"
+            const bubbleClass = isMine ? "message-bubble sender" : "message-bubble receiver"
+            const avatarHtml = !isMine
+                ? `<img src='/images/hnshop/avatar/${avatar || "no-avatar.jpg"}' class='chat-avatar mr-2' />`
+                : ""
+
+            const timeText = sentAt
+                ? new Date(sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+            const isImage = /\.(jpeg|jpg|gif|png|webp)$/i.test(message || "")
+            const contentHtml = isImage
+                ? `<img src="${message}" alt="Ảnh" style="max-width: 220px; border-radius: 12px;" />`
+                : `<div>${escapeHtml(message || "")}</div>`
+
+            const html = `
+                <div class="${alignment}">
+                    ${avatarHtml}
+                    <div class="${bubbleClass}">
+                        ${contentHtml}
+                        <div class="message-meta">${timeText}</div>
+                    </div>
+                </div>`
+
+            chatBox.insertAdjacentHTML("beforeend", html)
+            scrollToBottom()
+        }
+
+        function scrollToBottom() {
+            const chatBox = document.getElementById("chatMessages")
+            if (chatBox) chatBox.scrollTop = chatBox.scrollHeight
+        }
     </script>
 }

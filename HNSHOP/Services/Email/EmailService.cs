@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Globalization;
+using System.Net;
 using System.Net.Mail;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -64,7 +65,23 @@ namespace HNSHOP.Services
         <p>Trân trọng,<br/>Hệ thống HNSHOP</p>";
             await SendGeneralEmailAsync(email, subject, body);
         }
+        public async Task SendFeePaymentConfirmationEmail(string email, string shopName, string monthLabel, decimal amount)
+        {
+            string subject = "Xác nhận thanh toán phí bán hàng";
 
+            string body = $@"
+        <p>Xin chào <strong>{shopName}</strong>,</p>
+        <p>Bạn đã <strong>thanh toán thành công phí bán hàng tháng {monthLabel}</strong>.</p>
+        <ul>
+            <li><strong>Số tiền:</strong> {amount.ToString("N0", CultureInfo.GetCultureInfo("vi-VN"))} VNĐ</li>
+            <li><strong>Thời gian:</strong> {DateTime.Now:HH:mm dd/MM/yyyy}</li>
+        </ul>
+        <p>Cảm ơn bạn đã sử dụng nền tảng HNSHOP.</p>
+        <p>Trân trọng,<br/>Hệ thống HNSHOP</p>
+    ";
+
+            await SendGeneralEmailAsync(email, subject, body);
+        }
 
     }
 }

@@ -36,6 +36,7 @@ namespace HNSHOP.Controllers
                         .ThenInclude(d => d.Product)
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
+            
 
             return View(orders);
         }
@@ -72,7 +73,6 @@ namespace HNSHOP.Controllers
                     var product = detail.Product;
                     if (product == null) continue;
 
-                    // Tìm sự kiện giảm giá đang áp dụng
                     var activeSaleEvent = product.ProductSaleEvents?
                         .Select(pse => pse.SaleEvent)
                         .FirstOrDefault(se => se.StartDate <= DateTime.UtcNow && se.EndDate >= DateTime.UtcNow);
@@ -81,18 +81,14 @@ namespace HNSHOP.Controllers
                     decimal unitPrice = product.Price;
                     decimal finalPrice = unitPrice * (1 - (decimal)discount / 100);
 
-                    // Lưu giá và giảm giá vào chi tiết đơn hàng
                     detail.UnitPrice = unitPrice;
                     detail.DiscountPercent = discount;
 
-                    // Trừ kho
                     product.Quantity -= detail.Quantity;
 
-                    // Tính tiền
                     decimal itemTotal = finalPrice * detail.Quantity;
                     subTotal += itemTotal;
 
-                    // Optional: liên kết đơn hàng lại (nếu cần)
                     product.DetailOrders ??= new List<DetailOrder>();
                     product.DetailOrders.Add(detail);
                 }
@@ -106,7 +102,6 @@ namespace HNSHOP.Controllers
 
             await _db.SaveChangesAsync();
 
-            // Gửi thông báo đến khách hàng
             var customer = await _db.Customers
                 .Include(c => c.Account)
                 .FirstOrDefaultAsync(c => c.Id == order.CustomerId);
@@ -121,7 +116,6 @@ namespace HNSHOP.Controllers
                 );
             }
 
-            // Gửi thông báo đến từng shop có SubOrder
             var shopAccounts = await _db.SubOrders
                 .Where(so => so.OrderId == order.Id)
                 .Include(so => so.Shop)
@@ -164,7 +158,6 @@ namespace HNSHOP.Controllers
             if (order.Status != OrderStatus.Cancelled)
                 return BadRequest("Chỉ có thể xóa đơn hàng đã bị hủy.");
 
-            // Gửi thông báo cho khách hàng trước khi xóa
             if (order.Customer != null && order.Customer.Account != null)
             {
                 await _notificationService.SendNotificationToAccountAsync(
@@ -175,7 +168,6 @@ namespace HNSHOP.Controllers
                 );
             }
 
-            // Gửi thông báo đến các shop nếu cần
             var shopAccounts = order.SubOrders
                 .Select(so => so.Shop?.Account)
                 .Where(a => a != null)
@@ -193,7 +185,6 @@ namespace HNSHOP.Controllers
             }
 
 
-            // Xoá chi tiết
             foreach (var subOrder in order.SubOrders)
             {
                 _db.DetailOrders.RemoveRange(subOrder.DetailOrders);

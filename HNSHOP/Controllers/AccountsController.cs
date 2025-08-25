@@ -30,12 +30,19 @@ public class AccountsController : Controller
         int userId = id ?? GetUserIdFromToken();
         int loggedInUserId = GetUserIdFromToken();
         var account = await _db.Accounts
-            .Include(a => a.Customer)
-            .Include(a => a.Shop)
-                .ThenInclude(s => s.Products)
-                .ThenInclude(p => p.ProductImages)
-            .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == userId);
+    .Include(a => a.Customer)
+    .Include(a => a.Shop)
+    .AsNoTracking()
+    .FirstOrDefaultAsync(a => a.Id == userId);
+
+        if (account?.Shop != null)
+        {
+            account.Shop.Products = await _db.Products
+                .Where(p => p.ShopId == account.Shop.Id && !p.IsDeleted)
+                .Include(p => p.ProductImages)
+                .AsNoTracking()
+                .ToListAsync();
+        }
 
         if (account == null) return NotFound();
 
@@ -114,19 +121,6 @@ public class AccountsController : Controller
         return RedirectToAction("Index");
     }
 
-    //[HttpPost]
-    //public async Task<IActionResult> UpdateOrderStatus(int id, OrderStatus status)
-    //{
-    //    var order = await _db.Orders.FindAsync(id);
-    //    if (order == null) return NotFound();
-
-    //    order.Status = status;
-    //    order.UpdatedAt = DateTime.Now;
-    //    await _db.SaveChangesAsync();
-
-    //    TempData["SuccessMessage"] = "Cập nhật trạng thái đơn hàng thành công!";
-    //    return RedirectToAction("Index");
-    //}
 
     [HttpPost]
     public async Task<IActionResult> UpdateAvatar(IFormFile Avatar)

@@ -11,8 +11,7 @@ namespace HNSHOP.Services
         Task MarkAsReadAsync(int accountId, int notificationId);
         Task SendNotificationToAdminsAsync(string title, string body, string type);
         Task DeleteNotificationAsync(int accountId, int notificationId);
-        Task DeleteAllNotificationsAsync(int accountId);
+        Task<int> DeleteAllReadNotificationsAsync(int accountId);
+
     }
-
-
 }

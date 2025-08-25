@@ -11,129 +11,129 @@
 }
 <style>
 	.profile-blur-bg {
-		position: relative;
-		width: 100%;
-		min-height: 90vh;
-		background-position: center;
-		background-size: cover;
-		background-repeat: no-repeat;
-		display: flex;
-		justify-content: center;
-		align-items: center;
+	position: relative;
+	width: 100%;
+	min-height: 90vh;
+	background-position: center;
+	background-size: cover;
+	background-repeat: no-repeat;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 	}
 
-		.profile-blur-bg:before {
-			content: '';
-			position: absolute;
-			z-index: 1;
-			top: 0;
-			left: 0;
-			right: 0;
-			bottom: 0;
-			background: rgba(200, 170, 110, 0.26);
-			backdrop-filter: blur(22px);
-			-webkit-backdrop-filter: blur(22px);
-		}
+	.profile-blur-bg:before {
+	content: '';
+	position: absolute;
+	z-index: 1;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(200, 170, 110, 0.26);
+	backdrop-filter: blur(22px);
+	-webkit-backdrop-filter: blur(22px);
+	}
 
 	.profile-card-modern {
-		position: relative;
-		z-index: 2;
-		background: #fff;
-		border-radius: 32px;
-		box-shadow: 0 6px 32px 0 rgba(40, 48, 64, 0.13);
-		padding: 52px 48px 44px 48px;
-		max-width: 510px;
-		width: 100%;
-		margin: 32px 0;
+	position: relative;
+	z-index: 2;
+	background: #fff;
+	border-radius: 32px;
+	box-shadow: 0 6px 32px 0 rgba(40, 48, 64, 0.13);
+	padding: 52px 48px 44px 48px;
+	max-width: 510px;
+	width: 100%;
+	margin: 32px 0;
 	}
 
 	.profile-avatar-wrap {
-		width: 110px;
-		height: 110px;
-		border-radius: 50%;
-		overflow: hidden;
-		box-shadow: 0 2px 12px 0 rgba(170, 136, 97, 0.18);
-		position: relative;
-		margin-bottom: 18px;
+	width: 110px;
+	height: 110px;
+	border-radius: 50%;
+	overflow: hidden;
+	box-shadow: 0 2px 12px 0 rgba(170, 136, 97, 0.18);
+	position: relative;
+	margin-bottom: 18px;
 	}
 
 	.profile-avatar-img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		border-radius: 50%;
-		display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: 50%;
+	display: block;
 	}
 
 	.profile-title {
-		font-size: 3.35rem;
-		font-weight: 700;
-		color: #222;
-		text-align: center;
-		margin-bottom: 6px;
-		letter-spacing: -1.5px;
+	font-size: 3.35rem;
+	font-weight: 700;
+	color: #222;
+	text-align: center;
+	margin-bottom: 6px;
+	letter-spacing: -1.5px;
 	}
 
 	.profile-role {
-		color: #ec9913;
-		font-size: 2.17rem;
-		letter-spacing: 1.1px;
-		font-weight: 700;
-		margin-bottom: 12px;
-		text-align: center;
+	color: #ec9913;
+	font-size: 2.17rem;
+	letter-spacing: 1.1px;
+	font-weight: 700;
+	margin-bottom: 12px;
+	text-align: center;
 	}
 
 	.profile-about h5 {
-		font-size: 1.99rem;
-		font-weight: 700;
-		margin-bottom: 3px;
-		color: #cf9813;
-		letter-spacing: 0.3px;
+	font-size: 1.99rem;
+	font-weight: 700;
+	margin-bottom: 3px;
+	color: #cf9813;
+	letter-spacing: 0.3px;
 	}
 
 	.profile-desc {
-		font-size: 1.99rem;
-		color: #564f43;
-		margin-bottom: 9px;
+	font-size: 1.99rem;
+	color: #564f43;
+	margin-bottom: 9px;
 	}
 
 	.profile-info-list {
-		list-style: none;
-		padding: 0;
-		margin: 0 0 16px 0;
+	list-style: none;
+	padding: 0;
+	margin: 0 0 16px 0;
 	}
 
-		.profile-info-list li {
-			font-size: 1.99rem;
-			color: #474444;
-			padding: 7px 0 4px 0;
-			border-bottom: 1px solid #f6e8dc;
-		}
+	.profile-info-list li {
+	font-size: 1.99rem;
+	color: #474444;
+	padding: 7px 0 4px 0;
+	border-bottom: 1px solid #f6e8dc;
+	}
 
-			.profile-info-list li:last-child {
-				border-bottom: none;
-			}
+	.profile-info-list li:last-child {
+	border-bottom: none;
+	}
 
 	.btn-modern {
-		background: #f48c06;
-		color: #fff;
-		font-weight: 700;
-		border-radius: 20px;
-		padding: 10px 30px;
-		border: none;
-		font-size: 1.29rem;
-		transition: background .18s;
+	background: #f48c06;
+	color: #fff;
+	font-weight: 700;
+	border-radius: 20px;
+	padding: 10px 30px;
+	border: none;
+	font-size: 1.29rem;
+	transition: background .18s;
 	}
 
-		.btn-modern:hover {
-			background: #e07d12;
-			color: #fff;
-		}
+	.btn-modern:hover {
+	background: #e07d12;
+	color: #fff;
+	}
 	@@media (max-width: 600px) {
-		.profile-card-modern
+	.profile-card-modern
 
 	{
-		padding: 16px 3vw 18px 3vw;
+	padding: 16px 3vw 18px 3vw;
 	}
 
 	}
@@ -142,7 +142,7 @@
 	<div class="container p-5">
 		<div class="breadcrumbs">
 			<ol class="breadcrumb">
-				<li><a asp-controller="Home" asp-action="Index">Home</a></li>
+				<li><a asp-controller="Home" asp-action="Index">Home</a></li>				
 				<li class="active">Thông Tin Tài Khoản</li>
 			</ol>
 		</div>

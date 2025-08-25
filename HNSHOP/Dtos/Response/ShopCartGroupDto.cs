@@ -12,5 +12,6 @@
         public decimal Discount => Items.Sum(i => (i.Price * i.Quantity) * (decimal)i.DiscountPercent / 100);
         
         public decimal FinalTotal => SubTotal - Discount;
+
     }
 }

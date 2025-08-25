@@ -133,26 +133,28 @@ public class SaleEventController : Controller
 
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateSaleEventReqDto req, IFormFile? Illustration)
     {
+        if (Illustration == null || Illustration.Length == 0)
+        {
+            ModelState.AddModelError("Illustration", "Ảnh minh họa là bắt buộc");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            await LoadCreateViewBagsAsync();
+            return View(req);
+        }
+
         try
         {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-                return Json(new { success = false, message = "Dữ liệu không hợp lệ: " + string.Join("; ", errors) });
-            }
-
             string illustrationPath = string.Empty;
-
-            // Xử lý lưu ảnh minh họa nếu có
             if (Illustration != null && Illustration.Length > 0)
             {
                 string uploadsFolder = Path.Combine(_env.WebRootPath, "images/hnshop");
                 if (!Directory.Exists(uploadsFolder))
-                {
                     Directory.CreateDirectory(uploadsFolder);
-                }
 
                 string fileName = $"{Guid.NewGuid()}_{Path.GetFileName(Illustration.FileName)}";
                 string filePath = Path.Combine(uploadsFolder, fileName);
@@ -162,17 +164,22 @@ public class SaleEventController : Controller
                     await Illustration.CopyToAsync(stream);
                 }
 
-                illustrationPath = $"{fileName}";
+                illustrationPath = fileName; 
             }
 
-            // Kiểm tra danh sách loại khách hàng & sản phẩm trước khi thêm
-            var customerTypes = req.CustomerTypeIds?.Select(id => new CustomerTypeSaleEvent { CustomerTypeId = id }).ToList() ?? new List<CustomerTypeSaleEvent>();
-            var products = req.ProductIds?.Select(id => new ProductSaleEvent { ProductId = id }).ToList() ?? new List<ProductSaleEvent>();
+            var customerTypes = (req.CustomerTypeIds ?? new List<int>())
+                .Select(id => new CustomerTypeSaleEvent { CustomerTypeId = id })
+                .ToList();
 
-            // Đảm bảo danh sách sản phẩm không trống
+            var products = (req.ProductIds ?? new List<int>())
+                .Select(id => new ProductSaleEvent { ProductId = id })
+                .ToList();
+
             if (!products.Any())
             {
-                return Json(new { success = false, message = "Vui lòng chọn ít nhất một sản phẩm áp dụng." });
+                ModelState.AddModelError("ProductIds", "Vui lòng chọn ít nhất một sản phẩm áp dụng.");
+                await LoadCreateViewBagsAsync();
+                return View(req);
             }
 
             var saleEvent = new SaleEvent
@@ -180,7 +187,7 @@ public class SaleEventController : Controller
                 Name = req.Name,
                 Description = req.Description,
                 Illustration = illustrationPath,
-                Discount = req.Discount,
+                Discount = req.Discount,          
                 StartDate = req.StartDate,
                 EndDate = req.EndDate,
                 CustomerTypeSaleEvents = customerTypes,
@@ -189,17 +196,48 @@ public class SaleEventController : Controller
 
             _db.SaleEvents.Add(saleEvent);
             await _db.SaveChangesAsync();
+
+            TempData["Message"] = "Tạo chương trình giảm giá thành công.";
             return RedirectToAction("Index");
         }
         catch (DbUpdateException dbEx)
         {
-            return Json(new { success = false, message = "Lỗi khi lưu vào database: " + dbEx.Message });
+            ModelState.AddModelError("", "Lỗi khi lưu vào database: " + dbEx.Message);
+            await LoadCreateViewBagsAsync();
+            return View(req);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
+            TempData["Error"] = "Có lỗi xảy ra. Vui lòng thử lại.";
             return RedirectToAction("Index");
         }
     }
+
+    private async Task LoadCreateViewBagsAsync()
+    {
+        ViewBag.CustomerTypes = await _db.CustomerTypes
+            .AsNoTracking()
+            .ToListAsync();
+
+        ViewBag.Products = await _db.Products
+            .AsNoTracking()
+            .Where(p => !p.IsDeleted)
+            .Include(p => p.ProductImages)
+            .Select(p => new ProductResDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                Price = p.Price,
+                Images = p.ProductImages.Select(img => new ProductImageResDto
+                {
+                    Id = img.Id,
+                    Path = img.Path
+                }).ToList()
+            })
+            .ToListAsync();
+    }
+
     public async Task<IActionResult> Edit(int id)
     {
         var saleEvent = await _db.SaleEvents
@@ -250,12 +288,9 @@ public class SaleEventController : Controller
     }
 
 
-
-
-
-
     [HttpPost]
-    public async Task<IActionResult> Edit(int id, UpdateSaleEventReqDto req, IFormFile? Illustration)
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, [FromForm] UpdateSaleEventReqDto req, IFormFile? Illustration)
     {
         var saleEvent = await _db.SaleEvents
             .Include(se => se.ProductSaleEvents)
@@ -264,43 +299,92 @@ public class SaleEventController : Controller
 
         if (saleEvent == null) return NotFound();
 
+        if (!ModelState.IsValid)
+        {
+            var vm = await BuildEditViewModelAsync(saleEvent, req);
+            return View(vm); 
+        }
+
         if (Illustration != null && Illustration.Length > 0)
         {
-            string fileName = $"{Guid.NewGuid()}_{Illustration.FileName}";
-            string path = Path.Combine(_env.WebRootPath, "images/hnshop", fileName);
-            using (var stream = new FileStream(path, FileMode.Create))
-            {
-                await Illustration.CopyToAsync(stream);
-            }
-            saleEvent.Illustration = $"{fileName}";
+            var uploads = Path.Combine(_env.WebRootPath, "images/hnshop");
+            if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
+
+            var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(Illustration.FileName)}";
+            var path = Path.Combine(uploads, fileName);
+            using (var fs = new FileStream(path, FileMode.Create))
+                await Illustration.CopyToAsync(fs);
+
+            saleEvent.Illustration = fileName;
         }
 
         saleEvent.Name = req.Name ?? saleEvent.Name;
         saleEvent.Description = req.Description ?? saleEvent.Description;
-        saleEvent.Discount = req.Discount ?? saleEvent.Discount;
+        saleEvent.Discount = req.Discount ?? saleEvent.Discount;   
         saleEvent.StartDate = req.StartDate ?? saleEvent.StartDate;
         saleEvent.EndDate = req.EndDate ?? saleEvent.EndDate;
 
-        // Cập nhật danh sách khách hàng áp dụng
-        saleEvent.CustomerTypeSaleEvents.Clear();
         if (req.CustomerTypeIds != null)
         {
+            saleEvent.CustomerTypeSaleEvents.Clear();
             saleEvent.CustomerTypeSaleEvents = req.CustomerTypeIds
+                .Distinct()
                 .Select(id => new CustomerTypeSaleEvent { CustomerTypeId = id })
                 .ToList();
         }
 
-        // Cập nhật danh sách sản phẩm áp dụng
-        saleEvent.ProductSaleEvents.Clear();
         if (req.ProductIds != null)
         {
+            saleEvent.ProductSaleEvents.Clear();
             saleEvent.ProductSaleEvents = req.ProductIds
+                .Distinct()
                 .Select(id => new ProductSaleEvent { ProductId = id })
                 .ToList();
         }
 
         await _db.SaveChangesAsync();
+        TempData["Message"] = "Cập nhật chương trình giảm giá thành công.";
         return RedirectToAction("Index");
+    }
+
+    private async Task<SaleEventProductResDto> BuildEditViewModelAsync(SaleEvent se, UpdateSaleEventReqDto req)
+    {
+        var selectedCt = (req.CustomerTypeIds ?? se.CustomerTypeSaleEvents.Select(x => x.CustomerTypeId).ToList()).ToHashSet();
+        var selectedPd = (req.ProductIds ?? se.ProductSaleEvents.Select(x => x.ProductId).ToList()).ToHashSet();
+
+        return new SaleEventProductResDto
+        {
+            Id = se.Id,
+            Name = req.Name ?? se.Name,
+            Description = req.Description ?? se.Description,
+            Illustration = se.Illustration,
+            Discount = req.Discount ?? se.Discount,       
+            StartDate = req.StartDate ?? se.StartDate,
+            EndDate = req.EndDate ?? se.EndDate,
+
+            CustomerTypes = await _db.CustomerTypes
+                .AsNoTracking()
+                .Select(ct => new CustomerTypeResDto
+                {
+                    Id = ct.Id,
+                    Name = ct.Name,
+                    Description = ct.Description,
+                    IsSelected = selectedCt.Contains(ct.Id)
+                }).ToListAsync(),
+
+            Products = await _db.Products
+                .AsNoTracking()
+                .Where(p => !p.IsDeleted)
+                .Include(p => p.ProductImages)
+                .Select(p => new ProductResDto
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Price = p.Price,
+                    Images = p.ProductImages.Select(i => new ProductImageResDto { Id = i.Id, Path = i.Path }).ToList(),
+                    IsSelected = selectedPd.Contains(p.Id)
+                }).ToListAsync()
+        };
     }
 
 

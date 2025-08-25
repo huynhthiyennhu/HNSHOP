@@ -87,7 +87,6 @@ public class CartController : Controller
         return Json(new { success = true, message = "Thêm vào giỏ hàng thành công!", cartCount });
     }
 
-    // Cập nhật số lượng sản phẩm trong giỏ hàng
     [HttpPost]
     public IActionResult UpdateCart([FromBody] UpdateCartReqDto request)
     {
@@ -97,7 +96,6 @@ public class CartController : Controller
         return Json(new { success = true, cartCount });
     }
 
-    // Xóa sản phẩm khỏi giỏ hàng
     [HttpPost]
     public IActionResult RemoveFromCart([FromBody] RemoveFromCartReqDto request)
     {

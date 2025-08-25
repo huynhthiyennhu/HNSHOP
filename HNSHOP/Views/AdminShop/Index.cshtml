@@ -58,14 +58,12 @@
                             <td class="text-center">
                                 <a asp-controller="Accounts" asp-action="Index" asp-route-id="@shop.AccountId" class="btn btn-info btn-sm">Xem</a>
 
-                                @* Nếu chưa được duyệt mới hiển thị nút Duyệt / Từ chối *@
                                 @if (!shop.Account.IsApproved)
                                 {
                                     <button class="btn btn-success btn-sm approve-btn" data-account-id="@shop.AccountId">Duyệt</button>
                                     <button class="btn btn-danger btn-sm reject-btn" data-account-id="@shop.AccountId">Từ chối</button>
                                 }
 
-                                @* Luôn hiển thị nút Xóa *@
                                 @* <button class="btn btn-outline-danger btn-sm delete-btn" data-id="@shop.Id">Xóa</button> *@
                             </td>
                         </tr>

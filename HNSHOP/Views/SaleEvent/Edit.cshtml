@@ -87,6 +87,7 @@
             <div class="title-highlight">Chỉnh Sửa Chương Trình Giảm Giá</div>
 
             <form id="editSaleEventForm" enctype="multipart/form-data" action="/SaleEvent/Edit" method="post">
+                @Html.AntiForgeryToken()
                 <input type="hidden" name="Id" value="@Model.Id" />
 
                 <div class="form-group text-center mb-4">
@@ -102,24 +103,34 @@
                         <div class="form-group mb-3">
                             <label for="SaleEventName">Tên chương trình</label>
                             <input type="text" name="Name" class="form-control" value="@Model.Name" required />
+                            <span class="text-danger" asp-validation-for="Name"></span>
+
                         </div>
                         <div class="form-group mb-3">
                             <label for="SaleEventDescription">Mô tả</label>
                             <textarea name="Description" class="form-control" rows="5" required>@Model.Description</textarea>
+                            <span class="text-danger" asp-validation-for="Description"></span>
+
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group mb-3">
                             <label for="SaleEventDiscount">Giảm giá (%)</label>
                             <input type="number" name="Discount" class="form-control" value="@Model.Discount" required min="1" max="100" />
+                            <span class="text-danger" asp-validation-for="Discount"></span>
+
                         </div>
                         <div class="form-group mb-3">
                             <label for="SaleEventStartDate">Ngày bắt đầu</label>
                             <input type="date" name="StartDate" class="form-control" value="@Model.StartDate.ToString("yyyy-MM-dd")" required />
+                            <span class="text-danger" asp-validation-for="StartDate"></span>
+
                         </div>
                         <div class="form-group mb-3">
                             <label for="SaleEventEndDate">Ngày kết thúc</label>
                             <input type="date" name="EndDate" class="form-control" value="@Model.EndDate.ToString("yyyy-MM-dd")" required />
+                            <span class="text-danger" asp-validation-for="EndDate"></span>
+
                         </div>
                     </div>
                 </div>

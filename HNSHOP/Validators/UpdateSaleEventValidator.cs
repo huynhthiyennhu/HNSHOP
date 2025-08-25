@@ -1,6 +1,7 @@
-﻿using HNSHOP.Dtos.Request;
+﻿using FluentValidation;
+using HNSHOP.Dtos.Request;
 using HNSHOP.Utils;
-using FluentValidation;
+using System.Linq;
 
 namespace HNSHOP.Validators
 {
@@ -8,24 +9,56 @@ namespace HNSHOP.Validators
     {
         public UpdateSaleEventValidator()
         {
+            CascadeMode = CascadeMode.Stop;
+
+            // Name (optional)
             RuleFor(se => se.Name)
-                .MaximumLength(ConstConfig.LongNameLength);
+                .Must(v => v == null || v.Length > 0).WithMessage("Tên không hợp lệ")
+                .When(se => se.Name != null)
+                .MaximumLength(ConstConfig.LongNameLength)
+                    .WithMessage($"Tên không được vượt quá {ConstConfig.LongNameLength} ký tự")
+                .When(se => se.Name != null);
 
+            // Description (optional)
             RuleFor(se => se.Description)
-                .MaximumLength(ConstConfig.LongDescriptionLength);
+                .Must(v => v == null || v.Length > 0).WithMessage("Mô tả không hợp lệ")
+                .When(se => se.Description != null)
+                .MaximumLength(ConstConfig.LongDescriptionLength)
+                    .WithMessage($"Mô tả không được vượt quá {ConstConfig.LongDescriptionLength} ký tự")
+                .When(se => se.Description != null);
 
+            // Illustration path (optional)
             RuleFor(se => se.Illustration)
-                .MaximumLength(ConstConfig.ImagePathLength);
+                .Must(v => v == null || v.Length > 0).WithMessage("Đường dẫn ảnh không hợp lệ")
+                .When(se => se.Illustration != null)
+                .MaximumLength(ConstConfig.ImagePathLength)
+                    .WithMessage($"Đường dẫn ảnh tối đa {ConstConfig.ImagePathLength} ký tự")
+                .When(se => se.Illustration != null);
 
             RuleFor(se => se.Discount)
-                .GreaterThan(0f)
-                .LessThanOrEqualTo(1f);
+                .InclusiveBetween(0f, 100f).WithMessage("Giảm giá phải từ 0 đến 100%")
+                .When(se => se.Discount.HasValue);
 
             RuleFor(se => se.EndDate)
-                .GreaterThan(se => se.StartDate);
+                .GreaterThan(se => se.StartDate!.Value)
+                .WithMessage("Ngày kết thúc phải sau ngày bắt đầu")
+                .When(se => se.StartDate.HasValue && se.EndDate.HasValue);
 
-            RuleFor(se => se.StartDate)
-               .LessThan(se => se.EndDate);
+            RuleFor(se => se.CustomerTypeIds)
+                .Must(list => list == null || (list.Count == list.Distinct().Count()))
+                .WithMessage("Danh sách nhóm khách hàng có phần tử trùng lặp");
+
+            RuleForEach(se => se.CustomerTypeIds)
+                .Must(id => id > 0).WithMessage("Mã nhóm khách hàng không hợp lệ")
+                .When(se => se.CustomerTypeIds != null);
+
+            RuleFor(se => se.ProductIds)
+                .Must(list => list == null || (list.Count == list.Distinct().Count()))
+                .WithMessage("Danh sách sản phẩm có phần tử trùng lặp");
+
+            RuleForEach(se => se.ProductIds)
+                .Must(id => id > 0).WithMessage("Mã sản phẩm không hợp lệ")
+                .When(se => se.ProductIds != null);
         }
     }
 }

@@ -1,4 +1,6 @@
 ﻿using HNSHOP.Data;
+using HNSHOP.Dtos.Response;
+using HNSHOP.Utils.EnumTypes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -67,5 +69,72 @@ namespace HNSHOP.Controllers
 
             return shop.Id;
         }
+        public async Task<IActionResult> SalesFees()
+        {
+            int shopId = GetCurrentShopId();
+            var feeStats = await GetMonthlyShopFees(shopId);
+            return View(feeStats);
+        }
+
+        private async Task<List<MonthlyShopFeeDto>> GetMonthlyShopFees(int shopId)
+        {
+            // Chỉ lấy các SubOrder đã Delivered/Completed
+            var validStatuses = new[] { SubOrderStatus.Delivered, SubOrderStatus.Completed };
+
+            var query = await _context.DetailOrders
+                .Where(d => d.SubOrder.ShopId == shopId &&
+                            validStatuses.Contains(d.SubOrder.Status))
+                .Select(d => new
+                {
+                    Year = d.SubOrder.CreatedAt.Year,
+                    Month = d.SubOrder.CreatedAt.Month,
+                    Revenue = d.Quantity * d.UnitPrice
+                })
+                .ToListAsync();
+
+            // sau khi group theo tháng
+            var result = query
+                .GroupBy(x => new { x.Year, x.Month })
+                .Select(g => new MonthlyShopFeeDto
+                {
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+                    Revenue = g.Sum(x => x.Revenue),
+                    IsPaid = _context.Notifications
+                        .Any(n => n.Title.Contains("đã thanh toán phí") &&
+                                  n.Body.Contains($"{g.Key.Month:00}/{g.Key.Year}"))
+                })
+                .ToList();
+
+
+            return result;
+        }
+        [HttpGet]
+        public async Task<IActionResult> FeeDetails(int month, int year)
+        {
+            int shopId = GetCurrentShopId();
+
+            var validStatuses = new[] { SubOrderStatus.Delivered, SubOrderStatus.Completed };
+
+            var details = await _context.DetailOrders
+                .Where(d =>
+                    d.SubOrder.ShopId == shopId &&
+                    d.SubOrder.Status != null &&
+                    validStatuses.Contains(d.SubOrder.Status) &&
+                    d.SubOrder.CreatedAt.Month == month &&
+                    d.SubOrder.CreatedAt.Year == year)
+                .Select(d => new FeeProductDetailDto
+                {
+                    ProductName = d.Product.Name,
+                    Quantity = d.Quantity,
+                    UnitPrice = d.UnitPrice
+                })
+                .ToListAsync();
+
+            ViewBag.MonthLabel = $"{month:00}/{year}";
+            return View("FeeDetails", details);
+        }
+
+
     }
 }

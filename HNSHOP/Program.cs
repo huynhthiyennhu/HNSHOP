@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using FluentValidation.AspNetCore;
 using HNSHOP.Data;
 using HNSHOP.Services;
 using HNSHOP.Utils;
@@ -13,7 +14,6 @@ using Microsoft.Extensions.Options;
 using System.Configuration;
 using Microsoft.AspNetCore.SignalR;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Cấu hình Database với SQL Server
@@ -24,7 +24,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Cấu hình AutoMapper
 builder.Services.AddAutoMapper(typeof(Program));
 
-//Cấu hình Authentication bằng Cookie
+// Cấu hình Authentication bằng Cookie
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -49,14 +49,29 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// Cấu hình MVC với yêu cầu đăng nhập mặc định
-builder.Services.AddControllersWithViews();
+// MVC: tắt required ngầm & Việt hoá thông điệp ModelBinding
+builder.Services.AddControllersWithViews(options =>
+{
+    options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+
+    var p = options.ModelBindingMessageProvider;
+    p.SetValueMustNotBeNullAccessor(_ => "Trường này là bắt buộc.");
+    p.SetMissingBindRequiredValueAccessor(_ => "Thiếu dữ liệu bắt buộc.");
+    p.SetAttemptedValueIsInvalidAccessor((v, f) => $"Giá trị \"{v}\" không hợp lệ cho {f}.");
+    p.SetValueIsInvalidAccessor(v => $"Giá trị \"{v}\" không hợp lệ.");
+    p.SetUnknownValueIsInvalidAccessor(_ => "Giá trị không hợp lệ.");
+    p.SetMissingKeyOrValueAccessor(() => "Thiếu dữ liệu.");
+})
+.AddViewLocalization()
+.AddDataAnnotationsLocalization();
+//  FluentValidation: auto validate (server) + client adapters
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddFluentValidationClientsideAdapters();
 
 // Đăng ký IWebHostEnvironment
 builder.Services.AddSingleton<IWebHostEnvironment>(builder.Environment);
 
-
-//Đăng ký các dịch vụ (Dependency Injection)
+// Đăng ký các dịch vụ (Dependency Injection)
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<CartService>();
 builder.Services.AddScoped<IAddressService, AddressService>();
@@ -73,23 +88,25 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<VnPayService>();
 
-
 builder.Services.Configure<PayPalConfig>(builder.Configuration.GetSection("PayPal"));
 builder.Services.AddScoped<PayPalService>();
 
-
-
-//Đăng ký Validator từ FluentValidation
+// Đăng ký Validator từ FluentValidation
+// FluentValidation (server + client)
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddFluentValidationClientsideAdapters();
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterShopValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<LoginValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateSaleEventValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UpdateSaleEventValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<VerifyEmailValidator>();
 
 // Cấu hình giới hạn upload file (Fix lỗi tải Avatar)
 builder.Services.Configure<FormOptions>(options =>
 {
     options.MultipartBodyLengthLimit = 10 * 1024 * 1024; // 10MB
 });
-
 
 builder.Services.AddAuthorizationBuilder()
      .AddPolicy(ConstConfig.AdminPolicy, policy =>
@@ -102,21 +119,15 @@ builder.Services.AddAuthorizationBuilder()
           policy.RequireRole(ConstConfig.AdminRoleName, ConstConfig.ShopRoleName, ConstConfig.UserRoleName)
      );
 
-
-
-//builder.Services.AddAuthorization(options =>
-//{
-//    options.AddPolicy("ShopPolicy", policy => policy.RequireRole("shop"));
-//    options.AddPolicy("UserPolicy", policy => policy.RequireRole("user"));
-//});
 builder.Services.AddSignalR();
 
-builder.Services.AddSession();
+// ❌ (ĐÃ BỎ) builder.Services.AddSession();  // trùng với cấu hình session ở trên
+
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
-//Middleware
+// Middleware
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -142,7 +153,5 @@ app.UseEndpoints(endpoints =>
     // Đăng ký ChatHub
     endpoints.MapHub<ChatHub>("/chathub");
 });
-
-
 
 app.Run();

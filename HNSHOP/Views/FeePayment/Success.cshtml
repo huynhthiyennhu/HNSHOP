@@ -1,0 +1,13 @@
+﻿@{
+    ViewData["Title"] = "Thanh toán thành công";
+    var monthLabel = ViewBag.MonthLabel as string;
+    var amount = ViewBag.Amount as decimal? ?? 0;
+}
+
+<div class="alert alert-success">
+    <h4>✅ Thanh toán thành công!</h4>
+    <p>Bạn đã thanh toán phí bán hàng tháng <strong>@monthLabel</strong>.</p>
+    <p>Số tiền: <strong>@amount.ToString("N0") VNĐ</strong></p>
+</div>
+
+<a href="/ShopStats/SalesFees" class="btn btn-primary">Quay lại trang phí bán hàng</a>

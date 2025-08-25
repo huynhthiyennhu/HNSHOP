@@ -4,6 +4,17 @@
 
 @{
     ViewBag.Title = "Quản Lý Đơn Hàng";
+
+    var tabs = new List<(string Id, string Label, OrderStatus Status)>
+    {
+        ("processing", "Chờ duyệt", OrderStatus.Processing),
+        ("preparing", "Đang chuẩn bị", OrderStatus.Preparing),
+        ("shipping", "Đang giao", OrderStatus.Shipping),
+        ("delivered", "Đã giao", OrderStatus.Delivered),
+        ("completed", "Hoàn tất", OrderStatus.Completed),
+        ("cancelled", "Đã hủy", OrderStatus.Cancelled),
+    };
+
     int truncateLength = 60;
 }
 
@@ -15,121 +26,195 @@
                 <li class="active">Quản lý đơn hàng</li>
             </ol>
         </div>
-        <h2 class="title text-center">📋 Quản lý đơn hàng</h2>
-        <div class="row">
 
-            <table class="table table-bordered table-hover shadow-sm" style="border:none;">
-                <thead class="thead-light">
-                    <tr style="background-color:#fbc75e;">
-                        <th>Mã đơn</th>
-                        <th>Khách hàng</th>
-                        <th>Địa chỉ</th>
-                        <th>Trạng thái</th>
-                        <th>Thanh toán</th>
-                        <th>Ngày tạo</th>
-                        <th>Tổng tiền</th>
-                        <th>Hành động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var order in Model)
-                    {
-                        <tr style="background-color:#ffe6b3;">
-                            <td>@order.Id</td>
-                            <td>@order.Customer.Name</td>
-                            <td>@order.Address.AddressDetail</td>
-                            <td>
-                                <span class="badge badge-@(
-                        order.Status switch {
-                            OrderStatus.Processing => "secondary",
-                            OrderStatus.Shipping => "info",
-                            OrderStatus.Delivered => "success",
-                            OrderStatus.Completed => "primary",
-                            OrderStatus.Cancelled => "danger",
-                            _ => "light"
+        <section class="category-tab shop-details-tab">
+            <!-- Tabs -->
+            <ul class="nav nav-tabs mb-4" id="orderTabs" role="tablist">
+                @for (int i = 0; i < tabs.Count; i++)
+                {
+                    var tab = tabs[i];
+                    <li class="nav-item">
+                        <a class="nav-link @(i == 0 ? "active" : "")"
+                        id="@($"{tab.Id}-tab")"
+                        data-toggle="tab"
+                        href="#@tab.Id"
+                        role="tab"
+                        aria-controls="@tab.Id"
+                        aria-selected="@(i == 0 ? "true" : "false")">
+                            @tab.Label
+                        </a>
+                    </li>
+                }
+            </ul>
+
+            <!-- Tab Contents -->
+            <div class="tab-content position-relative" id="orderTabContent" >
+                @for (int i = 0; i < tabs.Count; i++)
+                {
+                        var tab = tabs[i];
+                        var orders = Model.Where(o => o.Status == tab.Status).ToList();
+
+                    <div class="tab-pane fade @(i == 0 ? "show active" : "")"
+                    id="@tab.Id"
+                         role="tabpanel"
+                         aria-labelledby="@($"{tab.Id}-tab")">
+
+                        @if (!orders.Any())
+                        {
+                            <div class="text-center text-muted my-5">
+                                <i class="fa fa-box-open fa-3x mb-2"></i><br />
+                                Không có đơn hàng nào.
+                            </div>
                         }
-                    )" style="font-size:1.02rem;">
-                                    @order.Status.ToString()
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge badge-@(order.PaymentStatus == PaymentStatus.Completed ? "success" : "dark")" style="font-size:1.02rem;">
-                                    @(order.PaymentStatus == PaymentStatus.Completed ? "Đã thanh toán" : "Chưa thanh toán")
-                                </span>
-                            </td>
-                            <td>@order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
-                            <td>@order.Total.ToString("N0", CultureInfo.GetCultureInfo("vi-VN")) đ</td>
-                            <td>
-                                @if (order.Status == OrderStatus.Processing)
-                                {
-                                    <form asp-action="Approve" method="post" style="display:inline;">
-                                        <input type="hidden" name="id" value="@order.Id" />
-                                        <button class="btn btn-success btn-sm">
-                                            <i class="fa fa-check-circle"></i> Duyệt
-                                        </button>
-                                    </form>
-                                }
-                            </td>
-                        </tr>
-
-                        @* Chi tiết SubOrder *@
-                        <tr>
-                            <td colspan="8" class="p-0">
-                                <table class="table table-sm mb-0" style="background-color:#fcf6e9;">
-                                    <thead class="thead-light">
-                                        <tr>
-                                            <th>Shop</th>
-                                            <th>Sản phẩm</th>
-                                            <th class="text-center">Số lượng</th>
-                                            <th class="text-right">Đơn giá</th>
-                                            <th class="text-right">Tạm tính</th>
-                                            <th class="text-center">Trạng thái giao</th>
+                        else
+                        {
+                            <table class="table table-bordered table-hover shadow-sm" style="width: 100%;">
+                                <thead class="thead-light" style="background-color:#fbc75e;">
+                                    <tr>
+                                        <th>Mã đơn</th>
+                                        <th>Khách hàng</th>
+                                        <th>Địa chỉ</th>
+                                        <th>Trạng thái</th>
+                                        <th>Thanh toán</th>
+                                        <th>Ngày tạo</th>
+                                        <th>Tổng tiền</th>
+                                        <th>Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var order in orders)
+                                    {
+                                        <tr style="background-color:#ffe6b3;">
+                                            <td>@order.Id</td>
+                                            <td>@order.Customer?.Name</td>
+                                            <td>@order.Address?.AddressDetail</td>
+                                            <td>
+                                                <span class="badge badge-@(
+                                                    order.Status switch {
+                                                        OrderStatus.Processing => "secondary",
+                                                        OrderStatus.Preparing => "info",
+                                                        OrderStatus.Shipping => "primary",
+                                                        OrderStatus.Delivered => "success",
+                                                        OrderStatus.Completed => "success",
+                                                        OrderStatus.Cancelled => "danger",
+                                                        _ => "light"
+                                                    })">
+                                                    @order.Status.ToString()
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-@(order.PaymentStatus == PaymentStatus.Completed ? "success" : "dark")">
+                                                    @(order.PaymentStatus == PaymentStatus.Completed ? "Đã thanh toán" : "Chưa thanh toán")
+                                                </span>
+                                            </td>
+                                            <td>@order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>@order.Total.ToString("N0", CultureInfo.GetCultureInfo("vi-VN")) đ</td>
+                                            <td>
+                                                @if (order.Status == OrderStatus.Processing)
+                                                {
+                                                    <form asp-action="Approve" method="post" style="display:inline;">
+                                                        <input type="hidden" name="id" value="@order.Id" />
+                                                        <button class="btn btn-success btn-sm">
+                                                            <i class="fa fa-check-circle"></i> Duyệt
+                                                        </button>
+                                                    </form>
+                                                }
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var sub in order.SubOrders)
-                                        {
-                                            foreach (var item in sub.DetailOrders)
-                                            {
-                                                <tr style="background-color:#f3f1ed;">
-                                                    <td>@sub.Shop.Name</td>
-                                                    <td style="max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                                                        <span title="@item.Product.Name">
-                                                            @(item.Product.Name?.Length > truncateLength
-                                                                ? item.Product.Name.Substring(0, truncateLength) + "..."
-                                                                : item.Product.Name)
-                                                        </span>
-                                                    </td>
-                                                    <td class="text-center">@item.Quantity</td>
-                                                    <td class="text-right">@item.UnitPrice.ToString("N0", CultureInfo.GetCultureInfo("vi-VN")) đ</td>
-                                                    <td class="text-right">@((item.UnitPrice * item.Quantity).ToString("N0", CultureInfo.GetCultureInfo("vi-VN"))) đ</td>
-                                                    <td class="text-center">
-                                                        <span class="badge badge-@(
-                                                sub.Status switch {
-                                                    SubOrderStatus.Pending => "secondary",
-                                                    SubOrderStatus.Shipping => "info",
-                                                    SubOrderStatus.Delivered => "success",
-                                                    SubOrderStatus.Completed => "primary",
-                                                    SubOrderStatus.Cancelled => "danger",
-                                                    _ => "light"
-                                                })" style="font-size:0.97rem;">
-                                                            @sub.Status.ToString()
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            }
-                                        }
-                                    </tbody>
-                                </table>
-                            </td>
-                        </tr>
-                        <tr style="background-color:#fff;"><td colspan="8" style="border:none;height:8px;"></td></tr>
-                        <tr style="background-color:#fff;"><td colspan="8" style="border:none;height:8px;"></td></tr>
-                        <tr style="background-color:#fff;"><td colspan="8" style="border:none;height:8px;"></td></tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+
+                                        <!-- SubOrders -->
+                                        <tr>
+                                            <td colspan="8" class="p-0">
+                                                <table class="table table-sm mb-0" style="background-color:#fcf6e9;">
+                                                    <thead class="thead-light">
+                                                        <tr>
+                                                            <th>Shop</th>
+                                                            <th>Sản phẩm</th>
+                                                            <th class="text-center">Số lượng</th>
+                                                            <th class="text-right">Đơn giá</th>
+                                                            <th class="text-right">Tạm tính</th>
+                                                            <th class="text-center">Trạng thái giao</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var sub in order.SubOrders)
+                                                        {
+                                                            foreach (var item in sub.DetailOrders)
+                                                            {
+                                                                <tr style="background-color:#f3f1ed;">
+                                                                    <td>@sub.Shop?.Name</td>
+                                                                    <td style="max-width:320px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                                                        <span title="@item.Product?.Name">
+                                                                            @(item.Product?.Name?.Length > truncateLength
+                                                                                ? item.Product.Name.Substring(0, truncateLength) + "..."
+                                                                                : item.Product?.Name)
+                                                                        </span>
+                                                                    </td>
+                                                                    <td class="text-center">@item.Quantity</td>
+                                                                    <td class="text-right">@item.UnitPrice.ToString("N0", CultureInfo.GetCultureInfo("vi-VN")) đ</td>
+                                                                    <td class="text-right">@((item.UnitPrice * item.Quantity).ToString("N0", CultureInfo.GetCultureInfo("vi-VN"))) đ</td>
+                                                                    <td class="text-center">
+                                                                        <span class="badge badge-@(
+                                                                            sub.Status switch {
+                                                                                SubOrderStatus.Pending => "secondary",
+                                                                                SubOrderStatus.Shipping => "info",
+                                                                                SubOrderStatus.Delivered => "success",
+                                                                                SubOrderStatus.Completed => "primary",
+                                                                                SubOrderStatus.Cancelled => "danger",
+                                                                                _ => "light"
+                                                                            })">
+                                                                            @sub.Status.ToString()
+                                                                        </span>
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
+
+                                        <tr><td colspan="8" style="border:none;height:8px;"></td></tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
     </div>
 </section>
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            const storedTab = localStorage.getItem("activeAdminTab");
+
+            if (storedTab) {
+                const selector = storedTab.startsWith('#') ? storedTab : '#' + storedTab;
+                const $tab = $('#orderTabs a[href="' + selector + '"]');
+
+                if ($tab.length) {
+                    setTimeout(() => {
+                        $tab.tab('show');
+
+                        // Bắt buộc cập nhật class + style
+                        $('.tab-pane').removeClass('show active').css('display', 'none');
+                        $(selector).addClass('show active').css('display', 'block');
+                        $('#orderTabContent').css('height', 'auto');
+                    }, 100);
+                }
+            }
+
+            $('#orderTabs a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                const tabId = $(e.target).attr('href');
+                localStorage.setItem("activeAdminTab", tabId);
+
+                $('.tab-pane').removeClass('show active').css('display', 'none');
+                $(tabId).addClass('show active').css('display', 'block');
+                $('#orderTabContent').css('height', 'auto');
+            });
+        });
+    </script>
+}
 

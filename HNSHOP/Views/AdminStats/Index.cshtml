@@ -152,13 +152,13 @@
         </div>
         <br />
         <br />
-        <!-- 5. Sản phẩm bị ẩn / hết hạn -->
+        <!-- 5. Sản phẩm bị ẩn / hết hàng -->
         @if (hiddenStats != null && hiddenStats.Any()) {
             <div class="stat-card mt-3">
-                <div class="stat-card-title"><i class="fa fa-eye-slash"></i> Sản phẩm bị ẩn / hết hạn</div>
-                <div class="chart-wrapper">
-                    <canvas id="chartHidden" style="height:220px; max-height:240px;"></canvas>
-                </div>
+                <div class="stat-card-title"><i class="fa fa-eye-slash"></i> Sản phẩm bị ẩn / hết hàng</div>
+                @* <div class="chart-wrapper"> *@
+                @*     <canvas id="chartHidden" style="height:220px; max-height:240px;"></canvas> *@
+                @* </div> *@
                 <table class="table table-sm stat-table">
                     <thead><tr><th>Tên</th><th>Danh mục</th><th>Shop</th></tr></thead>
                     <tbody>
@@ -275,9 +275,9 @@
                 new Chart(document.getElementById('chartHidden'), {
                     type: 'bar',
                     data: {
-                        labels: hiddenStats.map(x => x.Name),
+                        labels: hiddenStats.map(x => x.Name.length > 30 ? x.Name.substring(0, 30) + '...' : x.Name),
                         datasets: [{
-                            label: 'Bị ẩn / hết hạn',
+                            label: 'Bị ẩn / hết hàng',
                             data: hiddenStats.map(x => 1),
                             backgroundColor: COLORS
                         }]

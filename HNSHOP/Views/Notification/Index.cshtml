@@ -183,7 +183,7 @@
                     {
                         <div class="text-right mb-2">
                             <button id="deleteAllNotiBtn" class="btn btn-danger" style="font-size:1.09rem;">
-                                <i class="fa fa-trash"></i> Xóa tất cả thông báo
+                                <i class="fa fa-trash"></i> Xóa tất cả thông báo đã đọc
                             </button>
                         </div>
                     }
@@ -235,51 +235,79 @@
                 </div>
                 
             </div>
-           
+            <form id="notiTokenForm" method="post" style="display:none">
+                @Html.AntiForgeryToken()
+            </form>
         </div>
         <br />
     </div>
 </section>
 @section Scripts {
     <script>
-        
-                $(document).ready(function () {
-            $('.mark-read-btn').click(function () {
-                const btn = $(this);
-                const id = btn.data('id');
-                $.post('/Notification/MarkAsRead', { notificationId: id }, function () {
-                    btn.replaceWith('<span class="noti-badge-read"><i class="fa fa-check"></i> Đã đọc</span>');
-                    $('#notification-' + id).removeClass('unread');
+        $(document).ready(function () {
+          const token = $('#notiTokenForm input[name="__RequestVerificationToken"]').val();
 
-                    var $badge = $('.fa-bell').siblings('.badge, .badge-danger');
-                    if ($badge.length) {
-                        var num = parseInt($badge.text());
-                        if (num > 1) $badge.text(num - 1);
-                        else $badge.remove();
-                    }
-                });
-            });
-        });
-
-                $(document).on("click", ".noti-btn-delete", function () {
+          // Đánh dấu đã đọc
+          $('.mark-read-btn').click(function () {
             const btn = $(this);
-            const id = btn.data("id");
-            if (confirm("Bạn có chắc muốn xóa thông báo này?")) {
-                $.post('/Notification/Delete', { notificationId: id }, function () {
-                    $('#notification-' + id).fadeOut(250, function () { $(this).remove(); });
-                });
-            }
-        });
+            const id = btn.data('id');
+            $.post('/Notification/MarkAsRead',
+              { notificationId: id, __RequestVerificationToken: token },
+              function () {
+                btn.replaceWith('<span class="noti-badge-read"><i class="fa fa-check"></i> Đã đọc</span>');
+                $('#notification-' + id).removeClass('unread');
 
-          $(document).on("click", "#deleteAllNotiBtn", function () {
-            if (!confirm("Bạn có chắc muốn xóa tất cả thông báo?")) return;
-            $.post('/Notification/DeleteAll', function () {
-                $(".noti-list").fadeOut(200, function() { $(this).empty().show(); });
                 var $badge = $('.fa-bell').siblings('.badge, .badge-danger');
-                if ($badge.length) $badge.remove();
-            });
+                if ($badge.length) {
+                  var num = parseInt($badge.text());
+                  if (num > 1) $badge.text(num - 1);
+                  else $badge.remove();
+                }
+              });
+          });
+
+          // Xóa đơn lẻ (chỉ khi đã đọc)
+          $(document).on("click", ".noti-btn-delete", function () {
+            const id = $(this).data("id");
+            if (!confirm("Bạn có chắc muốn xóa thông báo này?")) return;
+
+            $.post('/Notification/Delete',
+              { notificationId: id, __RequestVerificationToken: token },
+              function () {
+                $('#notification-' + id).fadeOut(250, function () {
+                  $(this).remove();
+                  if ($(".noti-list .noti-item").length === 0) {
+                    $(".noti-list").html(`
+                      <div class="text-center text-muted py-5" style="font-size:1.2rem;">
+                        <i class="fa fa-inbox" style="font-size:2rem;color:#fad287"></i><br/>
+                        Bạn chưa có thông báo nào.
+                      </div>
+                    `);
+                  }
+                });
+              });
+          });
+
+          // Xóa tất cả đã đọc
+          $(document).on("click", "#deleteAllNotiBtn", function () {
+            if (!confirm("Bạn có chắc muốn xóa tất cả thông báo đã đọc?")) return;
+
+            $.post('/Notification/DeleteAll',
+              { __RequestVerificationToken: token },
+              function () {
+                $(".noti-list .noti-item").not(".unread").fadeOut(200, function () {
+                  $(this).remove();
+                  if ($(".noti-list .noti-item").length === 0) {
+                    $(".noti-list").html(`
+                      <div class="text-center text-muted py-5" style="font-size:1.2rem;">
+                        <i class="fa fa-inbox" style="font-size:2rem;color:#fad287"></i><br/>
+                        Bạn chưa có thông báo nào.
+                      </div>
+                    `);
+                  }
+                });
+              });
+          });
         });
-
-
     </script>
 }

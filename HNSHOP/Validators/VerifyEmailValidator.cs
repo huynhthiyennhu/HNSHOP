@@ -1,6 +1,6 @@
-﻿using HNSHOP.Dtos.Request;
+﻿using FluentValidation;
+using HNSHOP.Dtos.Request;
 using HNSHOP.Utils;
-using FluentValidation;
 
 namespace HNSHOP.Validators
 {
@@ -8,13 +8,18 @@ namespace HNSHOP.Validators
     {
         public VerifyEmailValidator()
         {
+            CascadeMode = CascadeMode.Stop;
+
             RuleFor(ve => ve.Email)
-                .NotEmpty()
-                .EmailAddress();
+                .NotEmpty().WithMessage("Email không được để trống")
+                .EmailAddress().WithMessage("Email không hợp lệ");
 
             RuleFor(ve => ve.Token)
-                .NotEmpty()
-                .Length(ConstConfig.VerifyEmailTokenLength);
+                .NotEmpty().WithMessage("Mã xác thực không được để trống")
+                .Must(t => !string.IsNullOrWhiteSpace(t))
+                    .WithMessage("Mã xác thực không hợp lệ")
+                .Length(ConstConfig.VerifyEmailTokenLength)
+                    .WithMessage($"Mã xác thực phải có đúng {ConstConfig.VerifyEmailTokenLength} ký tự");
         }
     }
 }

@@ -110,7 +110,8 @@ namespace HNSHOP.Controllers
                                         Path = img.Path
                                     }).ToList(),
 
-                            IsRated = false
+                            IsRated = false,
+                            DiscountPercent=d.DiscountPercent
                         }
                     }).ToList()
                 }).ToList()
@@ -432,6 +433,72 @@ namespace HNSHOP.Controllers
             return RedirectToAction("Index");
         }
 
+        [HttpPost]
+        public async Task<IActionResult> CancelSubOrder(int orderId, int subOrderId)
+        {
+            int userId = GetUserIdFromToken();
+
+            var subOrder = await _db.SubOrders
+                .Include(so => so.Order)
+                    .ThenInclude(o => o.Customer)
+                .Include(so => so.Shop)
+                    .ThenInclude(s => s.Account)
+                .FirstOrDefaultAsync(so =>
+                    so.Id == subOrderId &&
+                    so.Order.Id == orderId &&
+                    so.Order.Customer.AccountId == userId);
+
+            if (subOrder == null)
+                return NotFound("Không tìm thấy đơn hàng con.");
+
+            if (subOrder.Status != SubOrderStatus.Pending)
+                return BadRequest("Chỉ có thể hủy đơn hàng đang chờ xử lý.");
+
+            subOrder.Status = SubOrderStatus.Cancelled;
+
+            // 🔔 Thông báo Shop
+            if (subOrder.Shop?.Account != null)
+            {
+                await _notificationService.SendNotificationToAccountAsync(
+                    accountId: subOrder.Shop.Account.Id,
+                    title: "Đơn hàng bị huỷ",
+                    body: $"Khách hàng đã huỷ đơn hàng #{orderId} (Sub: #{subOrderId}).",
+                    type: "Order"
+                );
+            }
+
+            // 🔔 Thông báo khách
+            await _notificationService.SendNotificationToAccountAsync(
+                accountId: subOrder.Order.Customer.AccountId,
+                title: "Đã huỷ đơn hàng",
+                body: $"Bạn đã huỷ đơn hàng #{orderId} (Sub: #{subOrderId}) thành công.",
+                type: "Order"
+            );
+
+            // 🔔 Thông báo admin
+            var adminAccounts = await _db.Accounts
+                .Where(a => a.Role.Id == 1)
+                .ToListAsync();
+            var order = subOrder.Order;
+            bool allCancelled = order.SubOrders.All(so => so.Status == SubOrderStatus.Cancelled);
+            if (allCancelled)
+            {
+                order.Status = OrderStatus.Cancelled;
+            }
+            foreach (var admin in adminAccounts)
+            {
+                await _notificationService.SendNotificationToAccountAsync(
+                    accountId: admin.Id,
+                    title: "Đơn hàng bị huỷ bởi khách",
+                    body: $"Sub-Order #{subOrderId} trong đơn hàng #{orderId} đã bị huỷ bởi khách.",
+                    type: "Order"
+                );
+            }
+
+            await _db.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+
 
         [HttpPost]
         public async Task<IActionResult> UpdateAddress(int id, UpdateOrderCustomerReqDto req)
@@ -554,16 +621,48 @@ namespace HNSHOP.Controllers
 
             var returnUrl = Url.Action("PaypalSuccess", "Orders", null, Request.Scheme)!;
             var cancelUrl = Url.Action("PaypalCancel", "Orders", null, Request.Scheme)!;
+            var invoiceNote = "Thanh Toán Đơn Hàng";
 
-            var paymentUrl = await _paypalService.CreateOrder(total, "USD", returnUrl, cancelUrl);
+            var paymentUrl = await _paypalService.CreateOrder(total, "USD", returnUrl, cancelUrl, invoiceNote);
 
             return Redirect(paymentUrl ?? "/Orders/Create");
         }
         public IActionResult PreparePaypal([FromBody] CreateOrderReqDto orderRequest)
         {
             int userId = GetUserIdFromToken();
-            var productIds = orderRequest.DetailOrderReqDtos.Select(x => x.ProductId).ToList();
 
+            // Tìm khách hàng
+            var customer = _db.Customers.FirstOrDefault(c => c.AccountId == userId);
+            if (customer == null)
+                return BadRequest("Không tìm thấy khách hàng.");
+
+            // Nếu có địa chỉ mới thì lưu lại
+            if (!string.IsNullOrWhiteSpace(orderRequest.NewAddress))
+            {
+                var newAddrDto = JsonConvert.DeserializeObject<AddressReqDto>(orderRequest.NewAddress);
+                if (newAddrDto != null && !string.IsNullOrWhiteSpace(newAddrDto.PhoneNumber))
+                {
+                    // Gộp số điện thoại vào AddressDetail
+                    var addressDetail = !string.IsNullOrWhiteSpace(newAddrDto.AddressDetail)
+                        ? $"SĐT: {newAddrDto.PhoneNumber} - {newAddrDto.AddressDetail}"
+                        : $"SĐT: {newAddrDto.PhoneNumber} - {newAddrDto.HouseNumber}, {newAddrDto.Street}, {newAddrDto.Ward}, {newAddrDto.District}, {newAddrDto.City}";
+
+                    var address = new Address
+                    {
+                        CustomerId = customer.Id,
+                        AddressDetail = addressDetail
+                    };
+
+                    _db.Add(address);
+                    _db.SaveChanges();
+
+                    orderRequest.AddressId = address.Id;
+                    orderRequest.NewAddress = null;
+                }
+            }
+
+            // Tính tổng tiền
+            var productIds = orderRequest.DetailOrderReqDtos.Select(x => x.ProductId).ToList();
             var products = _db.Products
                 .Include(p => p.ProductSaleEvents).ThenInclude(pse => pse.SaleEvent)
                 .Where(p => productIds.Contains(p.Id) && !p.IsDeleted)
@@ -585,7 +684,7 @@ namespace HNSHOP.Controllers
                 total += finalPrice * item.Quantity;
             }
 
-            // 🔹 Lưu đơn hàng vào session trước khi redirect
+            // Lưu vào session
             HttpContext.Session.SetString("PendingOrder", JsonConvert.SerializeObject(orderRequest));
 
             return Json(new { redirectUrl = Url.Action("PayWithPaypal", "Orders", new { total }) });

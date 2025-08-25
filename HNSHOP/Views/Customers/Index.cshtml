@@ -47,7 +47,10 @@
                 @foreach (var customer in Model)
                 {
                     <tr>
-                            <td><img src="~/images/hnshop/avatar/@customer.Account.Avatar" class="avatar ms-4" alt="@customer.Account.Avatar" /></td>
+                            <td>
+                                <img src="~/images/hnshop/avatar/@(string.IsNullOrEmpty(customer?.Account?.Avatar) ? "no-avatar.jpg" : customer.Account.Avatar)"
+                                     class="avatar ms-4" alt="avatar" />
+                            </td>
 
                         <td>@customer.Name</td>
                         <td>@customer.Account.Email</td>

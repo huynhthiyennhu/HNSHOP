@@ -32,17 +32,14 @@ public class ChatHub : Hub
         if (string.IsNullOrWhiteSpace(message)) return;
         if (!int.TryParse(conversationId, out int convId)) return;
 
-        // Lấy conversation
         var convo = await _context.Conversations.FindAsync(convId);
         if (convo == null) return;
 
-        // 👉 Tự động khôi phục nếu cuộc trò chuyện bị xóa bởi phía người gửi
         if (senderRole == "Customer" && convo.IsDeletedByCustomer)
             convo.IsDeletedByCustomer = false;
         else if (senderRole == "Shop" && convo.IsDeletedByShop)
             convo.IsDeletedByShop = false;
 
-        // Lưu tin nhắn
         var msg = new Message
         {
             ConversationId = convId,
@@ -53,10 +50,9 @@ public class ChatHub : Hub
         };
 
         _context.Messages.Add(msg);
-        _context.Conversations.Update(convo); // cập nhật lại trạng thái xóa
+        _context.Conversations.Update(convo); 
         await _context.SaveChangesAsync();
 
-        // Lấy avatar của người gửi
         string avatar = "default.png";
         if (senderRole == "Customer")
         {
@@ -77,9 +73,8 @@ public class ChatHub : Hub
                 .FirstOrDefault() ?? "default.png";
         }
 
-        // Gửi tin nhắn tới các client trong nhóm
         await Clients.Group(conversationId)
-            .SendAsync("ReceiveMessage", senderRole, senderId, message, msg.SentAt.ToString("o"), avatar, true);
+            .SendAsync("ReceiveMessage", senderRole, senderId, message, msg.SentAt.ToString("o"), avatar);
     }
 
 }

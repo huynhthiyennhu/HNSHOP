@@ -26,7 +26,8 @@ public class PayPalService
     decimal total,
     string currency,
     string returnUrl,
-    string cancelUrl
+    string cancelUrl,
+    string invoiceNote
 )
     {
         var request = new OrdersCreateRequest();
@@ -37,12 +38,15 @@ public class PayPalService
             ApplicationContext = new ApplicationContext
             {
                 ReturnUrl = returnUrl,
-                CancelUrl = cancelUrl
+                CancelUrl = cancelUrl,
+                LandingPage = "BILLING",
+                ShippingPreference = "NO_SHIPPING"
             },
             PurchaseUnits = new List<PurchaseUnitRequest>
         {
             new PurchaseUnitRequest
             {
+                Description = invoiceNote,
                 AmountWithBreakdown = new AmountWithBreakdown
                 {
                     CurrencyCode = currency,

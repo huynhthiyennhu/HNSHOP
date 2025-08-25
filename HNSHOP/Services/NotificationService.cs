@@ -114,13 +114,23 @@ namespace HNSHOP.Services
                 await _context.SaveChangesAsync();
             }
         }
-        public async Task DeleteAllNotificationsAsync(int accountId)
+
+        public async Task<int> DeleteAllReadNotificationsAsync(int accountId)
         {
-            var userNotis = _context.UserNotifications
-                .Where(x => x.AccountId == accountId);
-            _context.UserNotifications.RemoveRange(userNotis);
-            await _context.SaveChangesAsync();
+            var readNotis = _context.UserNotifications
+                .Where(x => x.AccountId == accountId && x.IsRead);
+
+            var count = await readNotis.CountAsync();
+
+            if (count > 0)
+            {
+                _context.UserNotifications.RemoveRange(readNotis);
+                await _context.SaveChangesAsync();
+            }
+
+            return count;
         }
+
 
 
     }

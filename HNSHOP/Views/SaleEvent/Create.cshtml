@@ -1,4 +1,6 @@
 ﻿@using System.Globalization
+@model HNSHOP.Dtos.Request.CreateSaleEventReqDto
+
 @{
     ViewData["Title"] = "Thêm Chương Trình Giảm Giá";
 }
@@ -67,6 +69,7 @@
     }
 </style>
 
+
 <section id="cart_items">
     <div class="container p-5">
         <div class="breadcrumbs">
@@ -76,44 +79,71 @@
                 <li class="active">Thêm Chương Trình Giảm Giá</li>
             </ol>
         </div>
+
         <div class="sale-card">
             <h2 class="title text-center mb-4">🎉 Thêm Chương Trình Giảm Giá</h2>
-            <form id="addSaleEventForm" enctype="multipart/form-data" action="/SaleEvent/Create" method="post">
+
+            <form id="addSaleEventForm" asp-action="Create" asp-controller="SaleEvent" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+
+                @* <div asp-validation-summary="All" class="text-danger mb-2"></div> *@
+
+                <!-- ẢNH MINH HOẠ -->
                 <div class="form-group text-center">
-                    <input type="file" name="Illustration" id="eventImageInput" style="display: none;">
-                    <div id="previewImage" class="mt-2 w-100" style="display: none;">
-                        <img id="selectedImage" src="#" class="img-fluid rounded w-100" style="max-height: 300px; object-fit: cover;">
+                    <!-- CHỈ 1 input file; giữ name="Illustration" để map vào tham số IFormFile Illustration -->
+                    <input type="file" name="Illustration" id="eventImageInput" style="display:none" />
+                    <div id="previewImage" class="mt-2 w-100" style="display:none;">
+                        <img id="selectedImage" src="#" class="img-fluid rounded w-100" style="max-height:300px; object-fit:cover;">
                     </div>
+                    <span class="text-danger" asp-validation-for="Illustration"></span>
+
                     <button type="button" id="customFileButton" class="btn btn-primary mb-3">
                         <i class="fa fa-image"></i> Chọn ảnh
                     </button>
                 </div>
+
                 <div class="row">
                     <div class="col-md-6">
+                        <!-- TÊN -->
                         <div class="form-group">
                             <label for="SaleEventName">Tên chương trình</label>
-                            <input type="text" name="Name" class="form-control" required />
+                            <input asp-for="Name" class="form-control" placeholder="Tên chương trình" />
+                            <span class="text-danger" asp-validation-for="Name"></span>
                         </div>
+
+                        <!-- MÔ TẢ -->
                         <div class="form-group">
                             <label for="SaleEventDescription">Mô tả</label>
-                            <textarea name="Description" class="form-control" rows="5" required></textarea>
+                            <textarea asp-for="Description" class="form-control" rows="5" placeholder="Mô tả"></textarea>
+                            <span class="text-danger" asp-validation-for="Description"></span>
                         </div>
                     </div>
+
                     <div class="col-md-6">
+                        <!-- GIẢM GIÁ -->
                         <div class="form-group">
                             <label for="SaleEventDiscount">Giảm giá (%)</label>
-                            <input type="number" name="Discount" class="form-control" required />
+                            <input asp-for="Discount" type="number" class="form-control" placeholder="VD: 10, 20..." step="0.01" min="0" max="100" />
+                            <span class="text-danger" asp-validation-for="Discount"></span>
                         </div>
+
+                        <!-- NGÀY BẮT ĐẦU -->
                         <div class="form-group">
                             <label for="SaleEventStartDate">Ngày bắt đầu</label>
-                            <input type="date" name="StartDate" class="form-control" required />
+                            <input asp-for="StartDate" type="date" class="form-control" />
+                            <span class="text-danger" asp-validation-for="StartDate"></span>
                         </div>
+
+                        <!-- NGÀY KẾT THÚC -->
                         <div class="form-group">
                             <label for="SaleEventEndDate">Ngày kết thúc</label>
-                            <input type="date" name="EndDate" class="form-control" required />
+                            <input asp-for="EndDate" type="date" class="form-control" />
+                            <span class="text-danger" asp-validation-for="EndDate"></span>
                         </div>
                     </div>
                 </div>
+
+                <!-- LOẠI KHÁCH HÀNG -->
                 <div class="mb-3">
                     <h4 class="table-title mb-2">Loại Khách Hàng Áp Dụng</h4>
                     <div class="table-responsive cart_info">
@@ -126,20 +156,24 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var type in ViewBag.CustomerTypes)
+                                @foreach (var type in (IEnumerable<dynamic>)ViewBag.CustomerTypes)
                                 {
+                                    var checkedAttr = (Model?.CustomerTypeIds?.Contains((int)type.Id) ?? false) ? "checked" : "";
                                     <tr>
                                         <td>@type.Name</td>
                                         <td>@type.Description</td>
                                         <td class="text-center">
-                                            <input type="checkbox" name="CustomerTypeIds" value="@type.Id">
+                                            <input type="checkbox" name="CustomerTypeIds" value="@type.Id" @checkedAttr />
                                         </td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
+                        <span class="text-danger" asp-validation-for="CustomerTypeIds"></span>
                     </div>
                 </div>
+
+                <!-- SẢN PHẨM -->
                 <div>
                     <h4 class="table-title mb-2">Sản Phẩm Áp Dụng</h4>
                     <div class="table-responsive cart_info">
@@ -153,21 +187,18 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var product in ViewBag.Products)
+                                @foreach (var product in (IEnumerable<dynamic>)ViewBag.Products)
                                 {
+                                    var image = (product.Images as List<HNSHOP.Dtos.Response.ProductImageResDto>)?.FirstOrDefault();
+                                    var checkedAttr = (Model?.ProductIds?.Contains((int)product.Id) ?? false) ? "checked" : "";
                                     <tr>
                                         <td>
-                                            @{
-                                                var image = (product.Images as List<HNSHOP.Dtos.Response.ProductImageResDto>)?.FirstOrDefault();
-                                            }
-                                            <img src="~/images/hnshop/@image?.Path" width="80" height="80">
+                                            <img src="~/images/hnshop/@image?.Path" width="80" height="80" />
                                         </td>
                                         <td>
                                             @if (product.Name != null && product.Name.Length > 40)
                                             {
-                                                <span title="@product.Name">
-                                                    @product.Name.Substring(0, 40)... 
-                                                </span>
+                                                <span title="@product.Name">@product.Name.Substring(0, 40)...</span>
                                             }
                                             else
                                             {
@@ -176,34 +207,38 @@
                                         </td>
                                         <td>@product.Price.ToString("C0", CultureInfo.GetCultureInfo("vi-VN"))</td>
                                         <td class="text-center">
-                                            <input type="checkbox" name="ProductIds" value="@product.Id">
+                                            <input type="checkbox" name="ProductIds" value="@product.Id" @checkedAttr />
                                         </td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
+                        <span class="text-danger" asp-validation-for="ProductIds"></span>
                     </div>
                 </div>
+
                 <div class="text-center mt-4">
                     <button type="submit" class="btn btn-success">
                         <i class="fa fa-plus-circle"></i> Thêm chương trình giảm giá
                     </button>
                 </div>
-        </form>
-    </div>
+            </form>
+        </div>
     </div>
     <br />
 </section>
+
 @section Scripts {
+    <partial name="_ValidationScriptsPartial" />
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js"></script>
     <script>
-        $(document).ready(function () {
-            $("#customFileButton").click(function () {
+        $(function () {
+            $("#customFileButton").on("click", function () {
                 $("#eventImageInput").click();
             });
 
-            $("#eventImageInput").change(function (event) {
+            $("#eventImageInput").on("change", function (event) {
                 const file = event.target.files[0];
                 if (file) {
                     const reader = new FileReader();
@@ -212,31 +247,30 @@
                         $("#previewImage").show();
                     };
                     reader.readAsDataURL(file);
+                } else {
+                    $("#previewImage").hide();
+                    $("#selectedImage").attr("src", "#");
                 }
             });
 
             $("#productTable").DataTable({
-                "paging": true,
-                "pageLength": 5,
-                "lengthChange": false,
-                "searching": true,
-                "ordering": true,
-                "info": true,
-                "autoWidth": false,
-                "language": {
-                    "lengthMenu": "Hiển thị _MENU_ sản phẩm mỗi trang",
-                    "zeroRecords": "Không tìm thấy sản phẩm nào",
-                    "info": "Trang _PAGE_ / _PAGES_",
-                    "infoEmpty": "Không có dữ liệu",
-                    "infoFiltered": "(lọc từ _MAX_ sản phẩm)",
-                    "search": "Tìm kiếm:",
-                    "paginate": {
-                        "previous": "Trước",
-                        "next": "Tiếp"
-                    }
+                paging: true,
+                pageLength: 5,
+                lengthChange: false,
+                searching: true,
+                ordering: true,
+                info: true,
+                autoWidth: false,
+                language: {
+                    lengthMenu: "Hiển thị _MENU_ sản phẩm mỗi trang",
+                    zeroRecords: "Không tìm thấy sản phẩm nào",
+                    info: "Trang _PAGE_ / _PAGES_",
+                    infoEmpty: "Không có dữ liệu",
+                    infoFiltered: "(lọc từ _MAX_ sản phẩm)",
+                    search: "Tìm kiếm:",
+                    paginate: { previous: "Trước", next: "Tiếp" }
                 }
             });
-
         });
     </script>
 }

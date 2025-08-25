@@ -1,6 +1,6 @@
-﻿using HNSHOP.Dtos.Request;
+﻿using FluentValidation;
+using HNSHOP.Dtos.Request;
 using HNSHOP.Utils;
-using FluentValidation;
 
 namespace HNSHOP.Validators
 {
@@ -8,14 +8,19 @@ namespace HNSHOP.Validators
     {
         public LoginValidator()
         {
+            CascadeMode = CascadeMode.Stop;
+
             RuleFor(l => l.Email)
-                .NotEmpty()
-                .EmailAddress();
+                .NotEmpty().WithMessage("Email không được để trống")
+                .EmailAddress().WithMessage("Email không hợp lệ");
 
             RuleFor(l => l.Password)
-                .NotEmpty()
+                .Must(p => !string.IsNullOrWhiteSpace(p))
+                    .WithMessage("Mật khẩu không được để trống")
                 .MinimumLength(ConstConfig.MinPasswordLength)
-                .MaximumLength(ConstConfig.MaxPasswordLength);
+                    .WithMessage($"Mật khẩu phải có ít nhất {ConstConfig.MinPasswordLength} ký tự")
+                .MaximumLength(ConstConfig.MaxPasswordLength)
+                    .WithMessage($"Mật khẩu không được dài quá {ConstConfig.MaxPasswordLength} ký tự");
         }
     }
 }

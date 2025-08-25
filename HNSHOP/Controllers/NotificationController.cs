@@ -41,14 +41,16 @@ public class NotificationController : Controller
         await _notificationService.DeleteNotificationAsync(accountId, notificationId);
         return Ok();
     }
+    
+
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAll()
     {
         var accountId = GetAccountId();
-        await _notificationService.DeleteAllNotificationsAsync(accountId);
-        return Ok();
+        var deleted = await _notificationService.DeleteAllReadNotificationsAsync(accountId);
+        return Ok(new { success = true, deleted });
     }
-
 
 
 }

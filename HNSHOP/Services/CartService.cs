@@ -80,7 +80,8 @@ namespace HNSHOP.Services
                     Image = product.ProductImages.FirstOrDefault()?.Path ?? "no-image.png",
                     ShopId = product.ShopId,
                     ShopName = product.Shop.Name,
-                    DiscountPercent = discountPercent
+                    DiscountPercent = discountPercent,
+                    StockQuantity = product.Quantity
                 };
             }).ToList();
         }
@@ -117,16 +118,30 @@ namespace HNSHOP.Services
 
             if (item != null)
             {
+                var product = _db.Products.Find(productId); // 🔥 Lấy tồn kho thật
+                if (product == null)
+                    return GetCartItemCount(); // hoặc throw nếu cần
+
+                if (quantity > product.Quantity)
+                {
+                    quantity = product.Quantity; // Giới hạn về tồn kho
+                }
+
                 if (quantity > 0)
+                {
                     item.Quantity = quantity;
+                }
                 else
+                {
                     cart.Remove(item);
+                }
 
                 SaveCartSession(cart);
             }
 
             return GetCartItemCount();
         }
+
 
         // ✅ Xóa sản phẩm
         public bool RemoveFromCart(int productId)

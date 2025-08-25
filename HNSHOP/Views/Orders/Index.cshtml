@@ -121,6 +121,7 @@
                 string shopName = WebUtility.HtmlEncode(subOrder.ShopName);
                 string statusBadge = GetStatusBadge(subOrder.Status);
 
+
                 bool hasUnrated = subOrder.DetailOrders.Any(d =>
                     d.Product != null &&
                     !ratedPairs.Any(r =>
@@ -132,6 +133,8 @@
                 html += "<div class='shop-section mb-4 p-3 border rounded bg-white shadow-sm'>";
                 html += $"<h5 class='shop-title mb-3 text-primary font-weight-bold'>🛍 Shop: {shopName}" +
                         $"<small class='ml-2'>  {statusBadge}</small></h5>";
+                html += $"<a href='/Chat/WithShop?shopId={subOrder.ShopId}' class='btn btn-info pull-right' style='margin-right:50px; margin-bottom:5px;  margin-top:-35px;  '>" +
+               "<i class='fa fa-comments'></i> Chat với Shop</a>";
 
                 // Sản phẩm đầu tiên
                 var firstProduct = subOrder.DetailOrders.FirstOrDefault(d => d.Product != null);
@@ -151,7 +154,7 @@
                     html += $"<div class='font-weight-bold'>{name}</div>";
                     html += $"<div class='text-muted small'>Đơn giá: {price:N0} VNĐ";
                     if (discount > 0)
-                        html += $" <span class='text-danger ml-2'>-{discount:0.#}%</span>";
+                        html += $" <span class='text-danger ml-2'>-{discount:0.#}% còn {finalPrice:N0} VNĐ</span>";
                     html += $"</div><div class='text-muted small'>Số lượng: {firstProduct.Quantity}</div>";
                     html += $"<div class='text-danger font-weight-bold mt-1'>{(finalPrice * firstProduct.Quantity):N0} VNĐ</div>";
                     html += "</td>";
@@ -164,6 +167,7 @@
                 {
                     html += $"<div class='mb-2'><a href='javascript:void(0)' onclick='toggleProducts(\"{blockId}\", this)'>Xem tất cả sản phẩm</a></div>";
                 }
+                
 
                 // Danh sách sản phẩm còn lại
                 html += $"<div id='{blockId}' style='display:none;'>";
@@ -182,8 +186,10 @@
                     html += $"<td style='width: 60px; border:none;'><img src='/images/hnshop/{img}' class='img-fluid rounded border' style='width:60px;height:60px;object-fit:cover;' /></td>";
                     html += "<td style='vertical-align: top;'>";
                     html += $"<div class='font-weight-bold'>{name}</div>";
-                    html += $"<div class='text-muted small'>Đơn giá: {item.UnitPrice:N0} VNĐ</div>";
-                    html += $"<div class='text-muted small'>Số lượng: {item.Quantity}</div>";
+                    html += $"<div class='text-muted small'>Đơn giá: {price:N0} VNĐ";
+                    if (discount > 0)
+                        html += $" <span class='text-danger ml-2'>-{discount:0.#}% còn {finalPrice:N0} VNĐ</span>";
+                    html += $"</div><div class='text-muted small'>Số lượng: {item.Quantity}</div>";
                     html += $"<div class='text-danger font-weight-bold mt-1'>{(finalPrice * item.Quantity):N0} VNĐ</div>";
                     html += "</td>";
                     html += "</tr>";
@@ -203,6 +209,15 @@
                 // Hành động
                 html += "<div class='text-right mt-3' style='margin-right:50px;'>";
                 html += $"<a href='/Orders/Details/{order.Id}' class='btn btn-outline-info btn-sm'>Chi tiết đơn</a> ";
+                if (subOrder.Status == SubOrderStatus.Pending)
+                {
+                    html += $@"
+        <form method='post' action='/Orders/CancelSubOrder?orderId={order.Id}&subOrderId={subOrder.Id}'
+              onsubmit='return confirm(""Bạn có chắc muốn hủy đơn hàng này không?"")'
+              style='display:inline-block'>
+            <button type='submit' class='btn btn-danger btn-sm ml-2'>Hủy đơn</button>
+        </form>";
+                }
 
                 if (subOrder.Status == SubOrderStatus.Completed && hasUnrated)
                 {
